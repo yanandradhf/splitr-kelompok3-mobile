@@ -68,8 +68,9 @@ const ChangePasswordScreen = () => {
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
 
+        <Text style={styles.title}>SELESAI!</Text>
+        
         <View style={styles.successContainer}>
-          <Text style={styles.successTitle}>SELESAI!</Text>
           <Text style={styles.successSubtitle}>Password Berhasil Diubah</Text>
           
           <View style={styles.successIcon}>
@@ -79,13 +80,6 @@ const ChangePasswordScreen = () => {
               </View>
             </View>
           </View>
-          
-          <TouchableOpacity 
-            style={styles.doneButton} 
-            onPress={() => router.back()}
-          >
-            <Text style={styles.doneButtonText}>Selesai</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -99,10 +93,9 @@ const ChangePasswordScreen = () => {
         <Ionicons name="chevron-back" size={24} color="#000" />
       </TouchableOpacity>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>{getTitle()}</Text>
-        
-        <View style={styles.formContainer}>
+      <Text style={styles.title}>{getTitle()}</Text>
+      
+      <View style={styles.formContainer}>
           <Text style={styles.subtitle}>{getSubtitle()}</Text>
           
           {step === 'current' && (
@@ -178,9 +171,9 @@ const ChangePasswordScreen = () => {
           <TouchableOpacity 
             style={[
               styles.nextButton,
-              (step === 'current' && currentPassword.length < 6) ||
-              (step === 'new' && (newPassword.length < 6 || confirmPassword.length < 6)) 
-                ? styles.nextButtonDisabled : {}
+              ((step === 'current' && currentPassword.length < 6) ||
+              (step === 'new' && (newPassword.length < 6 || confirmPassword.length < 6))) 
+                ? styles.nextButtonDisabled : null
             ]}
             onPress={handleNext}
             disabled={
@@ -190,7 +183,6 @@ const ChangePasswordScreen = () => {
           >
             <Text style={styles.nextButtonText}>{getButtonText()}</Text>
           </TouchableOpacity>
-        </View>
       </View>
     </SafeAreaView>
   );
@@ -208,23 +200,21 @@ const styles = StyleSheet.create({
     zIndex: 1,
     padding: 5,
   },
-  content: {
-    flex: 1,
-    paddingTop: 100,
-    paddingHorizontal: 20,
-  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
+    marginTop: 100,
     marginBottom: 40,
   },
   formContainer: {
     backgroundColor: '#FF7A00',
     borderRadius: 25,
     padding: 30,
-    marginHorizontal: 10,
+    marginHorizontal: 20,
+    flex: 1,
+    marginBottom: 40,
   },
   subtitle: {
     fontSize: 16,
@@ -274,23 +264,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   successContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    borderRadius: 25,
+    padding: 30,
     alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  successTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginHorizontal: 20,
+    flex: 1,
+    marginBottom: 40,
+    justifyContent: 'center',
   },
   successSubtitle: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#000',
     textAlign: 'center',
     marginBottom: 60,
+    fontWeight: '600',
   },
   successIcon: {
     marginBottom: 80,
@@ -310,19 +298,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#6EDCD9',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  doneButton: {
-    backgroundColor: '#6EDCD9',
-    paddingHorizontal: 50,
-    paddingVertical: 15,
-    borderRadius: 15,
-    width: '70%',
-    alignItems: 'center',
-  },
-  doneButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 

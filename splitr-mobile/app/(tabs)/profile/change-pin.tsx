@@ -109,8 +109,9 @@ const ChangePinScreen = () => {
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
 
+        <Text style={styles.title}>SELESAI!</Text>
+        
         <View style={styles.successContainer}>
-          <Text style={styles.successTitle}>SELESAI!</Text>
           <Text style={styles.successSubtitle}>Pin Berhasil Diubah</Text>
           
           <View style={styles.successIcon}>
@@ -120,13 +121,6 @@ const ChangePinScreen = () => {
               </View>
             </View>
           </View>
-          
-          <TouchableOpacity 
-            style={styles.doneButton} 
-            onPress={() => router.back()}
-          >
-            <Text style={styles.doneButtonText}>Selesai</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -140,56 +134,54 @@ const ChangePinScreen = () => {
         <Ionicons name="chevron-back" size={24} color="#000" />
       </TouchableOpacity>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>{getTitle()}</Text>
+      <Text style={styles.title}>{getTitle()}</Text>
+      
+      <View style={styles.pinContainer}>
+        <Text style={styles.subtitle}>{getSubtitle()}</Text>
         
-        <View style={styles.pinContainer}>
-          <Text style={styles.subtitle}>{getSubtitle()}</Text>
-          
-          <View style={styles.pinDisplay}>
-            {[...Array(6)].map((_, index) => (
-              <View 
-                key={index}
-                style={[
-                  styles.pinDot,
-                  index < getCurrentPin().length && styles.pinDotFilled
-                ]}
-              />
-            ))}
-          </View>
-
-          <View style={styles.keypad}>
-            {keypadNumbers.map((row, rowIndex) => (
-              <View key={rowIndex} style={styles.keypadRow}>
-                {row.map((num, numIndex) => (
-                  <TouchableOpacity
-                    key={numIndex}
-                    style={styles.keypadButton}
-                    onPress={() => handleNumberPress(num)}
-                  >
-                    <Text style={[
-                      styles.keypadText,
-                      num === 'Lupa?' && styles.keypadSpecialText
-                    ]}>
-                      {num}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ))}
-          </View>
-
-          <TouchableOpacity 
-            style={[
-              styles.nextButton,
-              getCurrentPin().length < 6 && styles.nextButtonDisabled
-            ]}
-            onPress={handleNext}
-            disabled={getCurrentPin().length < 6}
-          >
-            <Text style={styles.nextButtonText}>{getButtonText()}</Text>
-          </TouchableOpacity>
+        <View style={styles.pinDisplay}>
+          {[...Array(6)].map((_, index) => (
+            <View 
+              key={index}
+              style={[
+                styles.pinDot,
+                index < getCurrentPin().length && styles.pinDotFilled
+              ]}
+            />
+          ))}
         </View>
+
+        <View style={styles.keypad}>
+          {keypadNumbers.map((row, rowIndex) => (
+            <View key={rowIndex} style={styles.keypadRow}>
+              {row.map((num, numIndex) => (
+                <TouchableOpacity
+                  key={numIndex}
+                  style={styles.keypadButton}
+                  onPress={() => handleNumberPress(num)}
+                >
+                  <Text style={[
+                    styles.keypadText,
+                    num === 'Lupa?' && styles.keypadSpecialText
+                  ]}>
+                    {num}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity 
+          style={[
+            styles.nextButton,
+            getCurrentPin().length < 6 && styles.nextButtonDisabled
+          ]}
+          onPress={handleNext}
+          disabled={getCurrentPin().length < 6}
+        >
+          <Text style={styles.nextButtonText}>{getButtonText()}</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -207,16 +199,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
     padding: 5,
   },
-  content: {
-    flex: 1,
-    paddingTop: 100,
-    paddingHorizontal: 20,
-  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
+    marginTop: 100,
     marginBottom: 40,
   },
   pinContainer: {
@@ -224,7 +212,9 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 30,
     alignItems: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: 20,
+    flex: 1,
+    marginBottom: 40,
   },
   subtitle: {
     fontSize: 16,
@@ -290,23 +280,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   successContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    borderRadius: 25,
+    padding: 30,
     alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  successTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginHorizontal: 20,
+    flex: 1,
+    marginBottom: 40,
+    justifyContent: 'center',
   },
   successSubtitle: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#000',
     textAlign: 'center',
     marginBottom: 60,
+    fontWeight: '600',
   },
   successIcon: {
     marginBottom: 80,
@@ -326,19 +314,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#6EDCD9',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  doneButton: {
-    backgroundColor: '#6EDCD9',
-    paddingHorizontal: 50,
-    paddingVertical: 15,
-    borderRadius: 15,
-    width: '70%',
-    alignItems: 'center',
-  },
-  doneButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 
