@@ -1,23 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { router } from 'expo-router';
-import { View } from 'react-native';
+import CustomSplashScreen from './(public)/splash';
 
 export default function Index() {
-  const [isMounted, setIsMounted] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+    router.replace('/(public)/onboarding');
+  };
 
-  useEffect(() => {
-    if (isMounted) {
-      const timer = setTimeout(() => {
-        router.replace('/(auth)/login');
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isMounted]);
+  if (showSplash) {
+    return <CustomSplashScreen onFinish={handleSplashFinish} />;
+  }
 
-  return <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} />;
+  return null;
 }
