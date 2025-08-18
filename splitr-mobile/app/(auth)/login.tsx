@@ -1,22 +1,22 @@
 // app/(auth)/login.tsx
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
-  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { Link, router } from 'expo-router';
 import Screen from '../../components/layout/Screen';
 
 const COLORS = {
   white: '#FFFFFF',
-  primary: '#ff9b3eff',    // oranye panel
+  primary: '#ffffffff',    // oranye panel
   title: '#1A1A1A',
   label: '#1F2937',
   inputBg: '#F2F4F7',
@@ -158,11 +158,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  link: { color: COLORS.link, fontWeight: '700' },
-  subtle: { color: COLORS.subtle, fontSize: 12 },
+  link: { color: COLORS.link, fontWeight: '400' },
+  subtle: { color: COLORS.subtle, fontSize: 12, fontWeight: '400' },
 
   button: {
-    marginTop: 52,
+    position: 'absolute',
+    bottom: 55,
+    left: 20,
+    right: 20,
     backgroundColor: COLORS.teal,
     borderRadius: 12,
     paddingVertical: 14,
