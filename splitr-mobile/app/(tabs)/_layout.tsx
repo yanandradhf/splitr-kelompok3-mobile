@@ -19,28 +19,22 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="monitoring"
         options={{
-          title: 'Monitoring',
+          title: 'Aktivitas',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart" size={size} color={color} />
+            <Ionicons name="list" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="riwayat"
         options={{
-          title: 'Riwayat',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen

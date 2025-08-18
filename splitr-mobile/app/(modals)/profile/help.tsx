@@ -16,22 +16,18 @@ const HelpScreen = () => {
     {
       title: 'Tentang Splitr',
       icon: 'information-circle-outline',
-      route: '/profile/help/about',
     },
     {
       title: 'Pemberitahuan Privasi',
       icon: 'shield-checkmark-outline',
-      route: '/profile/help/privacy',
     },
     {
       title: 'Syarat & Ketentuan',
       icon: 'document-text-outline',
-      route: '/profile/help/terms',
     },
     {
       title: 'Hubungi Kami',
       icon: 'mail-outline',
-      route: '/profile/help/contact',
     },
   ];
 
@@ -50,17 +46,37 @@ const HelpScreen = () => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.menuContainer}>
-          {helpItems.map((item, index) => (
-            <Link key={index} href={item.route as any} asChild>
-              <TouchableOpacity style={styles.menuItem}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name={item.icon as any} size={24} color="#6EDCD9" />
-                </View>
-                <Text style={styles.menuText}>{item.title}</Text>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
-              </TouchableOpacity>
-            </Link>
-          ))}
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(modals)/profile/about')}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="information-circle-outline" size={24} color="#6EDCD9" />
+            </View>
+            <Text style={styles.menuText}>Tentang Splitr</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(modals)/profile/privacy')}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="shield-checkmark-outline" size={24} color="#6EDCD9" />
+            </View>
+            <Text style={styles.menuText}>Pemberitahuan Privasi</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(modals)/profile/terms')}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="document-text-outline" size={24} color="#6EDCD9" />
+            </View>
+            <Text style={styles.menuText}>Syarat & Ketentuan</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(modals)/profile/contact')}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="mail-outline" size={24} color="#6EDCD9" />
+            </View>
+            <Text style={styles.menuText}>Hubungi Kami</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

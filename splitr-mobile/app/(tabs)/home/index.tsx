@@ -73,13 +73,16 @@ export default function HomeScreen() {
               resizeMode="contain"
             />
 
-            <View style={styles.welcomeWrap}>
+            <Pressable 
+              style={styles.welcomeWrap}
+              onPress={() => router.push('/(modals)/profile')}
+            >
               <Avatar size={36} uri={user.avatar} />
               <View style={{ marginLeft: 8 }}>
                 <Text style={styles.welcomeSmall}>Hi, Welcome Back!</Text>
                 <Text style={styles.welcomeName}>{user.name}</Text>
               </View>
-            </View>
+            </Pressable>
           </View>
 
           {/* Aktivitas Terbaru */}
