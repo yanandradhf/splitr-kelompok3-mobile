@@ -122,7 +122,7 @@ export default function LoginScreen() {
             <View style={styles.linksContainer}>
               <View style={styles.registerLink}>
                 <Text style={styles.linkText}>Belum memiliki akun? </Text>
-                <Link href="/(auth)/register">
+                <Link href="/(auth)/register/">
                   <Text style={styles.blueLink}>Registrasi</Text>
                 </Link>
               </View>
