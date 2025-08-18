@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity } from 'react-native';
-import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold, Poppins_800ExtraBold, Poppins_900Black } from '@expo-google-fonts/poppins';
+import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans';
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 350;
@@ -8,17 +8,17 @@ const isMediumDevice = width >= 350 && width < 400;
 const isLargeDevice = width >= 400;
 
 interface Onboarding3Props {
+  currentIndex: number;
   onGetStarted?: () => void;
   onPrevious?: () => void;
 }
 
-export default function Onboarding3({ onGetStarted, onPrevious }: Onboarding3Props) {
+export default function Onboarding3({ currentIndex, onGetStarted, onPrevious }: Onboarding3Props) {
   const [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-    Poppins_800ExtraBold,
-    Poppins_900Black,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
   });
 
   if (!fontsLoaded) {
@@ -27,30 +27,42 @@ export default function Onboarding3({ onGetStarted, onPrevious }: Onboarding3Pro
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <Image 
-          source={require('../../../assets/images/onboarding3.png')} 
-          style={styles.onboardingImage}
-          resizeMode="contain"
-        />
-        <Text style={styles.titleText}>Pantau Tagihan dalam Satu Layar</Text>
-        <Text style={styles.descriptionText}>Selesaikan pembayaran dengan cepat dan dapatkan notifikasi otomatis untuk semua transaksi.</Text>
+      <Image 
+        source={require('../../../assets/images/splitr.png')} 
+        style={styles.logoTop}
+        resizeMode="contain"
+      />
+      <Image 
+        source={require('../../../assets/images/onboarding3.png')} 
+        style={styles.onboardingImage}
+        resizeMode="contain"
+      />
+      <Text style={styles.titleText}>
+        <Text style={styles.titleBlack}>Pantau Tagihan dalam </Text>
+        <Text style={styles.titleOrange}>Satu Layar</Text>
+      </Text>
+      <Text style={styles.descriptionText}>Selesaikan pembayaran dengan cepat dan dapatkan notifikasi otomatis untuk semua transaksi.</Text>
+      
+      <View style={styles.dotsContainer}>
+        <View style={[styles.dot, currentIndex === 0 && styles.activeDot]} />
+        <View style={[styles.dot, currentIndex === 1 && styles.activeDot]} />
+        <View style={[styles.dot, currentIndex === 2 && styles.activeDot]} />
+      </View>
+      
+      <View style={styles.buttonGroup}>
+        <TouchableOpacity 
+          style={styles.belumPunyaButton}
+          onPress={onGetStarted}
+        >
+          <Text style={styles.belumPunyaText}>Belum Punya Rekening Wondr</Text>
+        </TouchableOpacity>
         
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity 
-            style={styles.belumPunyaButton}
-            onPress={onGetStarted}
-          >
-            <Text style={styles.belumPunyaText}>Belum Punya Rekening Wondr</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.sudahPunyaButton}
-            onPress={onGetStarted}
-          >
-            <Text style={styles.sudahPunyaText}>Sudah Punya Rekening Wondr</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.sudahPunyaButton}
+          onPress={onGetStarted}
+        >
+          <Text style={styles.sudahPunyaText}>Sudah Punya Rekening Wondr</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -58,40 +70,62 @@ export default function Onboarding3({ onGetStarted, onPrevious }: Onboarding3Pro
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FF8736',
+    backgroundColor: '#ffffffff',
     padding: 20,
   },
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 1)',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
+  logoTop: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    width: 80,
+    height: 40,
   },
   onboardingImage: {
-    width: 250,
-    height: 200,
-    marginBottom: 30,
+    width: 300,
+    height: 300,
+    marginBottom: 0,
   },
   titleText: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
-    color: '#FF8736',
     textAlign: 'center',
-    marginBottom: 20,
-    fontFamily: 'Poppins_800ExtraBold',
+    marginBottom: 29,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  titleBlack: {
+    color: '#000000',
+  },
+  titleOrange: {
+    color: '#FF8736',
   },
   descriptionText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-    fontFamily: 'Poppins_400Regular',
+    fontSize: 13,
+    color: '#000000ff',
+    textAlign: 'justify',
+    lineHeight: 20,
+    marginBottom: 30,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 30,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D3D3D3',
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: '#FF8736',
   },
   buttonGroup: {
     width: '100%',
@@ -109,7 +143,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     textAlign: 'center',
   },
   sudahPunyaButton: {
@@ -125,7 +159,7 @@ const styles = StyleSheet.create({
     color: '#71DBD1',
     fontSize: 16,
     fontWeight: 'bold',
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     textAlign: 'center',
   },
 
