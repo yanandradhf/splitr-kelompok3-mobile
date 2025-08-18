@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack } from "expo-router";
 
 export default function RootLayout() {
   return (
@@ -6,7 +6,7 @@ export default function RootLayout() {
       <Stack.Screen name="(public)" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="(modals)" options={{ presentation: "modal" }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
