@@ -10,7 +10,7 @@ export default function CustomSplashScreen({ onFinish }: SplashScreenProps) {
     // Hide splash screen after 2.5 seconds
     const timer = setTimeout(() => {
       onFinish();
-    }, 9500);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#ffffffff',
     shadowOffset: {
       width: 0,
       height: 3,
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#000000',
+    color: '#000000ff',
     textAlign: 'center',
     lineHeight: 16,
   },

@@ -23,14 +23,14 @@ export default function Onboarding1({ currentIndex, onNext }: Onboarding1Props) 
 
   return (
     <View style={styles.container}>
-      <Image 
+      {/* <Image 
         source={require('../../../assets/images/splitr.png')} 
         style={styles.logoTop}
         resizeMode="contain"
-      />
+      /> */}
       <Text style={styles.welcomeText}>Welcome to Splitr !</Text>
       <Image 
-        source={require('../../../assets/images/onboarding1.png')} 
+        source={require('../../../assets/images/step1.png')} 
         style={styles.onboardingImage}
         resizeMode="contain"
       />
@@ -73,20 +73,20 @@ const styles = StyleSheet.create({
     height: 40,
   },
   welcomeText: {
-    fontSize: 35,
+    fontSize: 33,
     fontWeight: 'bold',
     color: '#070707ff',
     textAlign: 'center',
-    marginBottom: 0,
+    marginBottom: 10,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
   },
   onboardingImage: {
-    width: 250,
+    width: 320,
     height: 250,
     marginBottom: 0,
   },
   titleText: {
-    fontSize: 30,
+    fontSize: 29,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 29,

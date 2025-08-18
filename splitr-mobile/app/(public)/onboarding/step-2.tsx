@@ -23,13 +23,13 @@ export default function Onboarding2({ currentIndex, onNext }: Onboarding2Props) 
 
   return (
     <View style={styles.container}>
-      <Image 
+      {/* <Image 
         source={require('../../../assets/images/splitr.png')} 
         style={styles.logoTop}
         resizeMode="contain"
-      />
+      /> */}
       <Image 
-        source={require('../../../assets/images/onboarding2.png')} 
+        source={require('../../../assets/images/step2.png')} 
         style={styles.onboardingImage}
         resizeMode="contain"
       />
@@ -73,11 +73,11 @@ const styles = StyleSheet.create({
   },
   onboardingImage: {
     width: 300,
-    height: 300,
-    marginBottom: 0,
+    height: 250,
+    marginBottom: 20,
   },
   titleText: {
-    fontSize: 30,
+    fontSize: 29,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 29,

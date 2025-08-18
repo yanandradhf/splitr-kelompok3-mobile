@@ -27,18 +27,18 @@ export default function Onboarding3({ currentIndex, onGetStarted, onPrevious }: 
 
   return (
     <View style={styles.container}>
-      <Image 
+      {/* <Image 
         source={require('../../../assets/images/splitr.png')} 
         style={styles.logoTop}
         resizeMode="contain"
-      />
+      /> */}
       <Image 
         source={require('../../../assets/images/onboarding3.png')} 
         style={styles.onboardingImage}
         resizeMode="contain"
       />
       <Text style={styles.titleText}>
-        <Text style={styles.titleBlack}>Pantau Tagihan dalam </Text>
+        <Text style={styles.titleBlack}>Pantau Tagihan dalam       </Text>
         <Text style={styles.titleOrange}>Satu Layar</Text>
       </Text>
       <Text style={styles.descriptionText}>Selesaikan pembayaran dengan cepat dan dapatkan notifikasi otomatis untuk semua transaksi.</Text>
@@ -85,12 +85,12 @@ const styles = StyleSheet.create({
     height: 40,
   },
   onboardingImage: {
-    width: 300,
-    height: 300,
-    marginBottom: 0,
+    width: 250,
+    height: 250,
+    marginBottom: 10,
   },
   titleText: {
-    fontSize: 30,
+    fontSize: 29,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 29,
