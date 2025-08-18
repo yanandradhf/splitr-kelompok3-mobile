@@ -1,14 +1,15 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ScreenProps {
   children: React.ReactNode;
+  style?: ViewStyle;
 }
 
-export default function Screen({ children }: ScreenProps) {
+export default function Screen({ children, style }: ScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <View style={[styles.content, style]}>
         {children}
       </View>
     </SafeAreaView>
