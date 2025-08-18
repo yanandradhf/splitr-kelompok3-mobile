@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   View,
   Text,
@@ -11,15 +11,30 @@ import {
   SafeAreaView,
   Image,
   TouchableOpacity,
-} from 'react-native';
-import { Link, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans';
-import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
+} from "react-native";
+import { Link, router } from "expo-router";
+import { Alert } from "react-native";
+import { useAuth } from "../../hooks/useAuth";
+import LoadingScreen from "../../components/ui/LoadingScreen";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  useFonts,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from "@expo-google-fonts/plus-jakarta-sans";
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  SPACING,
+  BORDER_RADIUS,
+} from "../../constants/theme";
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const [fontsLoaded] = useFonts({
@@ -29,8 +44,14 @@ export default function LoginScreen() {
     PlusJakartaSans_800ExtraBold,
   });
 
-  const handleLogin = () => {
-    router.replace('/(tabs)/home');
+  const { login, isLoading } = useAuth();
+
+  const handleLogin = async () => {
+    if (!username.trim() || !password.trim()) {
+      Alert.alert("Error", "Username dan password harus diisi");
+      return;
+    }
+    await login(username, password);
   };
 
   if (!fontsLoaded) {
@@ -41,17 +62,17 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.select({ ios: 'padding', android: undefined })}
+        behavior={Platform.select({ ios: "padding", android: undefined })}
       >
-        <ScrollView 
-          bounces={false} 
+        <ScrollView
+          bounces={false}
           contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <Image
-              source={require('../../assets/images/splitr.png')}
+              source={require("../../assets/images/splitr.png")}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -59,8 +80,6 @@ export default function LoginScreen() {
 
           {/* Form Section */}
           <View style={styles.formSection}>
-            <Text style={styles.title}>Masuk</Text>
-
             {/* Username Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username</Text>
@@ -91,7 +110,7 @@ export default function LoginScreen() {
                   style={styles.eyeButton}
                 >
                   <Ionicons
-                    name={showPassword ? 'eye-off' : 'eye'}
+                    name={showPassword ? "eye-off" : "eye"}
                     size={20}
                     color={COLORS.textSecondary}
                   />
@@ -113,18 +132,23 @@ export default function LoginScreen() {
             </View>
 
             {/* Login Button */}
-            <Pressable 
-              onPress={handleLogin} 
+            <Pressable
+              onPress={handleLogin}
+              disabled={isLoading}
               style={({ pressed }) => [
-                styles.loginButton, 
-                pressed && { opacity: 0.9 }
+                styles.loginButton,
+                pressed && { opacity: 0.9 },
+                isLoading && { opacity: 0.6 },
               ]}
             >
-              <Text style={styles.loginButtonText}>Masuk</Text>
+              <Text style={styles.loginButtonText}>
+                {isLoading ? "Login..." : "Login"}
+              </Text>
             </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {isLoading && <LoadingScreen />}
     </SafeAreaView>
   );
 }
@@ -136,7 +160,7 @@ const styles = StyleSheet.create({
   },
 
   logoSection: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: 80,
     paddingBottom: 60,
     backgroundColor: COLORS.background,
@@ -158,7 +182,7 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 40,
   },
 
@@ -186,9 +210,9 @@ const styles = StyleSheet.create({
   },
 
   passwordContainer: {
-    position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'center',
+    position: "relative",
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   passwordInput: {
@@ -206,19 +230,19 @@ const styles = StyleSheet.create({
   },
 
   eyeButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 16,
     padding: 4,
   },
 
   linksContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
     marginBottom: 40,
   },
 
   registerLink: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
   },
 
@@ -238,12 +262,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.tosca,
     borderRadius: 12,
     paddingVertical: 18,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
 
   loginButtonText: {
-    color: COLORS.white,
+    color: COLORS.black,
     fontSize: 18,
     fontFamily: FONTS.bold,
     letterSpacing: 0.5,

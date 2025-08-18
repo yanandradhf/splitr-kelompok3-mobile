@@ -97,7 +97,7 @@ export default function Onboarding3({
           style={styles.sudahPunyaButton}
           onPress={handleSudahPunyaPress}
         >
-          <Text style={styles.sudahPunyaText}>Sudah Punya Rekening Wondr</Text>
+          <Text style={styles.sudahPunyaText}>Belum Punya Rekening BNI</Text>
         </TouchableOpacity>
       </View>
     </View>

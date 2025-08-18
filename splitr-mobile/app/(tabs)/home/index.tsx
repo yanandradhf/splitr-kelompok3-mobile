@@ -67,10 +67,11 @@ export default function HomeScreen() {
         <View style={styles.hero}>
           {/* top row: logo kiri, sapaan kanan */}
           <View style={styles.heroTopRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-              <Text style={styles.logoMain}>SPLITR</Text>
-              <Text style={styles.logoSub}>  by BNI</Text>
-            </View>
+            <Image
+              source={require('../../../assets/images/splitr.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
 
             <View style={styles.welcomeWrap}>
               <Avatar size={36} uri={user.avatar} />
@@ -250,8 +251,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  logoMain: { color: '#FF6A00', fontSize: 22, fontWeight: '800', letterSpacing: 1 },
-  logoSub: { color: '#1b1b1b', fontSize: 10, fontWeight: '600' },
+  logoImage: {
+    width: 120,
+    height: 40,
+  },
 
   welcomeWrap: { flexDirection: 'row', alignItems: 'center' },
   welcomeSmall: { color: '#0F172A', fontSize: 11, opacity: 0.8 },
