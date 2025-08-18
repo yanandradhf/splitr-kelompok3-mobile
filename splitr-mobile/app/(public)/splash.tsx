@@ -10,7 +10,7 @@ export default function CustomSplashScreen({ onFinish }: SplashScreenProps) {
     // Hide splash screen after 2.5 seconds
     const timer = setTimeout(() => {
       onFinish();
-    }, 2500);
+    }, 9500);
 
     return () => clearTimeout(timer);
   }, []);

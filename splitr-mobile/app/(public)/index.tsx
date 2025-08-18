@@ -7,7 +7,7 @@ export default function PublicIndex() {
 
   const handleSplashFinish = () => {
     setShowSplash(false);
-    router.replace('/onboarding');
+    router.replace('/forgot-password');
   };
 
   if (showSplash) {
