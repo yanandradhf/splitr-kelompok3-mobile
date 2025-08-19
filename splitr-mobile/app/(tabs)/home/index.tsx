@@ -19,14 +19,14 @@ import { useFriends, useGroups, useNotifications } from "../../../hooks/useApi";
 import { COLORS, FONTS } from "../../../constants/theme";
 
 const LOCAL_COLORS = {
-  background: COLORS.purple,
+  background: '#A6D3CE',
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
   textPrimary: COLORS.textPrimary,
   textSecondary: COLORS.textSecondary,
   border: COLORS.border,
-  headerBrown: COLORS.card,
+  headerBrown: '#00897B',
   gray: COLORS.gray,
 };
 
@@ -143,7 +143,7 @@ export default function HomeScreen() {
                           : "notifications-outline"
                       }
                       size={24}
-                      color={COLORS.card}
+                      color='#76B9BB'
                     />
                   </View>
                   <View style={styles.notificationContent}>
@@ -373,14 +373,14 @@ const styles = StyleSheet.create({
 
   // ACTIVITY CARD
   activityCard: {
-    backgroundColor: LOCAL_COLORS.cardBrown,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#000",
+    shadowColor: '#76B9BB',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -398,6 +398,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   notificationContent: {
     flex: 1,
@@ -419,7 +424,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dateContainer: {
-    backgroundColor: LOCAL_COLORS.background,
+    backgroundColor: '#76B9BB',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -468,11 +473,11 @@ const styles = StyleSheet.create({
   },
   groupId: {
     fontFamily: FONTS.semiBold,
-    color: LOCAL_COLORS.textPrimary,
+    color: '#FFFFFF',
   },
   groupHost: {
     fontFamily: FONTS.semiBold,
-    color: LOCAL_COLORS.textPrimary,
+    color: '#FFFFFF',
   },
   groupContent: {
     backgroundColor: LOCAL_COLORS.cardWhite,

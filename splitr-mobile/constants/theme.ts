@@ -1,9 +1,9 @@
 export const COLORS = {
   // Primary Colors
   orange: '#FF8736',        // Icons, branding
-  teal: '#71DBD1',         // Primary buttons
+  teal: '#00897B',         // Primary buttons
   red: '#FF4747',          // Cancel, delete
-  purple: '#EDEAFC',       // Background
+  purple: '#B2DBD7',       // Background
   
   // Secondary Colors
   card: '#D4A89D',         // Card backgrounds
@@ -20,8 +20,8 @@ export const COLORS = {
   placeholder: '#9CA3AF',
   
   // Legacy support
-  tosca: '#71DBD1',        // Alias for teal
-  background: '#EDEAFC',   // Alias for purple
+  tosca: '#00897B',        // Alias for teal
+  background: '#B2DBD7',   // Alias for purple
   inputBg: '#F3F4F6',
   inputBorder: '#B3B3B3',
   textLight: '#9CA3AF',

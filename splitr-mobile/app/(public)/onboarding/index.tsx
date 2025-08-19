@@ -24,6 +24,13 @@ export default function OnboardingSwiper() {
     }
   };
 
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      scrollViewRef.current?.scrollTo({ x: prevIndex * width, animated: true });
+    }
+  };
+
   const handleGetStarted = () => {
     router.replace('/(tabs)');
   };
@@ -42,7 +49,7 @@ export default function OnboardingSwiper() {
         <Onboarding1 currentIndex={currentIndex} onNext={goToNext} />
       </View>
       <View style={styles.slide}>
-        <Onboarding2 currentIndex={currentIndex} onNext={goToNext} />
+        <Onboarding2 currentIndex={currentIndex} onNext={goToNext} onPrevious={goToPrevious} />
       </View>
       <View style={styles.slide}>
         <Onboarding3 currentIndex={currentIndex} onGetStarted={handleGetStarted} />

@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans';
+import { COLORS as THEME_COLORS } from '../../../constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -46,12 +48,20 @@ export default function Onboarding1({ currentIndex, onNext }: Onboarding1Props) 
         <View style={[styles.dot, currentIndex === 2 && styles.activeDot]} />
       </View>
       
-      <TouchableOpacity 
-        style={styles.nextButton}
-        onPress={onNext}
-      >
-        <Text style={styles.nextButtonText}>Next</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          disabled={true}
+        >
+          <Text style={styles.backButtonText}>Kembali</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.nextButton}
+          onPress={onNext}
+        >
+          <Text style={styles.nextButtonText}>Lanjut</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -62,7 +72,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffffff',
+    backgroundColor: '#FFFFFF',
     padding: 10,
   },
   logoTop: {
@@ -101,7 +111,7 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 13,
     color: '#000000ff',
-    textAlign: 'justify',
+    textAlign: 'center',
     lineHeight: 20,
     marginBottom: 50,
     fontFamily: 'PlusJakartaSans_400Regular',
@@ -121,18 +131,42 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: '#FF8736',
+    backgroundColor: THEME_COLORS.teal,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+    position: 'absolute',
+    bottom: 50,
+  },
+  backButton: {
+    backgroundColor: '#D1D5DB',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 20,
+    flex: 0.45,
+  },
+  backButtonText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    textAlign: 'center',
   },
   nextButton: {
-    backgroundColor: '#FF8736',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 25,
+    backgroundColor: THEME_COLORS.teal,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 20,
+    flex: 0.45,
   },
   nextButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     fontFamily: 'PlusJakartaSans_600SemiBold',
+    textAlign: 'center',
   },
 });

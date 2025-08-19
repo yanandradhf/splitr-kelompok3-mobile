@@ -94,7 +94,7 @@ export default function NotificationsScreen() {
                       <Ionicons 
                         name={getNotificationIcon(notification.type)} 
                         size={24} 
-                        color={COLORS.card} 
+                        color='#00897B' 
                       />
                     </View>
                     <View style={styles.notificationContent}>
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   notificationCard: {
-    backgroundColor: LOCAL_COLORS.cardWhite,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 16,
     elevation: 2,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dateContainer: {
-    backgroundColor: LOCAL_COLORS.background,
+    backgroundColor: '#76B9BB',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,

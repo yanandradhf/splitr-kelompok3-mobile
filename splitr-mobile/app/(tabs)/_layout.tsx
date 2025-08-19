@@ -33,7 +33,7 @@ function CustomTabBar() {
         {isHome && <View style={{
           width: 60,
           height: 4,
-          backgroundColor: COLORS.card,
+          backgroundColor: '#00897B',
           borderRadius: 2,
           marginBottom: 4,
         }} />}
@@ -87,7 +87,7 @@ function CustomTabBar() {
         {isMonitoring && <View style={{
           width: 60,
           height: 4,
-          backgroundColor: COLORS.card,
+          backgroundColor: '#00897B',
           borderRadius: 2,
           marginBottom: 4,
         }} />}

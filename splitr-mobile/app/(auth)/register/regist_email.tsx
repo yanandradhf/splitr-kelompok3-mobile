@@ -13,11 +13,10 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { FONTS } from "../../../constants/theme";
+import { FONTS, COLORS as THEME_COLORS } from "../../../constants/theme";
 
 const COLORS = {
-  primary: "rgb(237, 234, 252)",
-  accent: "#73E0D1",
+  primary: "#B2DBD7",
   text: "#111827",
   muted: "#6B7280",
   inputBg: "#EEF1F5",
@@ -36,19 +35,19 @@ function Stepper({ current }: { current: number }) {
             style={[
               styles.halfLine,
               idx === 0 && styles.invisible,
-              s - 1 < current && idx !== 0 && { backgroundColor: COLORS.accent },
+              s - 1 < current && idx !== 0 && { backgroundColor: THEME_COLORS.teal },
             ]}
           />
           <View
             style={[
               styles.stepCircle,
-              s <= current && { backgroundColor: COLORS.accent },
+              s <= current && { backgroundColor: THEME_COLORS.teal },
             ]}
           >
             <Text
               style={[
                 styles.stepLabel,
-                s <= current && { color: "#0F172A" },
+                s <= current && { color: "#FFFFFF" },
               ]}
             >
               {s}
@@ -58,7 +57,7 @@ function Stepper({ current }: { current: number }) {
             style={[
               styles.halfLine,
               idx === steps.length - 1 && styles.invisible,
-              s < current && idx !== steps.length - 1 && { backgroundColor: COLORS.accent },
+              s < current && idx !== steps.length - 1 && { backgroundColor: THEME_COLORS.teal },
             ]}
           />
         </View>
@@ -186,8 +185,14 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
     backgroundColor: "white",
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
   },
   panelContent: {
     paddingHorizontal: 20,
@@ -205,14 +210,14 @@ const styles = StyleSheet.create({
     borderColor: COLORS.line,
   },
   primaryBtn: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: THEME_COLORS.teal,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
     marginTop: 40,
   },
 
-  primaryBtnText: { fontSize: 18, fontFamily: FONTS.extraBold, color: "#0F172A" },
+  primaryBtnText: { fontSize: 18, fontFamily: FONTS.extraBold, color: "#FFFFFF" },
   primaryBtnDisabled: { backgroundColor: "#D1D5DB" },
   primaryBtnTextDisabled: { color: "#9CA3AF" },
   inputError: { borderColor: "#EF4444", borderWidth: 2 },
