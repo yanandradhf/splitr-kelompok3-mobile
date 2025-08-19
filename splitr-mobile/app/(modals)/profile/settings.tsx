@@ -25,7 +25,7 @@ const SettingsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF7A00" barStyle="light-content" />
+      <StatusBar backgroundColor="#EDEAFC" barStyle="dark-content" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -39,18 +39,21 @@ const SettingsScreen = () => {
         <View style={styles.placeholder} />
       </View>
 
+      {/* Profile Image */}
+      <View style={styles.profileSection}>
+        <Image
+          source={{
+            uri: "https://picsum.photos/id/64/120/120",
+          }}
+          style={styles.profileImage}
+        />
+        <View style={styles.editIconContainer}>
+          <Ionicons name="camera" size={16} color="#FF7A00" />
+        </View>
+      </View>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Info */}
-        <View style={styles.profileSection}>
-          <Image
-            source={{
-              uri: "https://via.placeholder.com/100x100/4A90E2/FFFFFF?text=Ivana",
-            }}
-            style={styles.profileImage}
-          />
-          <View style={styles.editIconContainer}>
-            <Ionicons name="camera" size={14} color="#FF7A00" />
-          </View>
+        <View style={styles.profileInfo}>
           <Text style={styles.profileName}>
             {profile?.user?.username || "User"}
           </Text>
@@ -117,7 +120,7 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FF7A00",
+    backgroundColor: "#EDEAFC",
   },
   header: {
     flexDirection: "row",
@@ -125,43 +128,55 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 15,
+    marginTop: 20,
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#000",
   },
   placeholder: {
     width: 34,
   },
+  profileSection: {
+    alignItems: "center",
+    marginTop: 40,
+    marginBottom: 60,
+    zIndex: 2,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 25,
+    backgroundColor: "#4A90E2",
+    borderWidth: 3,
+    borderColor: "#FFF",
+  },
   content: {
     flex: 1,
     backgroundColor: "#FFF",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    paddingTop: 80,
+    paddingHorizontal: 20,
+    marginTop: -120,
+    zIndex: 1,
   },
-  profileSection: {
+  profileInfo: {
     alignItems: "center",
-    paddingTop: 30,
     paddingBottom: 20,
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    backgroundColor: "#4A90E2",
   },
   editIconContainer: {
     position: "absolute",
-    right: "38%",
-    top: 85,
+    right: "35%",
+    top: 90,
     backgroundColor: "#FFF",
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
@@ -171,18 +186,17 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#000",
-    marginTop: 10,
+    // marginTop: 15,
   },
   profileId: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#666",
-    marginTop: 2,
+    marginTop: 5,
   },
   section: {
-    paddingHorizontal: 20,
     marginBottom: 30,
   },
   sectionTitle: {

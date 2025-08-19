@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 const ContactScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF7A00" barStyle="light-content" />
+      <StatusBar backgroundColor="#EDEAFC" barStyle="dark-content" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -51,7 +51,7 @@ const ContactScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF7A00',
+    backgroundColor: '#EDEAFC',
   },
   header: {
     flexDirection: 'row',
@@ -59,12 +59,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
+    marginTop: 20,
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#000',
   },
@@ -76,6 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    marginTop: 40,
   },
   contentContainer: {
     padding: 25,
