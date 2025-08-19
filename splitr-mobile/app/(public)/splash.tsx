@@ -18,7 +18,7 @@ export default function CustomSplashScreen({ onFinish }: SplashScreenProps) {
 
   return (
     <LinearGradient
-      colors={['#EDEAFC', '#A9CECD']}
+      colors={['#B2DBD7', '#9BCCC7', '#84BDB8']}
       style={styles.container}
     >
       <View style={styles.content}>

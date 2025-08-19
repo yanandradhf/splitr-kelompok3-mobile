@@ -1,4 +1,5 @@
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { COLORS } from '../../constants/theme';
 
 interface ButtonProps {
   title: string;
@@ -21,7 +22,7 @@ export default function Button({ title, onPress, variant = 'primary' }: ButtonPr
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#FF7A1A',
+    backgroundColor: COLORS.teal,
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -29,13 +30,13 @@ const styles = StyleSheet.create({
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#FF7A1A',
+    borderColor: COLORS.teal,
   },
   text: {
     color: '#FFFFFF',
     fontWeight: '600',
   },
   secondaryText: {
-    color: '#FF7A1A',
+    color: COLORS.teal,
   },
 });

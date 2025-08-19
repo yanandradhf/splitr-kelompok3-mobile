@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
 
   loginButtonText: {
-    color: COLORS.black,
+    color: COLORS.white,
     fontSize: 18,
     fontFamily: FONTS.bold,
     letterSpacing: 0.5,

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -16,6 +17,7 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { router } from "expo-router";
+import { COLORS as THEME_COLORS } from '../../../constants/theme';
 
 const { width, height } = Dimensions.get("window");
 const isSmallDevice = width < 350;
@@ -110,7 +112,7 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ffffffff",
+    backgroundColor: "#FFFFFF",
     padding: 20,
   },
   logoTop: {
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 13,
     color: "#000000ff",
-    textAlign: "justify",
+    textAlign: "center",
     lineHeight: 20,
     marginBottom: 30,
     fontFamily: "PlusJakartaSans_400Regular",
@@ -161,14 +163,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: "#FF8736",
+    backgroundColor: THEME_COLORS.teal,
   },
   buttonGroup: {
     width: "100%",
     alignItems: "center",
   },
   belumPunyaButton: {
-    backgroundColor: "#71DBD1",
+    backgroundColor: THEME_COLORS.teal,
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -183,16 +185,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   sudahPunyaButton: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "#71DBD1",
+    backgroundColor: "#D1D5DB",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,
     width: "100%",
   },
   sudahPunyaText: {
-    color: "#71DBD1",
+    color: "#9CA3AF",
     fontSize: 16,
     fontWeight: "bold",
     fontFamily: "PlusJakartaSans_600SemiBold",
