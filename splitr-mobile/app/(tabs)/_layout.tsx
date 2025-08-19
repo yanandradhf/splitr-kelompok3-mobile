@@ -28,7 +28,7 @@ function CustomTabBar() {
           justifyContent: 'center',
         }}
         activeOpacity={0.7} 
-        onPress={() => router.push('/(tabs)/home')}
+        onPress={() => !isHome && router.push('/(tabs)/home')}
       >
         {isHome && <View style={{
           width: 60,
@@ -82,7 +82,7 @@ function CustomTabBar() {
           justifyContent: 'center',
         }}
         activeOpacity={0.7} 
-        onPress={() => router.push('/(tabs)/monitoring')}
+        onPress={() => !isMonitoring && router.push('/(tabs)/monitoring')}
       >
         {isMonitoring && <View style={{
           width: 60,
