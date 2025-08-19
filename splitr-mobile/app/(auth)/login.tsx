@@ -11,6 +11,8 @@ import {
   SafeAreaView,
   Image,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Alert } from "react-native";
@@ -59,16 +61,15 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.select({ ios: "padding", android: undefined })}
-      >
-        <ScrollView
-          bounces={false}
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.select({ ios: "padding", android: "height" })}
         >
+        {/* Purple Background Section */}
+        <View style={styles.purpleSection}>
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <Image
@@ -77,9 +78,17 @@ export default function LoginScreen() {
               resizeMode="contain"
             />
           </View>
+        </View>
 
-          {/* Form Section */}
-          <View style={styles.formSection}>
+        {/* White Modal Container */}
+        <View style={styles.whiteModalContainer}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Form Section */}
+            <View style={styles.formSection}>
             {/* Username Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username</Text>
@@ -122,7 +131,7 @@ export default function LoginScreen() {
             <View style={styles.linksContainer}>
               <View style={styles.registerLink}>
                 <Text style={styles.linkText}>Belum memiliki akun? </Text>
-                <Link href="/(auth)/register/">
+                <Link href="/(auth)/register">
                   <Text style={styles.blueLink}>Registrasi</Text>
                 </Link>
               </View>
@@ -134,36 +143,49 @@ export default function LoginScreen() {
             {/* Login Button */}
             <Pressable
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={isLoading || !username.trim() || !password.trim()}
               style={({ pressed }) => [
                 styles.loginButton,
                 pressed && { opacity: 0.9 },
-                isLoading && { opacity: 0.6 },
+                (isLoading || !username.trim() || !password.trim()) && styles.loginButtonDisabled,
               ]}
             >
-              <Text style={styles.loginButtonText}>
+              <Text style={[
+                styles.loginButtonText,
+                (isLoading || !username.trim() || !password.trim()) && styles.loginButtonTextDisabled,
+              ]}>
                 {isLoading ? "Login..." : "Login"}
               </Text>
             </Pressable>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            </View>
+          </ScrollView>
+        </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
       {isLoading && <LoadingScreen />}
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.purple,
+  },
+  safeArea: {
+    flex: 1,
+  },
+
+  purpleSection: {
+    backgroundColor: COLORS.purple,
+    paddingBottom: 20,
   },
 
   logoSection: {
     alignItems: "center",
     paddingTop: 80,
     paddingBottom: 60,
-    backgroundColor: COLORS.background,
   },
 
   logoImage: {
@@ -171,9 +193,25 @@ const styles = StyleSheet.create({
     height: 100,
   },
 
-  formSection: {
+  whiteModalContainer: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 50,
+  },
+
+  formSection: {
     paddingHorizontal: 24,
     paddingTop: 40,
   },
@@ -259,11 +297,15 @@ const styles = StyleSheet.create({
   },
 
   loginButton: {
-    backgroundColor: COLORS.tosca,
+    backgroundColor: COLORS.teal,
     borderRadius: 12,
     paddingVertical: 18,
     alignItems: "center",
     marginTop: 20,
+  },
+
+  loginButtonDisabled: {
+    backgroundColor: COLORS.gray,
   },
 
   loginButtonText: {
@@ -271,5 +313,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: FONTS.bold,
     letterSpacing: 0.5,
+  },
+
+  loginButtonTextDisabled: {
+    color: COLORS.textSecondary,
   },
 });

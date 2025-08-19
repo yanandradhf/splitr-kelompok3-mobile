@@ -1,25 +1,30 @@
 export const COLORS = {
   // Primary Colors
-  orange: '#FF8500',
-  tosca: '#3FD8D4',
+  orange: '#FF8736',        // Icons, branding
+  teal: '#71DBD1',         // Primary buttons
+  red: '#FF4747',          // Cancel, delete
+  purple: '#EDEAFC',       // Background
   
-  // Base Colors
+  // Secondary Colors
+  card: '#D4A89D',         // Card backgrounds
+  gray: '#B5C2C1',         // Disabled states
+  border: '#B3B3B3',       // Borders, dividers
+  
+  // Base Colors (unchanged)
   white: '#FFFFFF',
   black: '#000000',
-  gray: '#6B7280',
-  
-  // UI Colors
-  inputBg: '#F3F4F6',
-  inputBorder: '#E5E7EB',
-  placeholder: '#9CA3AF',
   
   // Text Colors
   textPrimary: '#000000',
-  textSecondary: '#6B7280',
-  textLight: '#9CA3AF',
+  textSecondary: '#666666',
+  placeholder: '#9CA3AF',
   
-  // Background
-  background: '#FFFFFF',
+  // Legacy support
+  tosca: '#71DBD1',        // Alias for teal
+  background: '#EDEAFC',   // Alias for purple
+  inputBg: '#F3F4F6',
+  inputBorder: '#B3B3B3',
+  textLight: '#9CA3AF',
   surface: '#F9FAFB',
 };
 

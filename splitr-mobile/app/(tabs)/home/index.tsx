@@ -1,378 +1,454 @@
-// app/(tabs)/home/index.tsx
-import { useMemo } from 'react';
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
+  TouchableOpacity,
   Image,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
+  SafeAreaView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 
-type Activity = {
-  id: string;
-  name: string;
-  account: string;
-  description: string;
-  avatar?: string;
+import { COLORS } from '../../../constants/theme';
+
+const LOCAL_COLORS = {
+  background: COLORS.purple,
+  cardBrown: COLORS.card,
+  cardWhite: COLORS.white,
+  orange: COLORS.orange,
+  textPrimary: COLORS.textPrimary,
+  textSecondary: COLORS.textSecondary,
+  border: COLORS.border,
+  headerBrown: COLORS.card,
+  gray: COLORS.gray,
 };
 
-type Group = {
-  id: string;
-  name: string;
-  membersCount: number;
-  host: 'you' | 'other';
-  cover?: string;
-};
-
-const COLORS = {
-  teal: '#7ADFD6',
-  tealDark: '#57C8BF',
-  bg: '#F2F4F7',
-  white: '#FFFFFF',
-  title: '#111827',
-  subtitle: '#667085',
-  primary: '#FF7A00',
-  border: '#E4E7EC',
-  icon: '#98A2B3',
-  shadow: '#000000',
-};
-
-const ACTIVITIES: Activity[] = [
-  {
-    id: 'a1',
-    name: 'Hans Sye',
-    account: '1765324215',
-    description: 'Membayar Birthday House Party sebesar Rp 200.000',
-    avatar:
-      'https://i.pravatar.cc/80?img=14', // ganti ke aset kamu jika perlu
-  },
-];
-
-const GROUPS: Group[] = [
-  { id: 'g1', name: 'Holiday', membersCount: 4, host: 'you' },
-  { id: 'g2', name: 'Holiday', membersCount: 3, host: 'other' },
+const friends = [
+  { name: "Hansip", image: require("../../../assets/images/person1.png") },
+  { name: "Dull", image: require("../../../assets/images/person2.png") },
+  { name: "Sugi", image: require("../../../assets/images/person3.png") },
+  { name: "lulu", image: require("../../../assets/images/person4.png") },
 ];
 
 export default function HomeScreen() {
-  const user = useMemo(() => ({ name: 'Ivana', avatar: 'https://i.pravatar.cc/80?img=5' }), []);
-
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* HEADER */}
-        <View style={styles.hero}>
-          {/* top row: logo kiri, sapaan kanan */}
-          <View style={styles.heroTopRow}>
-            <Image
-              source={require('../../../assets/images/splitr.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-
-            <Pressable 
-              style={styles.welcomeWrap}
-              onPress={() => router.push('/(modals)/profile')}
-            >
-              <Avatar size={36} uri={user.avatar} />
-              <View style={{ marginLeft: 8 }}>
-                <Text style={styles.welcomeSmall}>Hi, Welcome Back!</Text>
-                <Text style={styles.welcomeName}>{user.name}</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* PURPLE BACKGROUND SECTION */}
+        <View style={styles.purpleSection}>
+          {/* HEADER SECTION */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.userProfile} activeOpacity={0.7} onPress={() => router.push('/(modals)/profile')}>
+              <Image
+                source={require("../../../assets/images/person1.png")}
+                style={styles.profileImage}
+              />
+              <View style={styles.welcomeText}>
+                <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
+                <Text style={styles.welcomeName}>Ivana</Text>
               </View>
-            </Pressable>
+            </TouchableOpacity>
+            <View style={styles.notificationContainer}>
+              <Ionicons
+                name="notifications-outline"
+                size={24}
+                color={COLORS.textPrimary}
+              />
+              <View style={styles.notificationDot} />
+            </View>
           </View>
 
-          {/* Aktivitas Terbaru */}
-          <Text style={styles.sectionTitleHero}>Aktivitas Terbaru</Text>
-          {ACTIVITIES.map((a) => (
-            <View key={a.id} style={styles.activityCard}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Avatar size={40} uri={a.avatar} />
+          {/* RECENT ACTIVITY SECTION */}
+          <View style={styles.activitySection}>
+            <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
+            <View style={styles.activityCard}>
+              <View style={styles.activityLeft}>
+                <Image
+                  source={require("../../../assets/images/person2.png")}
+                  style={styles.activityImage}
+                />
                 <View>
-                  <Text style={styles.activityName}>{a.name}</Text>
-                  <Text style={styles.activityAcct}>{a.account}</Text>
+                  <Text style={styles.activityName}>Hans Sye</Text>
+                  <Text style={styles.activityPhone}>1765324215</Text>
                 </View>
               </View>
-              <Text style={styles.activityDesc}>{a.description}</Text>
+              <View style={styles.activityRight}>
+                <Text style={styles.paymentText}>Membayar Birthday</Text>
+                <Text style={styles.paymentSubtext}>House Party sebesar</Text>
+                <Text style={styles.paymentAmount}>Rp 200.000</Text>
+              </View>
             </View>
-          ))}
+          </View>
         </View>
 
-        {/* BODY (white) */}
-        <View style={styles.body}>
-          <Text style={styles.bodyTitle}>Buat grup</Text>
+        {/* WHITE MODAL CONTAINER */}
+        <View style={styles.whiteModalContainer}>
+          {/* GROUPS SECTION */}
+          <View style={styles.modalSection}>
+          <Text style={styles.sectionTitle}>Lihat grup</Text>
 
-          {/* Group cards */}
-          <View style={{ gap: 16 }}>
-            {GROUPS.map((g) => (
-              <GroupCard
-                key={g.id}
-                group={g}
-                onPress={() =>
-                  router.push({ pathname: '/(tabs)/monitoring/group/[id]', params: { id: g.id } })
-                }
-              />
+          {/* Group Card 1 */}
+          <View style={styles.groupCard}>
+            <View style={styles.groupHeader}>
+              <Text style={styles.groupId}>ID A1001</Text>
+              <Text style={styles.groupHost}>Host : You</Text>
+            </View>
+            <View style={styles.groupContent}>
+              <View style={styles.groupAvatars}>
+                <Image
+                  source={require("../../../assets/images/person1.png")}
+                  style={styles.avatar}
+                />
+                <Image
+                  source={require("../../../assets/images/person2.png")}
+                  style={[styles.avatar, styles.avatarOverlap]}
+                />
+                <Image
+                  source={require("../../../assets/images/person3.png")}
+                  style={[styles.avatar, styles.avatarOverlap]}
+                />
+                <Image
+                  source={require("../../../assets/images/person4.png")}
+                  style={[styles.avatar, styles.avatarOverlap]}
+                />
+              </View>
+              <View style={styles.groupInfo}>
+                <Text style={styles.groupName}>Holiday</Text>
+                <Text style={styles.groupMembers}>4 orang dalam grup ini</Text>
+                <TouchableOpacity
+                  style={styles.addFriendButton}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="person-add-outline" size={14} color={LOCAL_COLORS.headerBrown} />
+                  <Text style={styles.addFriendText}>Tambahkan Teman</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Group Card 2 */}
+          <View style={[styles.groupCard, { marginTop: 16 }]}>
+            <View style={styles.groupHeader}>
+              <Text style={styles.groupId}>ID A1002</Text>
+              <Text style={styles.groupHost}>Host : Hans</Text>
+            </View>
+            <View style={styles.groupContent}>
+              <View style={styles.groupAvatars}>
+                <Image
+                  source={require("../../../assets/images/person1.png")}
+                  style={styles.avatar}
+                />
+                <Image
+                  source={require("../../../assets/images/person3.png")}
+                  style={[styles.avatar, styles.avatarOverlap]}
+                />
+                <Image
+                  source={require("../../../assets/images/person4.png")}
+                  style={[styles.avatar, styles.avatarOverlap]}
+                />
+                <View style={[styles.avatar, styles.avatarOverlap, { opacity: 0 }]} />
+              </View>
+              <View style={styles.groupInfo}>
+                <Text style={styles.groupName}>Travelling</Text>
+                <Text style={styles.groupMembers}>3 orang dalam grup ini</Text>
+                <TouchableOpacity
+                  style={styles.addFriendButton}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="person-add-outline" size={14} color={LOCAL_COLORS.headerBrown} />
+                  <Text style={styles.addFriendText}>Tambahkan Teman</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+
+          {/* FRIENDS SECTION */}
+          <View style={styles.modalSection}>
+          <Text style={styles.sectionTitle}>Lihat Teman</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.friendsScroll}
+          >
+            {friends.map((friend, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.friendItem}
+                activeOpacity={0.7}
+              >
+                <Image
+                  source={friend.image}
+                  style={styles.friendImage}
+                />
+                <Text style={styles.friendName}>{friend.name}</Text>
+              </TouchableOpacity>
             ))}
-          </View>
+            <TouchableOpacity style={styles.friendItem} activeOpacity={0.7}>
+              <View style={styles.addFriendCircle}>
+                <Ionicons name="add" size={28} color={COLORS.white} />
+              </View>
+              <Text style={styles.friendName}>Tambah teman</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
 
-          {/* Quick actions */}
-          <View style={styles.quickGrid}>
-            <QuickAction
-              label="Unggah Struk"
-              icon="scan-outline"
-              onPress={() => router.push('/(modals)/pick-my-bill')}
-            />
-            <QuickAction
-              label="Buat Bill"
-              icon="reader-outline"
-              onPress={() => router.push('/(tabs)/home/split')}
-            />
-          </View>
+          <View style={{ height: 100 }} />
         </View>
       </ScrollView>
+
+
     </SafeAreaView>
   );
 }
 
-/* =========================
- * Subcomponents
- * =======================*/
-
-function Avatar({ size = 40, uri }: { size?: number; uri?: string }) {
-  if (uri) {
-    return (
-      <Image
-        source={{ uri }}
-        style={{ width: size, height: size, borderRadius: size / 2 }}
-      />
-    );
-  }
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: COLORS.border,
-      }}
-    />
-  );
-}
-
-function GroupCard({
-  group,
-  onPress,
-}: {
-  group: Group;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.groupCard, pressed && { opacity: 0.9 }]}
-    >
-      {/* pill host di atas */}
-      <View style={styles.hostPillWrap}>
-        <View style={styles.hostPill}>
-          <Text style={styles.hostPillText}>
-            Host : {group.host === 'you' ? 'You' : 'Hans'}
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        {/* foto grup (avatar bundar berisi beberapa orang) */}
-        <View style={styles.groupAvatarWrap}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&q=60' }}
-            style={styles.groupAvatar}
-          />
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=120&q=60' }}
-            style={[styles.groupAvatar, { marginLeft: -18 }]}
-          />
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&q=60' }}
-            style={[styles.groupAvatar, { marginLeft: -18 }]}
-          />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <Text style={styles.groupTitle}>{group.name}</Text>
-          <Text style={styles.groupSubtitle}>
-            {group.membersCount} orang dalam grup ini
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={22} color={COLORS.icon} />
-      </View>
-    </Pressable>
-  );
-}
-
-function QuickAction({
-  label,
-  icon,
-  onPress,
-}: {
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.quickCard, pressed && { opacity: 0.9 }]}>
-      <View style={styles.quickIconWrap}>
-        <Ionicons name={icon} size={28} color={COLORS.primary} />
-      </View>
-      <Text style={styles.quickLabel}>{label}</Text>
-    </Pressable>
-  );
-}
-
-/* =========================
- * Styles
- * =======================*/
-
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.bg },
-  scroll: { paddingBottom: 28 },
+  container: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.background,
+  },
+  purpleSection: {
+    backgroundColor: LOCAL_COLORS.background,
+    paddingBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  whiteModalContainer: {
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
 
   // HEADER
-  hero: {
-    backgroundColor: COLORS.teal,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 18,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  logoImage: {
-    width: 120,
-    height: 40,
-  },
-
-  welcomeWrap: { flexDirection: 'row', alignItems: 'center' },
-  welcomeSmall: { color: '#0F172A', fontSize: 11, opacity: 0.8 },
-  welcomeName: { color: '#0F172A', fontSize: 12, fontWeight: '700' },
-
-  sectionTitleHero: {
-    marginTop: 4,
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-
-  activityCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    padding: 12,
-    gap: 8,
-    // shadow
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  activityName: { fontSize: 14, fontWeight: '700', color: COLORS.title },
-  activityAcct: { fontSize: 12, color: COLORS.subtitle },
-  activityDesc: { fontSize: 12, color: COLORS.title, fontWeight: '600' },
-
-  // BODY WHITE
-  body: {
-    marginTop: -10, // sedikit menumpuk ke header (sesuai desain)
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 16,
-    paddingTop: 18,
-    paddingBottom: 28,
-    gap: 18,
-  },
-  bodyTitle: {
-    alignSelf: 'center',
-    color: COLORS.title,
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-
-  // GROUP CARD
-  groupCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    position: 'relative',
-    // shadow
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
   },
-  hostPillWrap: {
-    position: 'absolute',
-    top: -12,
-    alignSelf: 'center',
+  userProfile: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  hostPill: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+  profileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 12,
   },
-  hostPillText: { color: COLORS.white, fontWeight: '700', fontSize: 12 },
+  welcomeText: {
+    justifyContent: "center",
+  },
+  welcomeSubtext: {
+    fontSize: 16,
+    color: LOCAL_COLORS.textSecondary,
+  },
+  welcomeName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: LOCAL_COLORS.textPrimary,
+  },
+  notificationContainer: {
+    position: "relative",
+  },
+  notificationDot: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.red,
+  },
 
-  groupAvatarWrap: { flexDirection: 'row', alignItems: 'center' },
-  groupAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: COLORS.white },
-  groupTitle: { color: COLORS.title, fontSize: 16, fontWeight: '700' },
-  groupSubtitle: { color: COLORS.subtitle, fontSize: 12, marginTop: 2 },
-
-  // QUICK ACTIONS
-  quickGrid: {
-    marginTop: 8,
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
+  // SECTIONS
+  activitySection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
-  quickCard: {
-    flex: 1,
-    backgroundColor: '#F7F8FA',
+  modalSection: {
+    marginVertical: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: LOCAL_COLORS.textPrimary,
+    marginBottom: 16,
+  },
+
+  // ACTIVITY CARD
+  activityCard: {
+    backgroundColor: LOCAL_COLORS.cardBrown,
     borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    // shadow ringan
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
+    padding: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    elevation: 3,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  quickIconWrap: {
-    width: 56,
-    height: 56,
+  activityLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  activityImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  activityName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: LOCAL_COLORS.textPrimary,
+  },
+  activityPhone: {
+    fontSize: 14,
+    color: LOCAL_COLORS.textSecondary,
+  },
+  activityRight: {
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  paymentText: {
+    fontSize: 16,
+    color: LOCAL_COLORS.textPrimary,
+  },
+  paymentSubtext: {
+    fontSize: 14,
+    color: LOCAL_COLORS.textSecondary,
+  },
+  paymentAmount: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: LOCAL_COLORS.textPrimary,
+  },
+
+  // GROUP CARDS
+  groupCard: {
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: COLORS.primary,
+    overflow: "hidden",
+    elevation: 12,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+  },
+  groupHeader: {
+    backgroundColor: LOCAL_COLORS.headerBrown,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  groupId: {
+    color: LOCAL_COLORS.textPrimary,
+    fontWeight: "bold",
+  },
+  groupHost: {
+    color: LOCAL_COLORS.textPrimary,
+    fontWeight: "bold",
+  },
+  groupContent: {
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    flexDirection: "row",
+    padding: 16,
+    alignItems: "center",
+  },
+  groupAvatars: {
+    flexDirection: "row",
+    marginRight: 16,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: LOCAL_COLORS.cardWhite,
+  },
+  avatarOverlap: {
+    marginLeft: -10,
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: LOCAL_COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  groupMembers: {
+    fontSize: 14,
+    color: LOCAL_COLORS.textSecondary,
     marginBottom: 8,
   },
-  quickLabel: { fontSize: 13, fontWeight: '700', color: COLORS.title },
+  addFriendButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.headerBrown,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignSelf: "flex-start",
+  },
+  addFriendText: {
+    color: LOCAL_COLORS.headerBrown,
+    fontSize: 12,
+    fontWeight: "bold",
+    marginLeft: 4,
+  },
+
+  // FRIENDS
+  friendsScroll: {
+    paddingVertical: 8,
+  },
+  friendItem: {
+    alignItems: "center",
+    marginRight: 16,
+  },
+  friendImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: 8,
+  },
+  friendName: {
+    fontSize: 14,
+    color: LOCAL_COLORS.textPrimary,
+    textAlign: "center",
+  },
+  addFriendCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: LOCAL_COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+
+
 });
