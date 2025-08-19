@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -16,11 +17,14 @@ export default function CustomSplashScreen({ onFinish }: SplashScreenProps) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#EDEAFC', '#A9CECD']}
+      style={styles.container}
+    >
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../assets/images/logo-splitr-white.png')} 
+          <Image
+            source={require("../../assets/images/splitr.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -28,28 +32,29 @@ export default function CustomSplashScreen({ onFinish }: SplashScreenProps) {
       </View>
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          PT Bank Negara Indonesia (Persero) Tbk berizin dan diawasi oleh Otoritas Jasa Keuangan (OJK) & Bank Indonesia (BI) serta merupakan peserta penjaminan Lembaga Penjamin Simpanan (LPS).
+          PT Bank Negara Indonesia (Persero) Tbk berizin dan diawasi oleh
+          Otoritas Jasa Keuangan (OJK) & Bank Indonesia (BI) serta merupakan
+          peserta penjaminan Lembaga Penjamin Simpanan (LPS).
         </Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FF8736',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   logoContainer: {
     marginBottom: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#ffffffff',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#ffffffff",
     shadowOffset: {
       width: 0,
       height: 3,
@@ -65,24 +70,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 48,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
   },
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 40,
     paddingHorizontal: 30,
   },
   footerText: {
     fontSize: 12,
-    color: '#000000ff',
-    textAlign: 'center',
+    color: "#000000ff",
+    textAlign: "center",
     lineHeight: 16,
   },
 });

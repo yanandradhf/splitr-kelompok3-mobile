@@ -1,378 +1,559 @@
-// app/(tabs)/home/index.tsx
-import { useMemo } from 'react';
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
+  TouchableOpacity,
   Image,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+  SafeAreaView,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useAuthStore } from "../../../store/auth.store";
+import { useProfileStore } from "../../../store/profile.store";
+import { useFriends, useGroups, useNotifications } from "../../../hooks/useApi";
 
-type Activity = {
-  id: string;
-  name: string;
-  account: string;
-  description: string;
-  avatar?: string;
+import { COLORS, FONTS } from "../../../constants/theme";
+
+const LOCAL_COLORS = {
+  background: COLORS.purple,
+  cardBrown: COLORS.card,
+  cardWhite: COLORS.white,
+  orange: COLORS.orange,
+  textPrimary: COLORS.textPrimary,
+  textSecondary: COLORS.textSecondary,
+  border: COLORS.border,
+  headerBrown: COLORS.card,
+  gray: COLORS.gray,
 };
 
-type Group = {
-  id: string;
-  name: string;
-  membersCount: number;
-  host: 'you' | 'other';
-  cover?: string;
-};
-
-const COLORS = {
-  teal: '#7ADFD6',
-  tealDark: '#57C8BF',
-  bg: '#F2F4F7',
-  white: '#FFFFFF',
-  title: '#111827',
-  subtitle: '#667085',
-  primary: '#FF7A00',
-  border: '#E4E7EC',
-  icon: '#98A2B3',
-  shadow: '#000000',
-};
-
-const ACTIVITIES: Activity[] = [
-  {
-    id: 'a1',
-    name: 'Hans Sye',
-    account: '1765324215',
-    description: 'Membayar Birthday House Party sebesar Rp 200.000',
-    avatar:
-      'https://i.pravatar.cc/80?img=14', // ganti ke aset kamu jika perlu
-  },
-];
-
-const GROUPS: Group[] = [
-  { id: 'g1', name: 'Holiday', membersCount: 4, host: 'you' },
-  { id: 'g2', name: 'Holiday', membersCount: 3, host: 'other' },
+const personImages = [
+  require("../../../assets/images/person1.png"),
+  require("../../../assets/images/person2.png"),
+  require("../../../assets/images/person3.png"),
+  require("../../../assets/images/person4.png"),
 ];
 
 export default function HomeScreen() {
-  const user = useMemo(() => ({ name: 'Ivana', avatar: 'https://i.pravatar.cc/80?img=5' }), []);
+  const { user } = useAuthStore();
+  const { profile } = useProfileStore();
+  const { friends, loading: friendsLoading, refetch: refetchFriends } = useFriends();
+  const { groups, loading: groupsLoading, refetch: refetchGroups } = useGroups();
+  const { notifications, loading: notificationsLoading, refetch: refetchNotifications } = useNotifications();
+  
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchFriends(),
+        refetchGroups(), 
+        refetchNotifications()
+      ]);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchFriends, refetchGroups, refetchNotifications]);
+
+  const latestNotification = notifications[0];
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
+
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
+
+    if (diffInMinutes < 3) return "Baru saja";
+    if (diffInMinutes < 60) return `${diffInMinutes} menit lalu`;
+    if (diffInHours < 24) return `${diffInHours} jam lalu`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} hari lalu`;
+    return date.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+  };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* HEADER */}
-        <View style={styles.hero}>
-          {/* top row: logo kiri, sapaan kanan */}
-          <View style={styles.heroTopRow}>
-            <Image
-              source={require('../../../assets/images/splitr.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-
-            <Pressable 
-              style={styles.welcomeWrap}
-              onPress={() => router.push('/(modals)/profile')}
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.card}
+            colors={[COLORS.card]}
+          />
+        }
+      >
+        {/* PURPLE BACKGROUND SECTION */}
+        <View style={styles.purpleSection}>
+          {/* HEADER SECTION */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.userProfile}
+              activeOpacity={0.7}
+              onPress={() => router.push("/(modals)/profile")}
             >
-              <Avatar size={36} uri={user.avatar} />
-              <View style={{ marginLeft: 8 }}>
-                <Text style={styles.welcomeSmall}>Hi, Welcome Back!</Text>
-                <Text style={styles.welcomeName}>{user.name}</Text>
+              <Image
+                source={require("../../../assets/images/person1.png")}
+                style={styles.profileImage}
+              />
+              <View style={styles.welcomeText}>
+                <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
+                <Text style={styles.welcomeName}>{user?.name || profile?.user?.name || "User"}</Text>
               </View>
-            </Pressable>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.notificationContainer}
+              onPress={() => router.push("/(modals)/notifications")}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={24}
+                color={COLORS.textPrimary}
+              />
+              <View style={styles.notificationDot} />
+            </TouchableOpacity>
           </View>
 
-          {/* Aktivitas Terbaru */}
-          <Text style={styles.sectionTitleHero}>Aktivitas Terbaru</Text>
-          {ACTIVITIES.map((a) => (
-            <View key={a.id} style={styles.activityCard}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Avatar size={40} uri={a.avatar} />
-                <View>
-                  <Text style={styles.activityName}>{a.name}</Text>
-                  <Text style={styles.activityAcct}>{a.account}</Text>
+          {/* RECENT ACTIVITY SECTION */}
+          <View style={styles.activitySection}>
+            <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
+            {notificationsLoading ? (
+              <ActivityIndicator size="small" color={COLORS.card} />
+            ) : latestNotification ? (
+              <View style={styles.activityCard}>
+                <View style={styles.activityLeft}>
+                  <View style={styles.notificationIcon}>
+                    <Ionicons
+                      name={
+                        latestNotification.type === "payment_reminder"
+                          ? "card-outline"
+                          : "notifications-outline"
+                      }
+                      size={24}
+                      color={COLORS.card}
+                    />
+                  </View>
+                  <View style={styles.notificationContent}>
+                    <Text style={styles.notificationTitle}>
+                      {latestNotification.title}
+                    </Text>
+                    <Text
+                      style={styles.notificationMessage}
+                      numberOfLines={3}
+                      ellipsizeMode="tail"
+                    >
+                      {latestNotification.message}
+                    </Text>
+                    <View style={styles.dateContainer}>
+                      <Text style={styles.notificationDate}>
+                        {formatDate(latestNotification.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </View>
-              <Text style={styles.activityDesc}>{a.description}</Text>
-            </View>
-          ))}
+            ) : (
+              <View style={styles.activityCard}>
+                <Text style={styles.noNotificationText}>
+                  Tidak ada notifikasi terbaru
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
-        {/* BODY (white) */}
-        <View style={styles.body}>
-          <Text style={styles.bodyTitle}>Buat grup</Text>
+        {/* WHITE MODAL CONTAINER */}
+        <View style={styles.whiteModalContainer}>
+          {/* GROUPS SECTION */}
+          <View style={styles.modalSection}>
+            <Text style={styles.sectionTitle}>Lihat grup</Text>
 
-          {/* Group cards */}
-          <View style={{ gap: 16 }}>
-            {GROUPS.map((g) => (
-              <GroupCard
-                key={g.id}
-                group={g}
-                onPress={() =>
-                  router.push({ pathname: '/(tabs)/monitoring/group/[id]', params: { id: g.id } })
-                }
+            {groupsLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.card}
+                style={{ marginTop: 20 }}
               />
-            ))}
+            ) : (
+              groups.map((group, index) => (
+                <View
+                  key={group.groupId || index}
+                  style={[styles.groupCard, index > 0 && { marginTop: 16 }]}
+                >
+                  <View style={styles.groupHeader}>
+                    <Text style={styles.groupId}>
+                      ID {group.groupId.slice(0, 8)}
+                    </Text>
+                    <Text style={styles.groupHost}>
+                      Host : {group.isCreator ? "You" : group.creatorName}
+                    </Text>
+                  </View>
+                  <View style={styles.groupContent}>
+                    <View style={styles.groupAvatars}>
+                      {[0, 1, 2, 3].map((avatarIndex) => {
+                        const member = group.members?.[avatarIndex];
+                        return (
+                          <Image
+                            key={avatarIndex}
+                            source={personImages[avatarIndex % 4]}
+                            style={[
+                              styles.avatar,
+                              avatarIndex > 0 && styles.avatarOverlap,
+                              !member && { opacity: 0 },
+                            ]}
+                          />
+                        );
+                      })}
+                    </View>
+                    <View style={styles.groupInfo}>
+                      <Text style={styles.groupName}>{group.groupName}</Text>
+                      <Text style={styles.groupMembers}>
+                        {group.memberCount} orang dalam grup ini
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.addFriendButton}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons
+                          name="person-add-outline"
+                          size={14}
+                          color={LOCAL_COLORS.headerBrown}
+                        />
+                        <Text style={styles.addFriendText}>
+                          Tambahkan Teman
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
 
-          {/* Quick actions */}
-          <View style={styles.quickGrid}>
-            <QuickAction
-              label="Unggah Struk"
-              icon="scan-outline"
-              onPress={() => router.push('/(modals)/pick-my-bill')}
-            />
-            <QuickAction
-              label="Buat Bill"
-              icon="reader-outline"
-              onPress={() => router.push('/(tabs)/home/split')}
-            />
+          {/* FRIENDS SECTION */}
+          <View style={styles.modalSection}>
+            <Text style={styles.sectionTitle}>Lihat Teman</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.friendsScroll}
+            >
+              {friendsLoading ? (
+                <ActivityIndicator size="small" color={COLORS.card} />
+              ) : (
+                friends.slice(0, 4).map((friendData, index) => (
+                  <TouchableOpacity
+                    key={friendData.friend.userId || index}
+                    style={styles.friendItem}
+                    activeOpacity={0.7}
+                  >
+                    <Image
+                      source={personImages[index % 4]}
+                      style={styles.friendImage}
+                    />
+                    <Text style={styles.friendName}>
+                      {friendData.friend.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+              <TouchableOpacity style={styles.friendItem} activeOpacity={0.7}>
+                <View style={styles.addFriendCircle}>
+                  <Ionicons name="add" size={28} color={COLORS.white} />
+                </View>
+                <Text style={styles.friendName}>Tambah teman</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
+
+          <View style={{ height: 100 }} />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* =========================
- * Subcomponents
- * =======================*/
-
-function Avatar({ size = 40, uri }: { size?: number; uri?: string }) {
-  if (uri) {
-    return (
-      <Image
-        source={{ uri }}
-        style={{ width: size, height: size, borderRadius: size / 2 }}
-      />
-    );
-  }
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: COLORS.border,
-      }}
-    />
-  );
-}
-
-function GroupCard({
-  group,
-  onPress,
-}: {
-  group: Group;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.groupCard, pressed && { opacity: 0.9 }]}
-    >
-      {/* pill host di atas */}
-      <View style={styles.hostPillWrap}>
-        <View style={styles.hostPill}>
-          <Text style={styles.hostPillText}>
-            Host : {group.host === 'you' ? 'You' : 'Hans'}
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        {/* foto grup (avatar bundar berisi beberapa orang) */}
-        <View style={styles.groupAvatarWrap}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&q=60' }}
-            style={styles.groupAvatar}
-          />
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=120&q=60' }}
-            style={[styles.groupAvatar, { marginLeft: -18 }]}
-          />
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&q=60' }}
-            style={[styles.groupAvatar, { marginLeft: -18 }]}
-          />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <Text style={styles.groupTitle}>{group.name}</Text>
-          <Text style={styles.groupSubtitle}>
-            {group.membersCount} orang dalam grup ini
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={22} color={COLORS.icon} />
-      </View>
-    </Pressable>
-  );
-}
-
-function QuickAction({
-  label,
-  icon,
-  onPress,
-}: {
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.quickCard, pressed && { opacity: 0.9 }]}>
-      <View style={styles.quickIconWrap}>
-        <Ionicons name={icon} size={28} color={COLORS.primary} />
-      </View>
-      <Text style={styles.quickLabel}>{label}</Text>
-    </Pressable>
-  );
-}
-
-/* =========================
- * Styles
- * =======================*/
-
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.bg },
-  scroll: { paddingBottom: 28 },
+  container: {
+    flex: 1,
+    backgroundColor: LOCAL_COLORS.background,
+  },
+  purpleSection: {
+    backgroundColor: LOCAL_COLORS.background,
+    paddingBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  whiteModalContainer: {
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
 
   // HEADER
-  hero: {
-    backgroundColor: COLORS.teal,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 18,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  logoImage: {
-    width: 120,
-    height: 40,
-  },
-
-  welcomeWrap: { flexDirection: 'row', alignItems: 'center' },
-  welcomeSmall: { color: '#0F172A', fontSize: 11, opacity: 0.8 },
-  welcomeName: { color: '#0F172A', fontSize: 12, fontWeight: '700' },
-
-  sectionTitleHero: {
-    marginTop: 4,
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-
-  activityCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    padding: 12,
-    gap: 8,
-    // shadow
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  activityName: { fontSize: 14, fontWeight: '700', color: COLORS.title },
-  activityAcct: { fontSize: 12, color: COLORS.subtitle },
-  activityDesc: { fontSize: 12, color: COLORS.title, fontWeight: '600' },
-
-  // BODY WHITE
-  body: {
-    marginTop: -10, // sedikit menumpuk ke header (sesuai desain)
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 16,
-    paddingTop: 18,
-    paddingBottom: 28,
-    gap: 18,
-  },
-  bodyTitle: {
-    alignSelf: 'center',
-    color: COLORS.title,
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-
-  // GROUP CARD
-  groupCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    position: 'relative',
-    // shadow
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
   },
-  hostPillWrap: {
-    position: 'absolute',
-    top: -12,
-    alignSelf: 'center',
+  userProfile: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  hostPill: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+  profileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 12,
   },
-  hostPillText: { color: COLORS.white, fontWeight: '700', fontSize: 12 },
+  welcomeText: {
+    justifyContent: "center",
+  },
+  welcomeSubtext: {
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: LOCAL_COLORS.textSecondary,
+  },
+  welcomeName: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: LOCAL_COLORS.textPrimary,
+  },
+  notificationContainer: {
+    position: "relative",
+  },
+  notificationDot: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.red,
+  },
 
-  groupAvatarWrap: { flexDirection: 'row', alignItems: 'center' },
-  groupAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: COLORS.white },
-  groupTitle: { color: COLORS.title, fontSize: 16, fontWeight: '700' },
-  groupSubtitle: { color: COLORS.subtitle, fontSize: 12, marginTop: 2 },
-
-  // QUICK ACTIONS
-  quickGrid: {
-    marginTop: 8,
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
+  // SECTIONS
+  activitySection: {
+    paddingHorizontal: 20,
+    marginBottom: 10,
   },
-  quickCard: {
-    flex: 1,
-    backgroundColor: '#F7F8FA',
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    // shadow ringan
-    shadowColor: COLORS.shadow,
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  quickIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: COLORS.primary,
+  modalSection: {
+    marginTop: 5,
     marginBottom: 8,
   },
-  quickLabel: { fontSize: 13, fontWeight: '700', color: COLORS.title },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: LOCAL_COLORS.textPrimary,
+    marginBottom: 16,
+  },
+
+  // ACTIVITY CARD
+  activityCard: {
+    backgroundColor: LOCAL_COLORS.cardBrown,
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  activityLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  notificationIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.semiBold,
+    color: LOCAL_COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  notificationMessage: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: LOCAL_COLORS.textSecondary,
+    lineHeight: 18,
+  },
+  activityRight: {
+    alignItems: "flex-end",
+    justifyContent: "center",
+  },
+  dateContainer: {
+    backgroundColor: LOCAL_COLORS.background,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: "flex-end",
+  },
+  notificationDate: {
+    fontSize: 11,
+    fontFamily: FONTS.medium,
+    color: LOCAL_COLORS.textPrimary,
+    textAlign: "center",
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.red,
+  },
+  noNotificationText: {
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: LOCAL_COLORS.textSecondary,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+
+  // GROUP CARDS
+  groupCard: {
+    borderRadius: 16,
+    overflow: "hidden",
+    elevation: 12,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+  },
+  groupHeader: {
+    backgroundColor: LOCAL_COLORS.headerBrown,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  groupId: {
+    fontFamily: FONTS.semiBold,
+    color: LOCAL_COLORS.textPrimary,
+  },
+  groupHost: {
+    fontFamily: FONTS.semiBold,
+    color: LOCAL_COLORS.textPrimary,
+  },
+  groupContent: {
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    flexDirection: "row",
+    padding: 16,
+    alignItems: "center",
+  },
+  groupAvatars: {
+    flexDirection: "row",
+    marginRight: 16,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: LOCAL_COLORS.cardWhite,
+  },
+  avatarOverlap: {
+    marginLeft: -10,
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupName: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: LOCAL_COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  groupMembers: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: LOCAL_COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  addFriendButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    borderWidth: 1,
+    borderColor: LOCAL_COLORS.headerBrown,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignSelf: "flex-start",
+  },
+  addFriendText: {
+    fontSize: 12,
+    fontFamily: FONTS.semiBold,
+    color: LOCAL_COLORS.headerBrown,
+    marginLeft: 4,
+  },
+
+  // FRIENDS
+  friendsScroll: {
+    paddingVertical: 8,
+  },
+  friendItem: {
+    alignItems: "center",
+    marginRight: 16,
+  },
+  friendImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: 8,
+  },
+  friendName: {
+    fontSize: 14,
+    fontFamily: FONTS.medium,
+    color: LOCAL_COLORS.textPrimary,
+    textAlign: "center",
+  },
+  addFriendCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: LOCAL_COLORS.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
 });
