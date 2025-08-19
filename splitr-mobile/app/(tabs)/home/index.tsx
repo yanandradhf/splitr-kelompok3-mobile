@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuthStore } from "../../../store/auth.store";
+import { useProfileStore } from "../../../store/profile.store";
 import { useFriends, useGroups, useNotifications } from "../../../hooks/useApi";
 
 import { COLORS, FONTS } from "../../../constants/theme";
@@ -38,6 +39,7 @@ const personImages = [
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
+  const { profile } = useProfileStore();
   const { friends, loading: friendsLoading, refetch: refetchFriends } = useFriends();
   const { groups, loading: groupsLoading, refetch: refetchGroups } = useGroups();
   const { notifications, loading: notificationsLoading, refetch: refetchNotifications } = useNotifications();
@@ -109,7 +111,7 @@ export default function HomeScreen() {
               />
               <View style={styles.welcomeText}>
                 <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
-                <Text style={styles.welcomeName}>{user?.name || "User"}</Text>
+                <Text style={styles.welcomeName}>{user?.name || profile?.user?.name || "User"}</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity

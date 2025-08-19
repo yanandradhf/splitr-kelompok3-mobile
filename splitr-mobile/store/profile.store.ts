@@ -38,18 +38,25 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       // Update profile data in store
       const currentProfile = get().profile;
       if (currentProfile) {
-        set({
-          profile: {
-            ...currentProfile,
-            user: {
-              ...currentProfile.user,
-              name: response.data.user.name,
-              phone: response.data.user.phone,
-              email: response.data.user.email,
-            }
-          },
-          isUpdating: false
-        });
+        const updatedProfile = {
+          ...currentProfile,
+          user: {
+            ...currentProfile.user,
+            name: response.data.user.name,
+            phone: response.data.user.phone,
+            email: response.data.user.email,
+          }
+        };
+        
+        set({ profile: updatedProfile, isUpdating: false });
+        
+        // Update auth store with new user data
+        const { useAuthStore } = await import('./auth.store');
+        const authStore = useAuthStore.getState();
+        if (authStore.user) {
+          authStore.user.name = response.data.user.name;
+          authStore.user.email = response.data.user.email;
+        }
       }
       return true;
     } catch (error: any) {
