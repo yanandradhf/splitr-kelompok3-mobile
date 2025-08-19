@@ -41,7 +41,7 @@ export default function ProfileScreen() {
       <View style={styles.profileSection}>
         <Image
           source={{
-            uri: "https://via.placeholder.com/120x120/4A90E2/FFFFFF?text=Ivana",
+            uri: "https://picsum.photos/id/64/120/120",
           }}
           style={styles.profileImage}
         />
@@ -98,7 +98,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.orange,
+    backgroundColor: "#EDEAFC",
   },
   header: {
     flexDirection: "row",
@@ -106,12 +106,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 15,
+    marginTop: 20,
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
@@ -120,14 +121,17 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 40,
+    marginBottom: 60,
+    zIndex: 2,
   },
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 25,
     backgroundColor: "#4A90E2",
+    borderWidth: 3,
+    borderColor: "#FFF",
   },
   editIconContainer: {
     position: "absolute",
@@ -162,8 +166,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    paddingTop: 30,
+    paddingTop: 160,
     paddingHorizontal: 20,
+    marginTop: -190,
+    zIndex: 1,
   },
   menuItem: {
     flexDirection: "row",
