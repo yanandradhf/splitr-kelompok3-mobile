@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,8 +12,11 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { FONTS, COLORS as THEME_COLORS } from "../../../constants/theme";
+import { useRegisterStore } from "../../../store/register.store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain,
@@ -69,6 +72,21 @@ export default function RegisterOTP() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const refs = useRef<Array<TextInput | null>>([]);
   const [error, setError] = useState("");
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  
+  const { verifyOtp, sendOtp, isLoading, data } = useRegisterStore();
+  
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setCanResend(true);
+    }
+  }, [timer]);
 
   const setDigit = (val: string, idx: number) => {
     const v = val.replace(/[^0-9]/g, "").slice(-1);
@@ -79,7 +97,7 @@ export default function RegisterOTP() {
     if (v && idx < 5) refs.current[idx + 1]?.focus();
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const otpString = otp.join("");
     
     if (otpString.length !== 6) {
@@ -87,7 +105,31 @@ export default function RegisterOTP() {
       return;
     }
     
-    router.push("/(auth)/register/regist_username");
+    if (!data.email) {
+      Alert.alert("Error", "Email tidak ditemukan. Silakan ulangi dari awal.");
+      return;
+    }
+    
+    try {
+      await verifyOtp(data.email, otpString);
+      router.push("/(auth)/register/regist_username");
+    } catch (error: any) {
+      setError(error.message);
+    }
+  };
+  
+  const handleResendOtp = async () => {
+    if (!canResend || !data.email) return;
+    
+    try {
+      await sendOtp(data.email);
+      setTimer(60);
+      setCanResend(false);
+      setOtp(["", "", "", "", "", ""]);
+      Alert.alert("Berhasil", "Kode OTP baru telah dikirim");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   const otpString = otp.join("");
@@ -138,19 +180,23 @@ export default function RegisterOTP() {
 
             <View style={styles.resendContainer}>
               <Text style={{ color: COLORS.muted }}>Tidak menerima kode? </Text>
-              <Pressable onPress={() => {}}>
-                <Text style={{ color: "#DC2626", fontWeight: "600" }}>
-                  Kirim Ulang
+              <Pressable onPress={handleResendOtp} disabled={!canResend}>
+                <Text style={{ color: canResend ? "#DC2626" : COLORS.muted, fontWeight: "600" }}>
+                  {canResend ? "Kirim Ulang" : `Kirim Ulang (${timer}s)`}
                 </Text>
               </Pressable>
             </View>
 
             <Pressable 
               onPress={handleNext} 
-              style={[styles.primaryBtn, !isComplete && styles.primaryBtnDisabled]}
-              disabled={!isComplete}
+              style={[styles.primaryBtn, (!isComplete || isLoading) && styles.primaryBtnDisabled]}
+              disabled={!isComplete || isLoading}
             >
-              <Text style={[styles.primaryBtnText, !isComplete && styles.primaryBtnTextDisabled]}>Verifikasi Kode OTP</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={[styles.primaryBtnText, (!isComplete || isLoading) && styles.primaryBtnTextDisabled]}>Verifikasi Kode OTP</Text>
+              )}
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
