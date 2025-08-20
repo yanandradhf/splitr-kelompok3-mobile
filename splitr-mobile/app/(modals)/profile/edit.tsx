@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useProfile } from "../../../hooks/useProfile";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
+import { COLORS, FONTS } from "../../../constants/theme";
 
 const EditProfileScreen = () => {
   const { profile, isLoading, isUpdating, updateProfile } = useProfile();
@@ -63,39 +64,44 @@ const EditProfileScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#EDEAFC" barStyle="dark-content" />
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profil</Text>
-        <View style={styles.placeholder} />
-      </View>
+        {/* Purple Background Section */}
+        <View style={styles.purpleSection}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Edit Profil</Text>
+            <View style={styles.placeholder} />
+          </View>
 
-      {/* Profile Image */}
-      <View style={styles.profileSection}>
-        <Image
-          source={{
-            uri: "https://picsum.photos/id/64/120/120",
-          }}
-          style={styles.profileImage}
-        />
-        <TouchableOpacity style={styles.editIconContainer}>
-          <Ionicons name="camera" size={16} color="#FF7A00" />
-        </TouchableOpacity>
-      </View>
+          {/* Profile Image */}
+          <View style={styles.profileSection}>
+            <Image
+              source={{
+                uri: "https://picsum.photos/id/64/120/120",
+              }}
+              style={styles.profileImage}
+            />
+            <TouchableOpacity style={styles.editIconContainer}>
+              <Ionicons name="camera" size={16} color={COLORS.teal} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* White Modal Container */}
+        <View style={styles.whiteModalContainer}>
+          <KeyboardAvoidingView 
+            style={{ flex: 1 }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.profileInfo}>
           <Text style={styles.profileName}>{profile?.user?.username || 'User'}</Text>
           <Text style={styles.profileId}>{profile?.user?.bniAccountNumber || '-'}</Text>
@@ -146,17 +152,26 @@ const EditProfileScreen = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-      {isUpdating && <LoadingScreen />}
-    </SafeAreaView>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </View>
+        {isUpdating && <LoadingScreen />}
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#EDEAFC",
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  purpleSection: {
+    backgroundColor: COLORS.backgroundMain,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: "row",
@@ -170,18 +185,17 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#000",
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
   placeholder: {
-    width: 34,
+    width: 40,
   },
   profileSection: {
     alignItems: "center",
-    marginTop: 40,
-    marginBottom: 60,
-    zIndex: 2,
+    marginTop: 20,
+    marginBottom: 40,
   },
   profileImage: {
     width: 120,
@@ -191,15 +205,22 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#FFF",
   },
+  whiteModalContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
+  },
   content: {
     flex: 1,
-    backgroundColor: "#FFF",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingTop: 80,
     paddingHorizontal: 20,
-    marginTop: -120,
-    zIndex: 1,
+    paddingTop: 24,
   },
   profileInfo: {
     alignItems: "center",
@@ -223,12 +244,13 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#000",
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
   profileId: {
     fontSize: 14,
-    color: "#666",
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
     marginTop: 5,
   },
   formContainer: {
@@ -239,31 +261,32 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
-    color: "#000",
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
     marginBottom: 8,
-    fontWeight: "500",
   },
   textInput: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: COLORS.inputBg,
     borderRadius: 15,
     paddingHorizontal: 20,
     paddingVertical: 15,
     fontSize: 16,
-    color: "#000",
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: COLORS.inputBorder,
   },
   updateButton: {
-    backgroundColor: "#6EDCD9",
+    backgroundColor: COLORS.teal,
     borderRadius: 15,
     paddingVertical: 18,
     alignItems: "center",
     marginTop: 20,
   },
   updateButtonText: {
-    color: "#FFF",
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: FONTS.bold,
   },
   updateButtonDisabled: {
     backgroundColor: "#E0E0E0",

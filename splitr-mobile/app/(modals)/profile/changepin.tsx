@@ -9,6 +9,49 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONTS } from '../../../constants/theme';
+
+function Stepper({ current }: { current: number }) {
+  const steps = [1, 2, 3];
+
+  return (
+    <View style={styles.stepper}>
+      {steps.map((s, idx) => (
+        <View key={s} style={styles.stepSlot}>
+          <View
+            style={[
+              styles.halfLine,
+              idx === 0 && styles.invisible,
+              s - 1 < current && idx !== 0 && { backgroundColor: COLORS.teal },
+            ]}
+          />
+          <View
+            style={[
+              styles.stepCircle,
+              s <= current && { backgroundColor: COLORS.teal },
+            ]}
+          >
+            <Text
+              style={[
+                styles.stepLabel,
+                s <= current && { color: COLORS.white },
+              ]}
+            >
+              {s}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.halfLine,
+              idx === steps.length - 1 && styles.invisible,
+              s < current && idx !== steps.length - 1 && { backgroundColor: COLORS.teal },
+            ]}
+          />
+        </View>
+      ))}
+    </View>
+  );
+}
 
 type PinStep = 'current' | 'new' | 'confirm' | 'success';
 
@@ -18,12 +61,19 @@ const ChangePinScreen = () => {
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
 
-  const keypadNumbers = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    ['Lupa?', '0', '×']
-  ];
+  const getKeypadNumbers = () => {
+    const baseNumbers = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9']
+    ];
+    
+    if (step === 'current') {
+      return [...baseNumbers, ['Lupa?', '0', '×']];
+    } else {
+      return [...baseNumbers, ['', '0', '×']];
+    }
+  };
 
   const getCurrentPin = () => {
     switch (step) {
@@ -73,43 +123,57 @@ const ChangePinScreen = () => {
     }
   };
 
+  const getStepNumber = () => {
+    switch (step) {
+      case 'current': return 1;
+      case 'new': return 2;
+      case 'confirm': return 3;
+      default: return 1;
+    }
+  };
+
   const getTitle = () => {
     switch (step) {
-      case 'current': return 'Masukkan pin splitr anda';
-      case 'new': return 'Masukkan pin splitr baru';
-      case 'confirm': return 'Masukkan pin splitr baru';
+      case 'current': return 'Masukkan PIN Lama';
+      case 'new': return 'Buat PIN Baru';
+      case 'confirm': return 'Konfirmasi PIN Baru';
       case 'success': return 'SELESAI!';
     }
   };
 
   const getSubtitle = () => {
     switch (step) {
-      case 'current': return 'Pin saat ini';
-      case 'new': return 'Buat Pin Baru';
-      case 'confirm': return 'Buat Pin Baru';
-      case 'success': return 'Pin Berhasil Diubah';
+      case 'current': return 'Masukkan PIN lama Anda untuk melanjutkan';
+      case 'new': return 'Buat PIN baru yang mudah diingat';
+      case 'confirm': return 'Masukkan ulang PIN baru Anda';
+      case 'success': return 'PIN Berhasil Diubah';
     }
   };
 
   const getButtonText = () => {
     switch (step) {
-      case 'current': return 'Done';
-      case 'new': return 'Done';
-      case 'confirm': return 'Ubah Pin';
-      default: return 'Done';
+      case 'current': return 'Konfirmasi';
+      case 'new': return 'Lanjut';
+      case 'confirm': return 'Ubah PIN';
+      default: return 'Konfirmasi';
     }
   };
 
   if (step === 'success') {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#FF7A00" barStyle="light-content" />
-        
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
-
-        <Text style={styles.title}>SELESAI!</Text>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+          
+          <View style={styles.backgroundSection}>
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Ubah PIN</Text>
+              <View style={styles.placeholder} />
+            </View>
+          </View>
         
         <View style={styles.successContainer}>
           <Text style={styles.successSubtitle}>Pin Berhasil Diubah</Text>
@@ -117,26 +181,34 @@ const ChangePinScreen = () => {
           <View style={styles.successIcon}>
             <View style={styles.checkmarkOuter}>
               <View style={styles.checkmarkInner}>
-                <Ionicons name="checkmark" size={40} color="#6EDCD9" />
+                <Ionicons name="checkmark" size={40} color={COLORS.white} />
               </View>
             </View>
           </View>
-        </View>
-      </SafeAreaView>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF7A00" barStyle="light-content" />
-      
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={24} color="#000" />
-      </TouchableOpacity>
-
-      <Text style={styles.title}>{getTitle()}</Text>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+        
+        <View style={styles.backgroundSection}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Ubah PIN</Text>
+            <View style={styles.placeholder} />
+          </View>
+          <Stepper current={getStepNumber()} />
+        </View>
       
       <View style={styles.pinContainer}>
+        <Text style={styles.title}>{getTitle()}</Text>
         <Text style={styles.subtitle}>{getSubtitle()}</Text>
         
         <View style={styles.pinDisplay}>
@@ -152,13 +224,14 @@ const ChangePinScreen = () => {
         </View>
 
         <View style={styles.keypad}>
-          {keypadNumbers.map((row, rowIndex) => (
+          {getKeypadNumbers().map((row, rowIndex) => (
             <View key={rowIndex} style={styles.keypadRow}>
               {row.map((num, numIndex) => (
                 <TouchableOpacity
                   key={numIndex}
                   style={styles.keypadButton}
                   onPress={() => handleNumberPress(num)}
+                  disabled={num === ''}
                 >
                   <Text style={[
                     styles.keypadText,
@@ -182,45 +255,104 @@ const ChangePinScreen = () => {
         >
           <Text style={styles.nextButtonText}>{getButtonText()}</Text>
         </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF7A00',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  backgroundSection: {
+    backgroundColor: COLORS.backgroundMain,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 40,
+  },
+  stepSlot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  halfLine: {
+    width: 30,
+    height: 3,
+    backgroundColor: COLORS.gray,
+    borderRadius: 2,
+    marginHorizontal: 8,
+  },
+  invisible: { opacity: 0 },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.gray,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepLabel: { 
+    fontFamily: FONTS.bold, 
+    fontSize: 14,
+    color: COLORS.textSecondary 
   },
   backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1,
     padding: 5,
   },
-  title: {
+  headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginTop: 100,
-    marginBottom: 40,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
+  placeholder: {
+    width: 40,
+  },
+
   pinContainer: {
-    backgroundColor: '#FF7A00',
-    borderRadius: 25,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
     padding: 30,
     alignItems: 'center',
-    marginHorizontal: 20,
     flex: 1,
-    marginBottom: 40,
+    marginBottom: -50,
+  },
+
+  title: {
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#000',
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
     marginBottom: 30,
-    fontWeight: '600',
   },
   pinDisplay: {
     flexDirection: 'row',
@@ -234,10 +366,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#FFF',
+    borderColor: COLORS.gray,
   },
   pinDotFilled: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.teal,
   },
   keypad: {
     marginBottom: 30,
@@ -256,15 +388,15 @@ const styles = StyleSheet.create({
   },
   keypadText: {
     fontSize: 24,
-    color: '#000',
-    fontWeight: '500',
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
   },
   keypadSpecialText: {
     fontSize: 16,
     textDecorationLine: 'underline',
   },
   nextButton: {
-    backgroundColor: '#6EDCD9',
+    backgroundColor: COLORS.teal,
     paddingHorizontal: 50,
     paddingVertical: 15,
     borderRadius: 15,
@@ -275,26 +407,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#AAA',
   },
   nextButtonText: {
-    color: '#FFF',
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: FONTS.bold,
   },
   successContainer: {
-    backgroundColor: '#FF7A00',
-    borderRadius: 25,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
     padding: 30,
     alignItems: 'center',
-    marginHorizontal: 20,
     flex: 1,
-    marginBottom: 40,
+    marginBottom: -50,
     justifyContent: 'center',
   },
   successSubtitle: {
     fontSize: 16,
-    color: '#000',
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: 60,
-    fontWeight: '600',
   },
   successIcon: {
     marginBottom: 80,
@@ -303,7 +440,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(110, 220, 217, 0.2)',
+    backgroundColor: 'rgba(0, 137, 123, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -311,7 +448,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#6EDCD9',
+    backgroundColor: COLORS.teal,
     justifyContent: 'center',
     alignItems: 'center',
   },

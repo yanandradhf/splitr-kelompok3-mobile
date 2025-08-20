@@ -16,7 +16,7 @@ import {
 import { COLORS as THEME_COLORS, FONTS } from "../../../constants/theme";
 
 const COLORS = {
-  primary: "#B2DBD7", // new theme background
+  primary: THEME_COLORS.backgroundMain, // new theme background
   text: "#111827",
   muted: "#6B7280",
   inputBg: "#EEF1F5",

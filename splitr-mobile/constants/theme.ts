@@ -3,7 +3,7 @@ export const COLORS = {
   orange: '#FF8736',        // Icons, branding
   teal: '#00897B',         // Primary buttons
   red: '#FF4747',          // Cancel, delete
-  purple: '#B2DBD7',       // Background
+  backgroundMain: '#B2DBD7', // Main background theme
   
   // Secondary Colors
   card: '#D4A89D',         // Card backgrounds
@@ -21,7 +21,7 @@ export const COLORS = {
   
   // Legacy support
   tosca: '#00897B',        // Alias for teal
-  background: '#B2DBD7',   // Alias for purple
+  background: '#B2DBD7',   // Alias for backgroundMain
   inputBg: '#F3F4F6',
   inputBorder: '#B3B3B3',
   textLight: '#9CA3AF',

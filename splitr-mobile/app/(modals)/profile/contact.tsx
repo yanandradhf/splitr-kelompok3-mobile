@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,56 +7,83 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS, FONTS } from "../../../constants/theme";
 
 const ContactScreen = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#EDEAFC" barStyle="dark-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bantuan</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={COLORS.backgroundMain}
+          barStyle="dark-content"
+        />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.contentContainer}>
-          <Text style={styles.pageTitle}>Hubungi Kami</Text>
-          
-          <View style={styles.emailSection}>
-            <Ionicons name="mail" size={60} color="#6EDCD9" />
-            <Text style={styles.emailTitle}>Email</Text>
-            <Text style={styles.emailAddress}>Splitrsatu@gmail.com</Text>
-            
-            <Text style={styles.emailDescription}>
-              Jika ada pertanyaan atau kendala, silakan hubungi kami melalui email.
-            </Text>
-            
-            <TouchableOpacity style={styles.emailButton}>
-              <Text style={styles.emailButtonText}>Kirim Email</Text>
+        {/* Purple Background Section */}
+        <View style={styles.purpleSection}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={COLORS.textPrimary}
+              />
             </TouchableOpacity>
+            <Text style={styles.headerTitle}>Hubungi Kami</Text>
+            <View style={styles.placeholder} />
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* White Modal Container */}
+        <View style={styles.whiteModalContainer}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.contentContainer}>
+              <View style={styles.emailSection}>
+                <Ionicons name="mail" size={60} color={COLORS.teal} />
+                <Text style={styles.emailTitle}>Email</Text>
+                <Text style={styles.emailAddress}>Splitrsatu@gmail.com</Text>
+
+                <Text style={styles.emailDescription}>
+                  Jika ada pertanyaan atau kendala, silakan hubungi kami melalui
+                  email.
+                </Text>
+
+                <TouchableOpacity style={styles.emailButton}>
+                  <Text style={styles.emailButtonText}>Kirim Email</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EDEAFC',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  purpleSection: {
+    backgroundColor: COLORS.backgroundMain,
+    paddingBottom: 20,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 15,
     marginTop: 20,
@@ -66,67 +93,78 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
   },
   placeholder: {
     width: 34,
   },
-  content: {
+  whiteModalContainer: {
     flex: 1,
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: 40,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
   },
   contentContainer: {
     padding: 25,
-    alignItems: 'center',
+    alignItems: "center",
   },
   pageTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
     marginBottom: 40,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emailSection: {
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
   },
   emailTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
     marginTop: 20,
     marginBottom: 10,
   },
   emailAddress: {
     fontSize: 18,
-    color: '#333',
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
     marginBottom: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emailDescription: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: "center",
     lineHeight: 24,
     marginBottom: 40,
     paddingHorizontal: 20,
   },
   emailButton: {
-    backgroundColor: '#6EDCD9',
+    backgroundColor: COLORS.teal,
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 15,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   emailButtonText: {
-    color: '#FFF',
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: FONTS.bold,
   },
 });
 

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONTS } from '../../../constants/theme';
 
 type PasswordStep = 'current' | 'new' | 'success';
 
@@ -23,16 +24,19 @@ const ChangePasswordScreen = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleNext = () => {
-    if (step === 'current') {
-      // TODO: Validate current password
-      setStep('new');
-    } else if (step === 'new') {
-      if (newPassword === confirmPassword && newPassword.length >= 6) {
-        setStep('success');
-      } else {
-        alert('Password tidak cocok atau terlalu pendek');
-      }
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      alert('Semua field harus diisi');
+      return;
     }
+    if (newPassword !== confirmPassword) {
+      alert('Password baru dan konfirmasi tidak cocok');
+      return;
+    }
+    if (newPassword.length < 6) {
+      alert('Password baru minimal 6 karakter');
+      return;
+    }
+    setStep('success');
   };
 
   const getTitle = () => {
@@ -52,23 +56,24 @@ const ChangePasswordScreen = () => {
   };
 
   const getButtonText = () => {
-    switch (step) {
-      case 'current': return 'Done';
-      case 'new': return 'Ubah Password';
-      default: return 'Done';
-    }
+    return 'Ubah Password';
   };
 
   if (step === 'success') {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#FF7A00" barStyle="light-content" />
-        
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
-
-        <Text style={styles.title}>SELESAI!</Text>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+          
+          <View style={styles.backgroundSection}>
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Ubah Password</Text>
+              <View style={styles.placeholder} />
+            </View>
+          </View>
         
         <View style={styles.successContainer}>
           <Text style={styles.successSubtitle}>Password Berhasil Diubah</Text>
@@ -76,35 +81,42 @@ const ChangePasswordScreen = () => {
           <View style={styles.successIcon}>
             <View style={styles.checkmarkOuter}>
               <View style={styles.checkmarkInner}>
-                <Ionicons name="checkmark" size={40} color="#6EDCD9" />
+                <Ionicons name="checkmark" size={40} color={COLORS.white} />
               </View>
             </View>
           </View>
-        </View>
-      </SafeAreaView>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF7A00" barStyle="light-content" />
-      
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={24} color="#000" />
-      </TouchableOpacity>
-
-      <Text style={styles.title}>{getTitle()}</Text>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+        
+        <View style={styles.backgroundSection}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Ubah Password</Text>
+            <View style={styles.placeholder} />
+          </View>
+        </View>
       
       <View style={styles.formContainer}>
           <Text style={styles.subtitle}>{getSubtitle()}</Text>
           
-          {step === 'current' && (
-            <View style={styles.inputContainer}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password Saat Ini</Text>
+            <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.textInput}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
-                placeholder="password saat ini"
+                placeholder="Masukkan password saat ini"
                 secureTextEntry={!showCurrentPassword}
                 autoCapitalize="none"
               />
@@ -115,140 +127,162 @@ const ChangePasswordScreen = () => {
                 <Ionicons 
                   name={showCurrentPassword ? "eye-off" : "eye"} 
                   size={20} 
-                  color="#999" 
+                  color={COLORS.textSecondary} 
                 />
               </TouchableOpacity>
             </View>
-          )}
+          </View>
 
-          {step === 'new' && (
-            <>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  placeholder="password baru"
-                  secureTextEntry={!showNewPassword}
-                  autoCapitalize="none"
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password Baru</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.textInput}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="Masukkan password baru"
+                secureTextEntry={!showNewPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity 
+                style={styles.eyeButton}
+                onPress={() => setShowNewPassword(!showNewPassword)}
+              >
+                <Ionicons 
+                  name={showNewPassword ? "eye-off" : "eye"} 
+                  size={20} 
+                  color={COLORS.textSecondary} 
                 />
-                <TouchableOpacity 
-                  style={styles.eyeButton}
-                  onPress={() => setShowNewPassword(!showNewPassword)}
-                >
-                  <Ionicons 
-                    name={showNewPassword ? "eye-off" : "eye"} 
-                    size={20} 
-                    color="#999" 
-                  />
-                </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-              <Text style={styles.confirmLabel}>Konfirmasi password baru</Text>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="konfirmasi password"
-                  secureTextEntry={!showConfirmPassword}
-                  autoCapitalize="none"
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Konfirmasi Password Baru</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.textInput}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Konfirmasi password baru"
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity 
+                style={styles.eyeButton}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <Ionicons 
+                  name={showConfirmPassword ? "eye-off" : "eye"} 
+                  size={20} 
+                  color={COLORS.textSecondary} 
                 />
-                <TouchableOpacity 
-                  style={styles.eyeButton}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  <Ionicons 
-                    name={showConfirmPassword ? "eye-off" : "eye"} 
-                    size={20} 
-                    color="#999" 
-                  />
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
+              </TouchableOpacity>
+            </View>
+          </View>
 
           <TouchableOpacity 
             style={[
               styles.nextButton,
-              ((step === 'current' && currentPassword.length < 6) ||
-              (step === 'new' && (newPassword.length < 6 || confirmPassword.length < 6))) 
+              (!currentPassword || !newPassword || !confirmPassword || newPassword.length < 6) 
                 ? styles.nextButtonDisabled : null
             ]}
             onPress={handleNext}
-            disabled={
-              (step === 'current' && currentPassword.length < 6) ||
-              (step === 'new' && (newPassword.length < 6 || confirmPassword.length < 6))
-            }
+            disabled={!currentPassword || !newPassword || !confirmPassword || newPassword.length < 6}
           >
             <Text style={styles.nextButtonText}>{getButtonText()}</Text>
           </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF7A00',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  backgroundSection: {
+    backgroundColor: COLORS.backgroundMain,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1,
     padding: 5,
   },
-  title: {
+  headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginTop: 100,
-    marginBottom: 40,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
+  placeholder: {
+    width: 40,
+  },
+
   formContainer: {
-    backgroundColor: '#FF7A00',
-    borderRadius: 25,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
     padding: 30,
-    marginHorizontal: 20,
     flex: 1,
-    marginBottom: 40,
+    marginBottom: -50,
   },
   subtitle: {
     fontSize: 16,
-    color: '#000',
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
     marginBottom: 30,
-    fontWeight: '600',
   },
   inputContainer: {
-    position: 'relative',
     marginBottom: 20,
   },
-  textInput: {
-    backgroundColor: '#FFF',
-    borderRadius: 15,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+  inputLabel: {
     fontSize: 16,
-    color: '#000',
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  passwordContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: COLORS.inputBg,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     paddingRight: 50,
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
   },
   eyeButton: {
     position: 'absolute',
-    right: 15,
-    top: 15,
-    padding: 5,
+    right: 16,
+    padding: 4,
   },
-  confirmLabel: {
-    fontSize: 14,
-    color: '#000',
-    marginBottom: 10,
-    fontWeight: '500',
-  },
+
   nextButton: {
-    backgroundColor: '#6EDCD9',
+    backgroundColor: COLORS.teal,
     paddingHorizontal: 50,
     paddingVertical: 15,
     borderRadius: 15,
@@ -259,26 +293,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#AAA',
   },
   nextButtonText: {
-    color: '#FFF',
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: FONTS.bold,
   },
   successContainer: {
-    backgroundColor: '#FF7A00',
-    borderRadius: 25,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
     padding: 30,
     alignItems: 'center',
-    marginHorizontal: 20,
     flex: 1,
-    marginBottom: 40,
+    marginBottom: -50,
     justifyContent: 'center',
   },
   successSubtitle: {
     fontSize: 16,
-    color: '#000',
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
     textAlign: 'center',
     marginBottom: 60,
-    fontWeight: '600',
   },
   successIcon: {
     marginBottom: 80,
@@ -287,7 +326,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(110, 220, 217, 0.2)',
+    backgroundColor: 'rgba(0, 137, 123, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -295,7 +334,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#6EDCD9',
+    backgroundColor: COLORS.teal,
     justifyContent: 'center',
     alignItems: 'center',
   },
