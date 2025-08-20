@@ -155,9 +155,8 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
         phone: data.phone,
       });
 
-      // Clear temporary data after successful registration
+      // Clear temporary token but keep data for success page
       await SecureStore.deleteItemAsync('temp_token');
-      get().clearData();
     } catch (error: any) {
       const apiError = handleApiError(error);
       set({ error: apiError.message });
