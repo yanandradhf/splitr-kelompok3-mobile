@@ -7,30 +7,19 @@ import {
   StyleSheet,
   StatusBar,
   Alert,
-  Dimensions,
+  SafeAreaView,
+  KeyboardAvoidingView,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
-import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
-const { width, height } = Dimensions.get('window');
-const isSmallScreen = height < 700;
-const isIOS = Platform.OS === 'ios';
+import { COLORS, FONTS } from '../../../constants/theme';
 
 export default function VerifyOTPScreen() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = React.useRef<(TextInput | null)[]>([]);
-  
-  const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-  });
-
-  if (!fontsLoaded) {
-    return null;
-  }
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
@@ -76,174 +65,170 @@ export default function VerifyOTPScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FF8A50" />
-      
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={28} color="#000" />
-      </TouchableOpacity>
-
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Lupa Password</Text>
-      </View>
-
-      {/* Main Form Container */}
-      <View style={styles.formWrapper}>
-        <View style={styles.formContainer}>
-          <Text style={styles.subtitle}>Masukkan kode OTP</Text>
-          
-          <Text style={styles.description}>
-            Kami telah mengirimkan kode verifikasi ke email Anda. Masukkan kode tersebut untuk pergantian password.
-          </Text>
-          
-          <View style={styles.otpContainer}>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => (inputRefs.current[index] = ref)}
-                style={styles.otpBox}
-                value={digit}
-                onChangeText={(text) => handleOtpChange(text, index)}
-                onKeyPress={(e) => handleKeyPress(e, index)}
-                keyboardType="numeric"
-                maxLength={1}
-                textAlign="center"
-                autoFocus={index === 0}
-              />
-            ))}
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: "padding", android: "height" })}
+          style={{ flex: 1 }}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.title}>Verifikasi OTP</Text>
+            <View style={styles.placeholder} />
           </View>
 
-          <TouchableOpacity 
-            style={styles.verifyButton}
-            onPress={handleVerifyOTP}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.verifyButtonText}>Verifikasi Kode OTP</Text>
-          </TouchableOpacity>
+          {/* White Panel */}
+          <View style={styles.panel}>
+            <View style={styles.panelContent}>
+              <Text style={styles.subtitle}>Masukkan kode OTP</Text>
+              
+              <Text style={styles.description}>
+                Kami telah mengirimkan kode verifikasi ke email Anda. Masukkan kode tersebut untuk pergantian password.
+              </Text>
+              
+              <View style={styles.otpContainer}>
+                {otp.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => (inputRefs.current[index] = ref)}
+                    style={styles.otpBox}
+                    value={digit}
+                    onChangeText={(text) => handleOtpChange(text, index)}
+                    onKeyPress={(e) => handleKeyPress(e, index)}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    textAlign="center"
+                    autoFocus={index === 0}
+                  />
+                ))}
+              </View>
 
-          <TouchableOpacity 
-            style={styles.resendButton}
-            onPress={handleResendOTP}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.resendButtonText}>Kirim Ulang Kode</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+              <TouchableOpacity 
+                style={[styles.primaryBtn, otp.join('').length !== 6 && styles.primaryBtnDisabled]}
+                onPress={handleVerifyOTP}
+                disabled={otp.join('').length !== 6}
+              >
+                <Text style={[styles.primaryBtnText, otp.join('').length !== 6 && styles.primaryBtnTextDisabled]}>Verifikasi Kode OTP</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.resendButton}
+                onPress={handleResendOTP}
+              >
+                <Text style={styles.resendButtonText}>Kirim Ulang Kode</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF8736',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   backButton: {
-    position: 'absolute',
-    top: isIOS ? 90 : 70,
-    left: 20,
-    width: 40,
-    height: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    paddingVertical: isSmallScreen ? 20 : 30,
-    paddingTop: isIOS ? 80 : 60,
+    padding: 8,
   },
   title: {
-    fontSize: isSmallScreen ? 20 : 22,
-    fontWeight: '800',
-    color: '#000',
-    letterSpacing: 0.5,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
-  formWrapper: {
-    flex: 1,
-    paddingHorizontal: 0,
-    paddingTop: isSmallScreen ? 10 : 20,
+  placeholder: {
+    width: 40,
   },
-  formContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 60,
-    borderTopRightRadius: 60,
+  panel: {
     flex: 1,
-    paddingHorizontal: width * 0.06,
-    paddingTop: isSmallScreen ? 30 : 40,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
+  },
+  panelContent: {
+    paddingHorizontal: 20,
+    paddingTop: 36,
+    paddingBottom: 200,
+    gap: 14,
   },
   subtitle: {
-    fontSize: isSmallScreen ? 14 : 16,
-    fontWeight: '700',
-    color: '#000000ff',
-    marginBottom: isSmallScreen ? 15 : 20,
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
     textAlign: 'center',
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    lineHeight: 22,
+    marginBottom: 8,
   },
   description: {
-    fontSize: isSmallScreen ? 12 : 13,
-    fontWeight: '400',
-    color: '#666666',
-    marginBottom: isSmallScreen ? 20 : 25,
-    textAlign: 'left',
-    fontFamily: 'PlusJakartaSans_400Regular',
-    lineHeight: 18,
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 30,
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: height * 0.47,
+    marginBottom: 40,
     paddingHorizontal: 10,
   },
   otpBox: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    backgroundColor: '#EEF1F5',
+    borderRadius: 10,
     width: 45,
     height: 50,
-    fontSize: isSmallScreen ? 18 : 20,
-    color: '#333',
-    fontWeight: 'bold',
+    fontSize: 20,
+    color: COLORS.textPrimary,
+    fontFamily: FONTS.bold,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
   },
-  verifyButton: {
-    backgroundColor: '#5DDBD3',
-    borderRadius: 8,
-    paddingVertical: isSmallScreen ? 15 : 18,
+  primaryBtn: {
+    backgroundColor: COLORS.teal,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 5,
-    marginBottom: 10,
+    marginTop: 20,
   },
-  verifyButtonText: {
-    color: '#000',
-    fontSize: isSmallScreen ? 14 : 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+  primaryBtnText: {
+    fontSize: 18,
+    fontFamily: FONTS.extraBold,
+    color: COLORS.white,
+  },
+  primaryBtnDisabled: {
+    backgroundColor: '#D1D5DB',
+  },
+  primaryBtnTextDisabled: {
+    color: '#9CA3AF',
   },
   resendButton: {
     alignItems: 'center',
     paddingVertical: 12,
-    marginBottom: isIOS ? 30 : 20,
+    marginTop: 10,
   },
   resendButtonText: {
-    color: '#FF8736',
-    fontSize: isSmallScreen ? 13 : 14,
-    fontWeight: '600',
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: COLORS.teal,
+    fontSize: 14,
+    fontFamily: FONTS.semiBold,
     textDecorationLine: 'underline',
   },
 });

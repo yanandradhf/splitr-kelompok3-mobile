@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,15 +7,21 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
+  Modal,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FONTS } from "../../../constants/theme";
 import { useProfile } from "../../../hooks/useProfile";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
+import { authAPI } from "../../../services/api";
+import * as SecureStore from 'expo-secure-store';
 
 export default function ProfileScreen() {
   const { profile, isLoading } = useProfile();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -111,7 +117,10 @@ export default function ProfileScreen() {
               <Text style={styles.menuText}>Bantuan</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => setShowLogoutModal(true)}
+            >
               <View style={[styles.menuIcon, { backgroundColor: COLORS.teal }]}>
                 <Ionicons
                   name="log-out-outline"
@@ -123,9 +132,66 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Logout Confirmation Modal */}
+        <Modal
+          visible={showLogoutModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowLogoutModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Konfirmasi Keluar</Text>
+              <Text style={styles.modalMessage}>
+                Apakah Anda yakin ingin keluar dari aplikasi?
+              </Text>
+              
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowLogoutModal(false)}
+                  disabled={isLoggingOut}
+                >
+                  <Text style={styles.cancelButtonText}>Batal</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={handleLogout}
+                  disabled={isLoggingOut}
+                >
+                  <Text style={styles.confirmButtonText}>
+                    {isLoggingOut ? 'Keluar...' : 'Ya, Keluar'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {isLoggingOut && <LoadingScreen />}
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    try {
+      const response = await authAPI.logout();
+      if (response.status === 200) {
+        await SecureStore.deleteItemAsync('auth_token');
+        await SecureStore.deleteItemAsync('user_data');
+        router.replace('/(auth)/login');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Gagal keluar dari aplikasi. Silakan coba lagi.');
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutModal(false);
+    }
+  }
 }
 
 const styles = StyleSheet.create({
@@ -232,5 +298,62 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    margin: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: COLORS.gray,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: COLORS.teal,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    fontSize: 14,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
   },
 });
