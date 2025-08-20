@@ -22,108 +22,146 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FF7A00" barStyle="light-content" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profil</Text>
-        <View style={styles.placeholder} />
-      </View>
-
-      {/* Profile Info */}
-      <View style={styles.profileSection}>
-        <Image
-          source={{
-            uri: "https://picsum.photos/id/64/120/120",
-          }}
-          style={styles.profileImage}
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={COLORS.backgroundMain}
+          barStyle="light-content"
         />
-        <View style={styles.editIconContainer}>
-          <Ionicons name="camera" size={16} color="#FF7A00" />
+
+        {/* Purple Background Section */}
+        <View style={styles.purpleSection}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={COLORS.textPrimary}
+              />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Profil</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          {/* Profile Info */}
+          <View style={styles.profileSection}>
+            <Image
+              source={{
+                uri: "https://picsum.photos/id/64/120/120",
+              }}
+              style={styles.profileImage}
+            />
+            <View style={styles.editIconContainer}>
+              <Ionicons name="camera" size={16} color={COLORS.teal} />
+            </View>
+            <Text style={styles.profileName}>
+              {profile?.user?.username || "User"}
+            </Text>
+            <Text style={styles.profileId}>
+              {profile?.user?.bniAccountNumber || "-"}
+            </Text>
+          </View>
         </View>
-        <Text style={styles.profileName}>{profile?.user?.username || 'User'}</Text>
-        <Text style={styles.profileId}>{profile?.user?.bniAccountNumber || '-'}</Text>
-      </View>
 
-      {/* Menu Items */}
-      <View style={styles.menuContainer}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/(modals)/profile/edit")}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: "#6EDCD9" }]}>
-            <Ionicons name="person-outline" size={24} color="#FFF" />
-          </View>
-          <Text style={styles.menuText}>Edit Profil</Text>
-        </TouchableOpacity>
+        {/* White Modal Container */}
+        <View style={styles.whiteModalContainer}>
+          <View style={styles.menuContainer}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/edit")}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: COLORS.teal }]}>
+                <Ionicons
+                  name="person-outline"
+                  size={24}
+                  color={COLORS.white}
+                />
+              </View>
+              <Text style={styles.menuText}>Edit Profil</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/(modals)/profile/settings")}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: "#6EDCD9" }]}>
-            <Ionicons name="settings-outline" size={24} color="#FFF" />
-          </View>
-          <Text style={styles.menuText}>Pengaturan</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/settings")}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: COLORS.teal }]}>
+                <Ionicons
+                  name="settings-outline"
+                  size={24}
+                  color={COLORS.white}
+                />
+              </View>
+              <Text style={styles.menuText}>Pengaturan</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/(modals)/profile/help")}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: "#6EDCD9" }]}>
-            <Ionicons name="help-circle-outline" size={24} color="#FFF" />
-          </View>
-          <Text style={styles.menuText}>Bantuan</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/help")}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: COLORS.teal }]}>
+                <Ionicons
+                  name="help-circle-outline"
+                  size={24}
+                  color={COLORS.white}
+                />
+              </View>
+              <Text style={styles.menuText}>Bantuan</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <View style={[styles.menuIcon, { backgroundColor: "#6EDCD9" }]}>
-            <Ionicons name="log-out-outline" size={24} color="#FFF" />
+            <TouchableOpacity style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: COLORS.teal }]}>
+                <Ionicons
+                  name="log-out-outline"
+                  size={24}
+                  color={COLORS.white}
+                />
+              </View>
+              <Text style={styles.menuText}>Keluar</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.menuText}>Keluar</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#EDEAFC",
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  purpleSection: {
+    backgroundColor: COLORS.backgroundMain,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginTop: 20,
+    paddingVertical: 16,
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
   placeholder: {
-    width: 34,
+    width: 40,
   },
   profileSection: {
     alignItems: "center",
-    marginTop: 40,
-    marginBottom: 60,
-    zIndex: 2,
+    marginTop: 20,
+    marginBottom: 40,
   },
   profileImage: {
     width: 120,
@@ -137,14 +175,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: "35%",
     top: 90,
-    backgroundColor: "#FFF",
+    backgroundColor: COLORS.white,
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -161,15 +199,21 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 5,
   },
-  menuContainer: {
+  whiteModalContainer: {
     flex: 1,
-    backgroundColor: "#FFF",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingTop: 160,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
+  },
+  menuContainer: {
     paddingHorizontal: 20,
-    marginTop: -190,
-    zIndex: 1,
+    paddingTop: 24,
   },
   menuItem: {
     flexDirection: "row",
@@ -185,8 +229,8 @@ const styles = StyleSheet.create({
     marginRight: 20,
   },
   menuText: {
-    fontSize: 18,
-    fontFamily: FONTS.medium,
+    fontSize: 17,
+    fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
 });

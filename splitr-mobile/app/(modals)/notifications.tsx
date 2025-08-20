@@ -14,7 +14,7 @@ import { useNotifications } from '../../hooks/useApi';
 import { COLORS, FONTS } from '../../constants/theme';
 
 const LOCAL_COLORS = {
-  background: COLORS.purple,
+  background: COLORS.backgroundMain,
   cardWhite: COLORS.white,
   textPrimary: COLORS.textPrimary,
   textSecondary: COLORS.textSecondary,

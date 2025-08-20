@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { COLORS as THEME_COLORS } from "../../constants/theme";
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -18,7 +19,7 @@ export default function CustomSplashScreen({ onFinish }: SplashScreenProps) {
 
   return (
     <LinearGradient
-      colors={['#B2DBD7', '#9BCCC7', '#84BDB8']}
+      colors={[THEME_COLORS.backgroundMain, '#9BCCC7', '#84BDB8']}
       style={styles.container}
     >
       <View style={styles.content}>

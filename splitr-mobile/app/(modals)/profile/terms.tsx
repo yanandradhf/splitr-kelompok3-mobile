@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,38 +7,49 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS, FONTS } from "../../../constants/theme";
 
 const TermsScreen = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#EDEAFC" barStyle="dark-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bantuan</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Background Section */}
+        <View style={styles.backgroundSection}>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Syarat dan Ketentuan</Text>
+            <View style={styles.placeholder} />
+          </View>
+        </View>
+
+        {/* White Modal Container */}
+        <View style={styles.whiteModalContainer}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.contentContainer}>
-          <Text style={styles.pageTitle}>Syarat dan Ketentuan</Text>
-          
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>A. Ketentuan Umum</Text>
             <Text style={styles.sectionNumber}>1. Pengguna:</Text>
             <Text style={styles.sectionText}>
-              Dengan menggunakan aplikasi Splitr by BNI ("Aplikasi"), kamu dianggap telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan ini.
+              Dengan menggunakan aplikasi Splitr by BNI ("Aplikasi"), kamu
+              dianggap telah membaca, memahami, dan menyetujui seluruh Syarat &
+              Ketentuan ini.
             </Text>
-            
+
             <Text style={styles.sectionNumber}>2. Perubahan:</Text>
             <Text style={styles.sectionText}>
-              BNI berhak mengubah Syarat & Ketentuan ini setiap saat. Perubahan akan diumumkan melalui Aplikasi atau media resmi BNI. Penggunaan lebih lanjut dianggap sebagai persetujuan atas ketentuan baru.
+              BNI berhak mengubah Syarat & Ketentuan ini setiap saat. Perubahan
+              akan diumumkan melalui Aplikasi atau media resmi BNI. Penggunaan
+              lebih lanjut dianggap sebagai persetujuan atas ketentuan baru.
             </Text>
           </View>
 
@@ -48,12 +59,14 @@ const TermsScreen = () => {
             <Text style={styles.sectionText}>
               Pengguna perlu memiliki rekening BNI yang aktif.
             </Text>
-            
+
             <Text style={styles.sectionNumber}>2.</Text>
             <Text style={styles.sectionText}>
-              Proses pendaftaran mencakup verifikasi identitas, pembuatan PIN, dan pengisian data pribadi. Pastikan semua informasi benar dan terbaru.
+              Proses pendaftaran mencakup verifikasi identitas, pembuatan PIN,
+              dan pengisian data pribadi. Pastikan semua informasi benar dan
+              terbaru.
             </Text>
-            
+
             <Text style={styles.sectionNumber}>3.</Text>
             <Text style={styles.sectionText}>
               Kerahasiaan akun dan PIN sepenuhnya tanggung jawab pengguna.
@@ -64,17 +77,21 @@ const TermsScreen = () => {
             <Text style={styles.sectionTitle}>C. Fitur Split Pembayaran</Text>
             <Text style={styles.sectionNumber}>1.</Text>
             <Text style={styles.sectionText}>
-              Fitur memungkinkan membagi pembayaran (tagihan, pembelian, dsb.) menjadi beberapa bagian sesuai kebutuhan pengguna.
+              Fitur memungkinkan membagi pembayaran (tagihan, pembelian, dsb.)
+              menjadi beberapa bagian sesuai kebutuhan pengguna.
             </Text>
-            
+
             <Text style={styles.sectionNumber}>2.</Text>
             <Text style={styles.sectionText}>
-              Pengguna bisa bikin jadwal atau reminder pembayaran: tiap tanggal tertentu, jumlah tertentu, atau frekuensi tertentu (misalnya, bulanan).
+              Pengguna bisa bikin jadwal atau reminder pembayaran: tiap tanggal
+              tertentu, jumlah tertentu, atau frekuensi tertentu (misalnya,
+              bulanan).
             </Text>
-            
+
             <Text style={styles.sectionNumber}>3.</Text>
             <Text style={styles.sectionText}>
-              Semua instruksi split dijalankan otomatis oleh Aplikasi sesuai jadwal.
+              Semua instruksi split dijalankan otomatis oleh Aplikasi sesuai
+              jadwal.
             </Text>
           </View>
 
@@ -82,12 +99,14 @@ const TermsScreen = () => {
             <Text style={styles.sectionTitle}>D. Biaya & Limit</Text>
             <Text style={styles.sectionNumber}>1.</Text>
             <Text style={styles.sectionText}>
-              Penggunaan fitur gratis, kecuali disebutkan biaya tertentu (jika ada).
+              Penggunaan fitur gratis, kecuali disebutkan biaya tertentu (jika
+              ada).
             </Text>
-            
+
             <Text style={styles.sectionNumber}>2.</Text>
             <Text style={styles.sectionText}>
-              Bank dapat mengenakan biaya tambahan sesuai jenis transaksi—dengan ketentuan jelas yang diberitahukan sebelumnya.
+              Bank dapat mengenakan biaya tambahan sesuai jenis transaksi—dengan
+              ketentuan jelas yang diberitahukan sebelumnya.
             </Text>
           </View>
 
@@ -95,17 +114,20 @@ const TermsScreen = () => {
             <Text style={styles.sectionTitle}>E. Tanggung Jawab & Risiko</Text>
             <Text style={styles.sectionNumber}>1.</Text>
             <Text style={styles.sectionText}>
-              Pengguna bertanggung jawab memastikan saldo cukup sebelum jadwal pembayaran.
+              Pengguna bertanggung jawab memastikan saldo cukup sebelum jadwal
+              pembayaran.
             </Text>
-            
+
             <Text style={styles.sectionNumber}>2.</Text>
             <Text style={styles.sectionText}>
-              Keterlambatan atau kegagalan pembayaran karena saldo tidak mencukupi atau faktor teknis, jadi tanggung jawab pengguna.
+              Keterlambatan atau kegagalan pembayaran karena saldo tidak
+              mencukupi atau faktor teknis, jadi tanggung jawab pengguna.
             </Text>
-            
+
             <Text style={styles.sectionNumber}>3.</Text>
             <Text style={styles.sectionText}>
-              BNI tidak bertanggung jawab atas kerugian akibat kegagalan sistem di luar kendali bank.
+              BNI tidak bertanggung jawab atas kerugian akibat kegagalan sistem
+              di luar kendali bank.
             </Text>
           </View>
 
@@ -113,12 +135,14 @@ const TermsScreen = () => {
             <Text style={styles.sectionTitle}>F. Penghentian Layanan</Text>
             <Text style={styles.sectionNumber}>1.</Text>
             <Text style={styles.sectionText}>
-              Pengguna dapat menghentikan jadwal split kapan saja melalui aplikasi.
+              Pengguna dapat menghentikan jadwal split kapan saja melalui
+              aplikasi.
             </Text>
-            
+
             <Text style={styles.sectionNumber}>2.</Text>
             <Text style={styles.sectionText}>
-              BNI dapat menghentikan atau menangguhkan akses fitur jika ditemukan pelanggaran hukum, atau keamanan.
+              BNI dapat menghentikan atau menangguhkan akses fitur jika
+              ditemukan pelanggaran hukum, atau keamanan.
             </Text>
           </View>
 
@@ -131,75 +155,95 @@ const TermsScreen = () => {
           </View>
 
           <View style={styles.bottomSpacing} />
+            </View>
+          </ScrollView>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EDEAFC',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  backgroundSection: {
+    backgroundColor: COLORS.backgroundMain,
+    paddingBottom: 20,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginTop: 20,
+    paddingVertical: 16,
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
   placeholder: {
-    width: 34,
+    width: 40,
+  },
+  whiteModalContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
   },
   content: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: 40,
+    paddingHorizontal: 20,
+    paddingTop: 24,
   },
   contentContainer: {
     padding: 25,
   },
   pageTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 25,
-    textAlign: 'center',
+    textAlign: "center",
   },
   section: {
-    marginBottom: 25,
+    marginBottom: 30,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 10,
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 15,
+    marginTop: 5,
   },
   sectionNumber: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 8,
-    marginBottom: 5,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+    marginTop: 12,
+    marginBottom: 6,
   },
   sectionText: {
     fontSize: 14,
-    color: '#555',
-    lineHeight: 22,
-    textAlign: 'justify',
-    marginBottom: 5,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    lineHeight: 24,
+    textAlign: "justify",
+    marginBottom: 12,
+    paddingLeft: 8,
   },
   bottomSpacing: {
     height: 30,
