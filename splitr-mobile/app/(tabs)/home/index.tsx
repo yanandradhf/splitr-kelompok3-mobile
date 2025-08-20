@@ -270,7 +270,11 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 ))
               )}
-              <TouchableOpacity style={styles.friendItem} activeOpacity={0.7}>
+              <TouchableOpacity 
+                style={styles.friendItem} 
+                activeOpacity={0.7}
+                onPress={() => router.push('/(modals)/tambah-teman')}
+              >
                 <View style={styles.addFriendCircle}>
                   <Ionicons name="add" size={28} color={COLORS.white} />
                 </View>

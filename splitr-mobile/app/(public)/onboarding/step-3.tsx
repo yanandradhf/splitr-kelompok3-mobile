@@ -43,7 +43,7 @@ export default function Onboarding3({
   });
 
   const handleBelumPunyaPress = () => {
-    router.push("/(auth)/login");
+    router.push("/(public)/terms");
   };
 
   const handleSudahPunyaPress = () => {
