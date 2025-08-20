@@ -12,8 +12,11 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { FONTS, COLORS as THEME_COLORS } from "../../../constants/theme";
+import { useRegisterStore } from "../../../store/register.store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain,
@@ -69,6 +72,8 @@ function Stepper({ current }: { current: number }) {
 export default function RegisterEmail() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  
+  const { sendOtp, isLoading, setStep2Data } = useRegisterStore();
 
   const validateEmail = (value: string) => {
     if (value.length === 0) return "";
@@ -76,7 +81,7 @@ export default function RegisterEmail() {
     return gmailRegex.test(value) ? "" : "Format email salah";
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!email) {
       setError("Masukkan email");
       return;
@@ -88,7 +93,13 @@ export default function RegisterEmail() {
       return;
     }
     
-    router.push("/(auth)/register/regist_otp");
+    try {
+      await sendOtp(email);
+      setStep2Data({ email });
+      router.push("/(auth)/register/regist_otp");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   return (
@@ -131,10 +142,14 @@ export default function RegisterEmail() {
 
             <Pressable 
               onPress={handleNext} 
-              style={[styles.primaryBtn, !email && styles.primaryBtnDisabled]}
-              disabled={!email}
+              style={[styles.primaryBtn, (!email || isLoading) && styles.primaryBtnDisabled]}
+              disabled={!email || isLoading}
             >
-              <Text style={[styles.primaryBtnText, !email && styles.primaryBtnTextDisabled]}>Kirim OTP</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={[styles.primaryBtnText, (!email || isLoading) && styles.primaryBtnTextDisabled]}>Kirim OTP</Text>
+              )}
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
