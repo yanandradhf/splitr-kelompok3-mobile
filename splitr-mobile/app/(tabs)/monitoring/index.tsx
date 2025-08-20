@@ -177,17 +177,22 @@ export default function MonitoringIndex() {
                     <View style={styles.expandedContent}>
                       {bill.people.map((person, index) => (
                         <View key={index} style={styles.friendRow}>
-                          <View style={styles.friendInfo}>
-                            <Text style={styles.friendName}>{person.name}</Text>
-                            {person.orderItems && (
-                              <View style={styles.orderItems}>
-                                {person.orderItems.map((item, idx) => (
-                                  <Text key={idx} style={styles.orderItem}>
-                                    {item.qty}x {item.name} - {item.price.formatted}
-                                  </Text>
-                                ))}
-                              </View>
-                            )}
+                          <View style={styles.avatarContainer}>
+                            <View style={styles.avatar}>
+                              <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
+                            </View>
+                            <View style={styles.friendInfo}>
+                              <Text style={styles.friendName}>{person.name}</Text>
+                              {person.orderItems && (
+                                <View style={styles.orderItems}>
+                                  {person.orderItems.map((item, idx) => (
+                                    <Text key={idx} style={styles.orderItem}>
+                                      {item.qty}x {item.name} - {item.price.formatted}
+                                    </Text>
+                                  ))}
+                                </View>
+                              )}
+                            </View>
                           </View>
                           <View style={styles.friendRight}>
                             <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
@@ -280,8 +285,55 @@ export default function MonitoringIndex() {
                       </View>
                       <View style={styles.billActions}>
                         <DonutChart progress={bill.progress} />
+                        <Pressable onPress={() => toggleExpanded(bill.id)}>
+                          <Ionicons 
+                            name={expandedBills.has(bill.id) ? 'chevron-up' : 'chevron-down'} 
+                            size={20} 
+                            color={Colors.textSecondary} 
+                          />
+                        </Pressable>
                       </View>
                     </View>
+                    
+                    {expandedBills.has(bill.id) && bill.people && (
+                      <View style={styles.expandedContent}>
+                        {bill.people.map((person, index) => (
+                          <View key={index} style={styles.friendRow}>
+                            <View style={styles.avatarContainer}>
+                              <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
+                              </View>
+                              <View style={styles.friendInfo}>
+                                <Text style={styles.friendName}>{person.name}</Text>
+                                <Text style={styles.paymentMethod}>
+                                  {person.method === 'bayar-sekarang' ? 'Bayar Sekarang' : 'Auto-Transfer'} : {person.paidAt}
+                                </Text>
+                                {person.orderItems && (
+                                  <View style={styles.orderItems}>
+                                    {person.orderItems.map((item, idx) => (
+                                      <Text key={idx} style={styles.orderItem}>
+                                        {item.qty}x {item.name} - {item.price.formatted}
+                                      </Text>
+                                    ))}
+                                  </View>
+                                )}
+                              </View>
+                            </View>
+                            <View style={styles.friendRight}>
+                              <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
+                              <View style={styles.statusBadgeSuccess}>
+                                <Text style={styles.statusTextSuccess}>Lunas</Text>
+                              </View>
+                            </View>
+                          </View>
+                        ))}
+                        {bill.receiptUrl && (
+                          <Pressable style={styles.receiptButton}>
+                            <Text style={styles.receiptButtonText}>Lihat Struk</Text>
+                          </Pressable>
+                        )}
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
@@ -322,12 +374,6 @@ export default function MonitoringIndex() {
 
                   {expandedBills.has(payment.id) && payment.items && (
                     <View style={styles.paymentExpandedContent}>
-                      <View style={styles.expandedHeader}>
-                        <View style={styles.avatar}>
-                          <Text style={styles.avatarText}>{payment.hostName.charAt(0)}</Text>
-                        </View>
-                        <Text style={styles.expandedHeaderText}>Pembayaran Selesai untuk {payment.hostName}</Text>
-                      </View>
                       <Text style={styles.expandedTitle}>{payment.title}</Text>
                       <Text style={styles.expandedStatus}>Done : {payment.methodDate}</Text>
                       <View style={styles.expandedAmountRow}>

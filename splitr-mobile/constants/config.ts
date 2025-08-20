@@ -254,13 +254,82 @@ export const UI_STATE_PAYLOAD = {
     completed: {
       hostBills: [
         {
-          id: "done-host-001",
+          id: "done-host-coffee-001",
           icon: "coffee",
           title: "Kopi Pagi",
           dateDone: "2025-06-19",
-          participants: [{ avatarUrl: "https://example.com/u1.jpg" }],
           total: { amount: 78000, currency: "IDR", formatted: "Rp 78.000" },
           progress: { percent: 100, label: "100% terbayar" },
+          receiptUrl: "https://example.com/struk/kopi-pagi-190625.jpg",
+          isExpanded: true,
+          people: [
+            {
+              name: "Ashraf Ren (You)",
+              status: "lunas",
+              method: "bayar-sekarang",
+              paidAt: "2025-06-19",
+              subtotal: {
+                amount: 22000,
+                currency: "IDR",
+                formatted: "Rp 22.000",
+              },
+              orderItems: [
+                {
+                  name: "Americano",
+                  qty: 1,
+                  price: {
+                    amount: 22000,
+                    currency: "IDR",
+                    formatted: "Rp 22.000",
+                  },
+                },
+              ],
+            },
+            {
+              name: "Ivana Yanana",
+              status: "lunas",
+              method: "auto-transfer",
+              paidAt: "2025-06-19",
+              subtotal: {
+                amount: 28000,
+                currency: "IDR",
+                formatted: "Rp 28.000",
+              },
+              orderItems: [
+                {
+                  name: "Butter Croissant",
+                  qty: 1,
+                  price: {
+                    amount: 28000,
+                    currency: "IDR",
+                    formatted: "Rp 28.000",
+                  },
+                },
+              ],
+            },
+            {
+              name: "Nabil Hanif",
+              status: "lunas",
+              method: "auto-transfer",
+              paidAt: "2025-06-19",
+              subtotal: {
+                amount: 28000,
+                currency: "IDR",
+                formatted: "Rp 28.000",
+              },
+              orderItems: [
+                {
+                  name: "Caffè Latte",
+                  qty: 1,
+                  price: {
+                    amount: 28000,
+                    currency: "IDR",
+                    formatted: "Rp 28.000",
+                  },
+                },
+              ],
+            },
+          ],
         },
       ],
       payments: [
