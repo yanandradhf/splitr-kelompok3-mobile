@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://a940d63c81df.ngrok-free.app", // Ganti dengan IP address komputer Anda
+  BASE_URL: "https://e459305d3f7e.ngrok-free.app", // Ganti dengan IP address komputer Anda
   ENDPOINTS: {
     LOGIN: "/api/mobile/auth/login",
     REGISTER: "/api/mobile/auth/register",
@@ -14,6 +14,7 @@ export const API_CONFIG = {
     SEND_RESET_OTP: "/api/mobile/auth/send-reset-otp",
     VERIFY_RESET_OTP: "/api/mobile/auth/verify-reset-otp",
     RESET_PASSWORD: "/api/mobile/auth/reset-password",
+    MY_ACCOUNT: "/api/mobile/auth/my-account",
   },
   TIMEOUT: 10000,
 };
