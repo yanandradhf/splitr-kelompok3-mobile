@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
   },
   statusLunas: {
-    backgroundColor: Colors.success,
+    backgroundColor: '#DCFCE7',
   },
   statusTertunda: {
     backgroundColor: '#FEF3C7',
@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   statusTextLunas: {
-    color: Colors.white,
+    color: '#16A34A',
   },
   statusTextTertunda: {
     color: '#D97706',
