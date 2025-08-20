@@ -46,6 +46,7 @@ export const authAPI = {
   },
   me: () => api.get(API_CONFIG.ENDPOINTS.ME),
   register: (data: any) => api.post(API_CONFIG.ENDPOINTS.REGISTER, data),
+  logout: () => api.post(API_CONFIG.ENDPOINTS.LOGOUT),
 };
 
 export default api;
