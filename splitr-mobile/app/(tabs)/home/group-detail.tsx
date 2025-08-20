@@ -14,6 +14,14 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { COLORS, FONTS } from "../../../constants/theme";
+import {
+  wp,
+  hp,
+  rf,
+  getSpacing,
+  getBorderRadius,
+  getIconSize,
+} from "../../../utils/responsive";
 
 const personImages = [
   require("../../../assets/images/person1.png"),
@@ -143,7 +151,7 @@ export default function GroupDetailScreen() {
       >
         <Ionicons
           name={item.status === "active" ? "checkmark" : "time"}
-          size={16}
+          size={getIconSize(16)}
           color={COLORS.white}
         />
       </View>
@@ -156,10 +164,14 @@ export default function GroupDetailScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            <Ionicons
+              name="arrow-back"
+              size={getIconSize(24)}
+              color={COLORS.textPrimary}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Detail Grup</Text>
-          <View style={{ width: 24 }} />
+          <View style={{ width: getIconSize(24) }} />
         </View>
 
         {/* White Modal Container */}
@@ -196,7 +208,7 @@ export default function GroupDetailScreen() {
                 >
                   <Ionicons
                     name={isEditing ? "checkmark" : "pencil"}
-                    size={16}
+                    size={getIconSize(16)}
                     color="#00897B"
                   />
                   <Text style={styles.editButtonText}>
@@ -271,7 +283,11 @@ export default function GroupDetailScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.deleteModal}>
               <View style={styles.warningIcon}>
-                <Ionicons name="warning" size={40} color="#FF9500" />
+                <Ionicons
+                  name="warning"
+                  size={getIconSize(40)}
+                  color="#FF9500"
+                />
               </View>
               <Text style={styles.deleteTitle}>Hapus Grup?</Text>
               <Text style={styles.deleteMessage}>
@@ -307,7 +323,11 @@ export default function GroupDetailScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.successModal}>
               <View style={styles.successIcon}>
-                <Ionicons name="checkmark-circle" size={60} color="#00897B" />
+                <Ionicons
+                  name="checkmark-circle"
+                  size={getIconSize(60)}
+                  color="#00897B"
+                />
               </View>
               <Text style={styles.successTitle}>Grup Berhasil dihapus</Text>
             </View>
@@ -330,58 +350,58 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingHorizontal: getSpacing(24),
+    paddingTop: getSpacing(16),
+    paddingBottom: getSpacing(20),
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: rf(20),
     fontFamily: FONTS.bold,
     color: COLORS.black,
   },
   whiteModalContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: getBorderRadius(24),
+    borderTopRightRadius: getBorderRadius(24),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    marginBottom: -50,
+    marginBottom: -hp(6),
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 50,
+    paddingBottom: hp(6),
   },
   groupInfoCard: {
     backgroundColor: "#A6D3CE",
-    marginHorizontal: 24,
-    marginTop: 20,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 16,
+    marginHorizontal: getSpacing(24),
+    marginTop: getSpacing(20),
+    marginBottom: getSpacing(16),
+    padding: getSpacing(20),
+    borderRadius: getBorderRadius(16),
     alignItems: "center",
   },
   groupTitle: {
-    fontSize: 20,
+    fontSize: rf(20),
     fontFamily: FONTS.bold,
     color: COLORS.black,
-    marginBottom: 4,
+    marginBottom: getSpacing(4),
   },
   groupSubtitle: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.black,
     opacity: 0.8,
   },
   section: {
-    paddingHorizontal: 24,
-    marginBottom: 20,
+    paddingHorizontal: getSpacing(24),
+    marginBottom: getSpacing(20),
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
@@ -389,10 +409,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: getSpacing(12),
   },
   memberCount: {
-    fontSize: 12,
+    fontSize: rf(12),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
@@ -400,43 +420,43 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: getSpacing(12),
   },
   editButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.inputBg,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: getSpacing(12),
+    paddingVertical: getSpacing(6),
+    borderRadius: getBorderRadius(16),
     borderWidth: 1,
     borderColor: "#00897B",
   },
   editButtonText: {
-    fontSize: 12,
+    fontSize: rf(12),
     fontFamily: FONTS.semiBold,
     color: "#00897B",
-    marginLeft: 4,
+    marginLeft: getSpacing(4),
   },
   groupNameDisplay: {
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
   },
   groupNameText: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
   },
   input: {
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    fontSize: 16,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
+    fontSize: rf(16),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
     borderWidth: 1,
@@ -445,32 +465,32 @@ const styles = StyleSheet.create({
   memberItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: getSpacing(14),
+    paddingHorizontal: getSpacing(16),
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: getBorderRadius(12),
+    marginBottom: getSpacing(8),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
   },
   memberAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+    marginRight: getSpacing(12),
   },
   memberInfo: {
     flex: 1,
   },
   memberName: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
   statusIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: wp(6),
+    height: wp(6),
+    borderRadius: wp(3),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -482,33 +502,33 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: "row",
-    paddingHorizontal: 24,
-    gap: 12,
-    marginTop: 8,
+    paddingHorizontal: getSpacing(24),
+    gap: getSpacing(12),
+    marginTop: getSpacing(8),
   },
   deleteButton: {
     flex: 1,
     backgroundColor: COLORS.white,
     borderWidth: 2,
     borderColor: "#FF3B30",
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
     alignItems: "center",
   },
   deleteButtonText: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: "#FF3B30",
   },
   addButton: {
     flex: 1,
     backgroundColor: "#00897B",
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
     alignItems: "center",
   },
   addButtonText: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.white,
   },
@@ -520,70 +540,70 @@ const styles = StyleSheet.create({
   },
   deleteModal: {
     backgroundColor: COLORS.white,
-    borderRadius: 24,
-    padding: 32,
+    borderRadius: getBorderRadius(24),
+    padding: getSpacing(32),
     alignItems: "center",
-    marginHorizontal: 40,
-    minWidth: 280,
+    marginHorizontal: getSpacing(40),
+    minWidth: wp(70),
   },
   warningIcon: {
-    marginBottom: 16,
+    marginBottom: getSpacing(16),
   },
   deleteTitle: {
-    fontSize: 20,
+    fontSize: rf(20),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: 8,
+    marginBottom: getSpacing(8),
   },
   deleteMessage: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: getSpacing(24),
   },
   deleteActions: {
     flexDirection: "row",
-    gap: 12,
+    gap: getSpacing(12),
   },
   cancelButton: {
     flex: 1,
     backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(12),
     alignItems: "center",
   },
   cancelButtonText: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.textSecondary,
   },
   confirmDeleteButton: {
     flex: 1,
     backgroundColor: "#FF3B30",
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(12),
     alignItems: "center",
   },
   confirmDeleteText: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.white,
   },
   successModal: {
     backgroundColor: "#A6D3CE",
-    borderRadius: 24,
-    padding: 40,
+    borderRadius: getBorderRadius(24),
+    padding: getSpacing(40),
     alignItems: "center",
-    marginHorizontal: 40,
+    marginHorizontal: getSpacing(40),
   },
   successIcon: {
-    marginBottom: 16,
+    marginBottom: getSpacing(16),
   },
   successTitle: {
-    fontSize: 18,
+    fontSize: rf(18),
     fontFamily: FONTS.bold,
     color: COLORS.white,
     textAlign: "center",

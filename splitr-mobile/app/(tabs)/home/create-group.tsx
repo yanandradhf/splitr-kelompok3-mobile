@@ -14,6 +14,14 @@ import { router } from "expo-router";
 import { COLORS, FONTS } from "../../../constants/theme";
 import { useApi } from "../../../hooks/useApi";
 import SuccessModal from "../../../components/ui/SuccessModal";
+import {
+  wp,
+  hp,
+  rf,
+  getSpacing,
+  getBorderRadius,
+  getIconSize,
+} from "../../../utils/responsive";
 
 const personImages = [
   require("../../../assets/images/person1.png"),
@@ -112,12 +120,12 @@ export default function CreateGroupScreen() {
             <TouchableOpacity onPress={() => router.back()}>
               <Ionicons
                 name="arrow-back"
-                size={24}
+                size={getIconSize(24)}
                 color={COLORS.textPrimary}
               />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Buat Grup</Text>
-            <View style={{ width: 24 }} />
+            <View style={{ width: getIconSize(24) }} />
           </View>
         </View>
 
@@ -149,7 +157,7 @@ export default function CreateGroupScreen() {
                 <View style={styles.searchInputContainer}>
                   <Ionicons
                     name="search"
-                    size={20}
+                    size={getIconSize(20)}
                     color={COLORS.textSecondary}
                     style={styles.searchIcon}
                   />
@@ -204,7 +212,7 @@ export default function CreateGroupScreen() {
                         >
                           <Ionicons
                             name={isSelected ? "checkmark" : "add"}
-                            size={16}
+                            size={getIconSize(16)}
                             color={COLORS.white}
                           />
                         </View>
@@ -226,7 +234,7 @@ export default function CreateGroupScreen() {
                     <View style={styles.noResultsContainer}>
                       <Ionicons
                         name="search"
-                        size={32}
+                        size={getIconSize(32)}
                         color={COLORS.textSecondary}
                       />
                       <Text style={styles.noResultsText}>
@@ -286,56 +294,56 @@ const styles = StyleSheet.create({
   },
   purpleSection: {
     backgroundColor: "#A6D3CE",
-    paddingBottom: 20,
+    paddingBottom: getSpacing(20),
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingHorizontal: getSpacing(24),
+    paddingTop: getSpacing(16),
+    paddingBottom: getSpacing(20),
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: rf(20),
     fontFamily: FONTS.bold,
     color: COLORS.black,
   },
   whiteModalContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: getBorderRadius(24),
+    borderTopRightRadius: getBorderRadius(24),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    marginBottom: -50,
+    marginBottom: -hp(6),
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 50,
+    paddingBottom: hp(6),
   },
   formSection: {
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: getSpacing(24),
+    paddingTop: getSpacing(40),
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: getSpacing(20),
   },
   label: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginBottom: 8,
+    marginBottom: getSpacing(8),
   },
   input: {
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    fontSize: 16,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
+    fontSize: rf(16),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
     borderWidth: 1,
@@ -345,68 +353,68 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
+    borderRadius: getBorderRadius(12),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: getSpacing(16),
+    marginBottom: getSpacing(16),
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: getSpacing(8),
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
+    paddingVertical: getSpacing(16),
+    fontSize: rf(16),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
   },
 
   friendsSection: {
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: getSpacing(20),
+    marginBottom: getSpacing(40),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: rf(18),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: 16,
+    marginBottom: getSpacing(16),
   },
   friendItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: getSpacing(14),
+    paddingHorizontal: getSpacing(16),
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: getBorderRadius(12),
+    marginBottom: getSpacing(8),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
   },
   friendAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
+    marginRight: getSpacing(12),
   },
   friendInfo: {
     flex: 1,
   },
   friendName: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginBottom: 2,
+    marginBottom: getSpacing(2),
   },
   friendUsername: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
   statusIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: wp(6),
+    height: wp(6),
+    borderRadius: wp(3),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -419,58 +427,58 @@ const styles = StyleSheet.create({
 
   emptyFriendsState: {
     alignItems: "center",
-    paddingVertical: 30,
+    paddingVertical: getSpacing(30),
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
+    borderRadius: getBorderRadius(12),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
     borderStyle: "dashed",
   },
   emptyFriendsText: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: FONTS.semiBold,
     color: COLORS.textSecondary,
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: getSpacing(8),
+    marginBottom: getSpacing(4),
   },
   emptyFriendsSubtext: {
-    fontSize: 12,
+    fontSize: rf(12),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: "center",
   },
   noResultsContainer: {
     alignItems: "center",
-    paddingVertical: 30,
+    paddingVertical: getSpacing(30),
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
-    marginTop: 8,
+    borderRadius: getBorderRadius(12),
+    marginTop: getSpacing(8),
   },
   noResultsText: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: FONTS.semiBold,
     color: COLORS.textSecondary,
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: getSpacing(8),
+    marginBottom: getSpacing(4),
   },
   noResultsSubtext: {
-    fontSize: 12,
+    fontSize: rf(12),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
   createButton: {
     backgroundColor: "#00897B",
-    borderRadius: 12,
-    paddingVertical: 18,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(18),
     alignItems: "center",
-    marginTop: 20,
+    marginTop: getSpacing(20),
   },
   createButtonDisabled: {
     backgroundColor: COLORS.gray,
   },
   createButtonText: {
     color: COLORS.white,
-    fontSize: 18,
+    fontSize: rf(18),
     fontFamily: FONTS.bold,
     letterSpacing: 0.5,
   },

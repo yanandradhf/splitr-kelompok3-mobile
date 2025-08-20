@@ -1,21 +1,27 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet, Modal } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS, FONTS } from "../../constants/theme";
 import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TouchableWithoutFeedback,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS } from '../../constants/theme';
+  wp,
+  hp,
+  rf,
+  getSpacing,
+  getBorderRadius,
+  getIconSize,
+} from "../../utils/responsive";
 
 interface SuccessModalProps {
   visible: boolean;
   onClose: () => void;
-  groupName?: string;
+  groupName: string;
 }
 
-export default function SuccessModal({ visible, onClose, groupName }: SuccessModalProps) {
+export default function SuccessModal({
+  visible,
+  onClose,
+  groupName,
+}: SuccessModalProps) {
   useEffect(() => {
     if (visible) {
       const timer = setTimeout(() => {
@@ -26,86 +32,58 @@ export default function SuccessModal({ visible, onClose, groupName }: SuccessMod
   }, [visible, onClose]);
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.modalContainer}>
-              {/* Success Icon */}
-              <View style={styles.iconContainer}>
-                <Ionicons name="people" size={48} color="#00897B" />
-                <View style={styles.checkmarkBadge}>
-                  <Ionicons name="checkmark" size={20} color={COLORS.white} />
-                </View>
-              </View>
-
-              {/* Success Text */}
-              <Text style={styles.title}>Yeay!</Text>
-              <Text style={styles.subtitle}>
-                {groupName ? `Grup "${groupName}" berhasil dibuat` : 'Grup Berhasil dibuat'}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
+    <Modal visible={visible} transparent={true} animationType="fade">
+      <View style={styles.modalOverlay}>
+        <View style={styles.successModal}>
+          <View style={styles.successIcon}>
+            <Ionicons
+              name="checkmark-circle"
+              size={getIconSize(60)}
+              color="#00897B"
+            />
+          </View>
+          <Text style={styles.successTitle}>
+            Grup "{groupName}" berhasil dibuat!
+          </Text>
+          <Text style={styles.successSubtitle}>
+            Anda akan diarahkan kembali ke halaman grup
+          </Text>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  modalContainer: {
-    backgroundColor: '#A6D3CE',
-    borderRadius: 24,
-    padding: 40,
-    alignItems: 'center',
-    marginHorizontal: 40,
-    minWidth: 280,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
+  successModal: {
+    backgroundColor: "#A6D3CE",
+    borderRadius: getBorderRadius(24),
+    padding: getSpacing(40),
+    alignItems: "center",
+    marginHorizontal: getSpacing(40),
+    minWidth: wp(70),
   },
-  iconContainer: {
-    position: 'relative',
-    marginBottom: 24,
+  successIcon: {
+    marginBottom: getSpacing(16),
   },
-  checkmarkBadge: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: '#00897B',
-    borderRadius: 16,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#A6D3CE',
-  },
-  title: {
-    fontSize: 28,
+  successTitle: {
+    fontSize: rf(18),
     fontFamily: FONTS.bold,
     color: COLORS.white,
-    marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
+    marginBottom: getSpacing(8),
   },
-  subtitle: {
-    fontSize: 16,
+  successSubtitle: {
+    fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.white,
-    textAlign: 'center',
-    lineHeight: 22,
+    textAlign: "center",
+    opacity: 0.9,
   },
 });

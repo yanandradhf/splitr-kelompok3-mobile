@@ -15,6 +15,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import { COLORS, FONTS } from "../../../constants/theme";
 import { useApi } from "../../../hooks/useApi";
+import {
+  wp,
+  hp,
+  rf,
+  getSpacing,
+  getBorderRadius,
+  getIconSize,
+} from "../../../utils/responsive";
 
 const personImages = [
   require("../../../assets/images/person1.png"),
@@ -116,17 +124,21 @@ export default function GroupsScreen() {
             <TouchableOpacity onPress={() => router.back()}>
               <Ionicons
                 name="arrow-back"
-                size={24}
+                size={getIconSize(24)}
                 color={COLORS.textPrimary}
               />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Grup</Text>
-            <View style={{ width: 24 }} />
+            <View style={{ width: getIconSize(24) }} />
           </View>
 
           {/* Search Bar */}
           <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color={COLORS.textSecondary} />
+            <Ionicons
+              name="search"
+              size={getIconSize(20)}
+              color={COLORS.textSecondary}
+            />
             <TextInput
               style={styles.searchInput}
               placeholder="Search Group"
@@ -217,7 +229,7 @@ export default function GroupsScreen() {
                 <View style={styles.emptyState}>
                   <Ionicons
                     name="people-outline"
-                    size={48}
+                    size={getIconSize(48)}
                     color={COLORS.textSecondary}
                   />
                   <Text style={styles.emptyText}>Tidak ada grup ditemukan</Text>
@@ -255,18 +267,18 @@ const styles = StyleSheet.create({
   },
   purpleSection: {
     backgroundColor: COLORS.backgroundMain,
-    paddingBottom: 20,
+    paddingBottom: getSpacing(20),
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingHorizontal: getSpacing(24),
+    paddingTop: getSpacing(16),
+    paddingBottom: getSpacing(20),
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: rf(20),
     fontFamily: FONTS.bold,
     color: COLORS.black,
   },
@@ -274,151 +286,136 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.white,
-    marginHorizontal: 24,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
+    marginHorizontal: getSpacing(24),
+    marginBottom: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
+    paddingVertical: getSpacing(12),
+    borderRadius: getBorderRadius(12),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: getSpacing(8),
+    fontSize: rf(16),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
   },
   whiteModalContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: getBorderRadius(24),
+    borderTopRightRadius: getBorderRadius(24),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    marginBottom: -50,
+    marginBottom: -hp(6),
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 50,
+    paddingBottom: hp(6),
   },
   listContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingHorizontal: getSpacing(24),
+    paddingTop: getSpacing(24),
   },
   groupCard: {
-    borderRadius: 16,
+    borderRadius: getBorderRadius(16),
     overflow: "hidden",
     elevation: 12,
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
-    marginBottom: 16,
+    marginBottom: getSpacing(16),
   },
   groupHeader: {
     backgroundColor: "#00897B",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    paddingHorizontal: getSpacing(16),
+    paddingVertical: getSpacing(12),
+    borderTopLeftRadius: getBorderRadius(16),
+    borderTopRightRadius: getBorderRadius(16),
   },
   groupId: {
+    fontSize: rf(14),
     fontFamily: FONTS.semiBold,
     color: "#FFFFFF",
   },
   groupHost: {
+    fontSize: rf(14),
     fontFamily: FONTS.semiBold,
     color: "#FFFFFF",
   },
   groupContent: {
     backgroundColor: COLORS.white,
     flexDirection: "row",
-    padding: 16,
+    padding: getSpacing(16),
     alignItems: "center",
   },
   groupAvatars: {
     flexDirection: "row",
-    marginRight: 16,
+    marginRight: getSpacing(16),
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
     borderWidth: 2,
     borderColor: COLORS.white,
   },
   avatarOverlap: {
-    marginLeft: -10,
+    marginLeft: -getSpacing(10),
   },
   groupInfo: {
     flex: 1,
   },
   groupName: {
-    fontSize: 18,
+    fontSize: rf(18),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: getSpacing(4),
   },
   groupMembers: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
-    marginBottom: 8,
-  },
-  addFriendButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: "#00897B",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignSelf: "flex-start",
-  },
-  addFriendText: {
-    fontSize: 12,
-    fontFamily: FONTS.semiBold,
-    color: "#00897B",
-    marginLeft: 4,
+    marginBottom: getSpacing(8),
   },
   createGroupButton: {
     backgroundColor: COLORS.teal,
-    marginHorizontal: 24,
-    marginTop: 20,
-    paddingVertical: 18,
-    borderRadius: 12,
+    marginHorizontal: getSpacing(24),
+    marginTop: getSpacing(20),
+    paddingVertical: getSpacing(18),
+    borderRadius: getBorderRadius(12),
     alignItems: "center",
   },
   createGroupText: {
-    fontSize: 18,
+    fontSize: rf(18),
     fontFamily: FONTS.bold,
     color: COLORS.white,
     letterSpacing: 0.5,
   },
   loader: {
-    marginTop: 40,
+    marginTop: getSpacing(40),
   },
   emptyState: {
     alignItems: "center",
-    paddingVertical: 40,
+    paddingVertical: getSpacing(40),
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: rf(16),
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: getSpacing(16),
+    marginBottom: getSpacing(8),
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: "center",
