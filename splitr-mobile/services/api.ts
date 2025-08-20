@@ -61,6 +61,18 @@ export const authAPI = {
   me: () => api.get(API_CONFIG.ENDPOINTS.ME),
   register: (data: any) => api.post(API_CONFIG.ENDPOINTS.REGISTER, data),
   logout: () => api.post(API_CONFIG.ENDPOINTS.LOGOUT),
+  sendResetOTP: (data: { email: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.SEND_RESET_OTP);
+    return api.post(API_CONFIG.ENDPOINTS.SEND_RESET_OTP, data);
+  },
+  verifyResetOTP: (data: { email: string; otp: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.VERIFY_RESET_OTP);
+    return api.post(API_CONFIG.ENDPOINTS.VERIFY_RESET_OTP, data);
+  },
+  resetPassword: (data: { tempToken: string; newPassword: string; confirmPassword: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.RESET_PASSWORD);
+    return api.post(API_CONFIG.ENDPOINTS.RESET_PASSWORD, data);
+  },
 };
 
 export const profileAPI = {
@@ -76,7 +88,6 @@ export const profileAPI = {
     return api.put(API_CONFIG.ENDPOINTS.CHANGE_PASSWORD, data);
   },
   changePin: (data: { currentPin: string; newPin: string; confirmPin: string }) => {
-    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.CHANGE_PIN);
     return api.put(API_CONFIG.ENDPOINTS.CHANGE_PIN, data);
   },
 };

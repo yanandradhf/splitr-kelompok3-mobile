@@ -8,6 +8,9 @@ export const API_CONFIG = {
     PROFILE: "/api/mobile/profile",
     CHANGE_PASSWORD: "/api/mobile/profile/change-password",
     CHANGE_PIN: "/api/mobile/profile/change-pin",
+    SEND_RESET_OTP: "/api/mobile/auth/send-reset-otp",
+    VERIFY_RESET_OTP: "/api/mobile/auth/verify-reset-otp",
+    RESET_PASSWORD: "/api/mobile/auth/reset-password",
   },
   TIMEOUT: 10000,
 };
