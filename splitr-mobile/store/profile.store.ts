@@ -1,5 +1,35 @@
 import { create } from 'zustand';
-import { profileAPI, ProfileResponse, UpdateProfileRequest } from '../services/profile.api';
+import { profileAPI } from '../services/api';
+
+export interface ProfileUser {
+  userId: string;
+  name: string;
+  email: string;
+  username: string;
+  phone: string;
+  bniAccountNumber: string;
+  bniBranchCode: string;
+  isVerified: boolean;
+  defaultPaymentMethod: string;
+  createdAt: string;
+}
+
+export interface ProfileStats {
+  totalBills: number;
+  totalSpent: number;
+  pendingPayments: number;
+}
+
+export interface ProfileResponse {
+  user: ProfileUser;
+  stats: ProfileStats;
+}
+
+export interface UpdateProfileRequest {
+  name: string;
+  phone: string;
+  email: string;
+}
 
 interface ProfileState {
   profile: ProfileResponse | null;

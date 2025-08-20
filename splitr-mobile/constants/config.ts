@@ -5,6 +5,9 @@ export const API_CONFIG = {
     REGISTER: "/api/mobile/auth/register",
     ME: "/api/mobile/auth/me",
     LOGOUT: "/api/mobile/auth/logout",
+    PROFILE: "/api/mobile/profile",
+    CHANGE_PASSWORD: "/api/mobile/profile/change-password",
+    CHANGE_PIN: "/api/mobile/profile/change-pin",
   },
   TIMEOUT: 10000,
 };
