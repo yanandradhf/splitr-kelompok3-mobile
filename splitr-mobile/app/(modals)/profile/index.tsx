@@ -24,25 +24,7 @@ export default function ProfileScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const formatCurrency = (amount) => {
-    if (amount >= 1000000) {
-      return `Rp ${(amount / 1000000).toFixed(1)}M`;
-    } else if (amount >= 1000) {
-      return `Rp ${(amount / 1000).toFixed(0)}K`;
-    }
-    return `Rp ${amount.toLocaleString("id-ID")}`;
-  };
 
-  const getPaymentMethodText = (method) => {
-    switch (method) {
-      case "instant":
-        return "Transfer Instan";
-      case "regular":
-        return "Transfer Reguler";
-      default:
-        return "Transfer Instan";
-    }
-  };
 
   if (isLoading) {
     return <LoadingScreen />;
