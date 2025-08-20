@@ -264,7 +264,7 @@ export const UI_STATE_PAYLOAD = {
           isExpanded: true,
           people: [
             {
-              name: "Ashraf Ren (You)",
+              name: "Nabilah Luthfianasari (You)",
               status: "lunas",
               method: "bayar-sekarang",
               paidAt: "2025-06-19",

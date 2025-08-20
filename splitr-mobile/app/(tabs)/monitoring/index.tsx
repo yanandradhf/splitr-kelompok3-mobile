@@ -97,6 +97,60 @@ const formatMoney = (amount: number): Money => ({
 
 const MOCK_DATA = UI_STATE_PAYLOAD.screens;
 
+// Dynamic calculation functions
+const idr = (n: number): Money => ({
+  amount: n,
+  currency: 'IDR',
+  formatted: `Rp ${n.toLocaleString('id-ID')}`
+});
+
+const clamp0 = (n: number) => (n < 0 ? 0 : n);
+
+const calcPembayaranTertunda = (myBills: any[]): Money => {
+  const totalOutstanding = myBills.reduce((acc, bill) => {
+    const outstandingPerBill = bill.people.reduce((s: number, p: any) => {
+      // For 'tertunda' status: calculate remaining amount after partial payment
+      // For 'lunas' status: no outstanding amount
+      if (p.status === 'lunas') return s;
+      
+      const outstanding = p.paidAmount != null
+        ? clamp0(p.subtotal.amount - p.paidAmount)
+        : p.subtotal.amount;
+      return s + outstanding;
+    }, 0);
+    return acc + outstandingPerBill;
+  }, 0);
+  return idr(totalOutstanding);
+};
+
+const calcTotalTagihanSaya = (payables: any[]): Money => {
+  const totalIHaventPaid = payables.reduce((acc, n) => {
+    if (n.status === 'lunas' || n.status === 'dibatalkan') return acc;
+    const outstanding = n.paidAmount != null
+      ? clamp0(n.amount.amount - n.paidAmount)
+      : n.amount.amount;
+    return acc + outstanding;
+  }, 0);
+  return idr(totalIHaventPaid);
+};
+
+const deriveBillProgress = (bill: any): DonutProgress => {
+  const total = bill.total.amount || bill.people.reduce((sum: number, p: any) => sum + p.subtotal.amount, 0);
+  
+  // Calculate total paid amount including partial payments
+  const paidSum = bill.people.reduce((sum: number, p: any) => {
+    if (p.status === 'lunas') {
+      return sum + p.subtotal.amount;
+    } else if (p.status === 'tertunda' && p.paidAmount != null) {
+      return sum + p.paidAmount;
+    }
+    return sum;
+  }, 0);
+  
+  const percent = total <= 0 ? 0 : Math.min(100, Math.max(0, Math.round((paidSum / total) * 100)));
+  return { percent, label: `${percent}% terbayar` };
+};
+
 export default function MonitoringIndex() {
   const [activeTab, setActiveTab] = useState<'running' | 'completed'>('running');
   const [expandedBills, setExpandedBills] = useState<Set<string>>(new Set());
@@ -110,6 +164,10 @@ export default function MonitoringIndex() {
     }
     setExpandedBills(newExpanded);
   };
+
+  // Calculate dynamic summary values
+  const pendingFromFriends = calcPembayaranTertunda(MOCK_DATA.running.myBills.items);
+  const iMustPayTotal = calcTotalTagihanSaya(MOCK_DATA.running.payables.items);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -142,12 +200,14 @@ export default function MonitoringIndex() {
           <>
             {/* Summary Cards */}
             <View style={styles.summaryRow}>
-              {MOCK_DATA.running.summary.map((card, index) => (
-                <View key={index} style={styles.summaryCard}>
-                  <Text style={styles.summaryTitle}>{card.title}</Text>
-                  <Text style={styles.summaryAmount}>{card.value.formatted}</Text>
-                </View>
-              ))}
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryTitle}>Pembayaran Tertunda</Text>
+                <Text style={styles.summaryAmount}>{pendingFromFriends.formatted}</Text>
+              </View>
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryTitle}>Total Tagihan Saya</Text>
+                <Text style={styles.summaryAmount}>{iMustPayTotal.formatted}</Text>
+              </View>
             </View>
 
             {/* Tagihan yang Aku Buat */}
@@ -162,7 +222,7 @@ export default function MonitoringIndex() {
                       <Text style={styles.billAmount}>{bill.total.formatted}</Text>
                     </View>
                     <View style={styles.billActions}>
-                      <DonutChart progress={bill.progress} />
+                      <DonutChart progress={deriveBillProgress(bill)} />
                       <Pressable onPress={() => toggleExpanded(bill.id)}>
                         <Ionicons 
                           name={expandedBills.has(bill.id) ? 'chevron-up' : 'chevron-down'} 
@@ -176,34 +236,36 @@ export default function MonitoringIndex() {
                   {expandedBills.has(bill.id) && (
                     <View style={styles.expandedContent}>
                       {bill.people.map((person, index) => (
-                        <View key={index} style={styles.friendRow}>
-                          <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                              <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
-                            </View>
-                            <View style={styles.friendInfo}>
+                        <View key={index} style={styles.personSection}>
+                          <View style={styles.personHeader}>
+                            <View style={styles.avatarContainer}>
+                              <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
+                              </View>
                               <Text style={styles.friendName}>{person.name}</Text>
-                              {person.orderItems && (
-                                <View style={styles.orderItems}>
-                                  {person.orderItems.map((item, idx) => (
-                                    <Text key={idx} style={styles.orderItem}>
-                                      {item.qty}x {item.name} - {item.price.formatted}
-                                    </Text>
-                                  ))}
+                            </View>
+                            <View style={styles.friendRight}>
+                              <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
+                              <View style={[styles.statusBadge, 
+                                person.status === 'lunas' ? styles.statusLunas : styles.statusTertunda
+                              ]}>
+                                <Text style={[styles.statusText,
+                                  person.status === 'lunas' ? styles.statusTextLunas : styles.statusTextTertunda
+                                ]}>{person.status === 'lunas' ? 'Lunas' : 'Tertunda'}</Text>
+                              </View>
+                            </View>
+                          </View>
+                          {person.orderItems && (
+                            <View style={styles.itemsTable}>
+                              {person.orderItems.map((item, idx) => (
+                                <View key={idx} style={styles.itemRow}>
+                                  <Text style={styles.itemName}>{item.name}</Text>
+                                  <Text style={styles.itemQty}>{item.qty}x</Text>
+                                  <Text style={styles.itemPrice}>{item.price.formatted}</Text>
                                 </View>
-                              )}
+                              ))}
                             </View>
-                          </View>
-                          <View style={styles.friendRight}>
-                            <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
-                            <View style={[styles.statusBadge, 
-                              person.status === 'lunas' ? styles.statusLunas : styles.statusTertunda
-                            ]}>
-                              <Text style={[styles.statusText,
-                                person.status === 'lunas' ? styles.statusTextLunas : styles.statusTextTertunda
-                              ]}>{person.status === 'lunas' ? 'Lunas' : 'Tertunda'}</Text>
-                            </View>
-                          </View>
+                          )}
                         </View>
                       ))}
                       <Pressable style={styles.receiptButton}>
@@ -298,33 +360,37 @@ export default function MonitoringIndex() {
                     {expandedBills.has(bill.id) && bill.people && (
                       <View style={styles.expandedContent}>
                         {bill.people.map((person, index) => (
-                          <View key={index} style={styles.friendRow}>
-                            <View style={styles.avatarContainer}>
-                              <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
+                          <View key={index} style={styles.personSection}>
+                            <View style={styles.personHeader}>
+                              <View style={styles.avatarContainer}>
+                                <View style={styles.avatar}>
+                                  <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
+                                </View>
+                                <View style={styles.friendInfo}>
+                                  <Text style={styles.friendName}>{person.name}</Text>
+                                  <Text style={styles.paymentMethod}>
+                                    {person.method === 'bayar-sekarang' ? 'Bayar Sekarang' : 'Auto-Transfer'} : {person.paidAt}
+                                  </Text>
+                                </View>
                               </View>
-                              <View style={styles.friendInfo}>
-                                <Text style={styles.friendName}>{person.name}</Text>
-                                <Text style={styles.paymentMethod}>
-                                  {person.method === 'bayar-sekarang' ? 'Bayar Sekarang' : 'Auto-Transfer'} : {person.paidAt}
-                                </Text>
-                                {person.orderItems && (
-                                  <View style={styles.orderItems}>
-                                    {person.orderItems.map((item, idx) => (
-                                      <Text key={idx} style={styles.orderItem}>
-                                        {item.qty}x {item.name} - {item.price.formatted}
-                                      </Text>
-                                    ))}
+                              <View style={styles.friendRight}>
+                                <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
+                                <View style={styles.statusBadgeSuccess}>
+                                  <Text style={styles.statusTextSuccess}>Lunas</Text>
+                                </View>
+                              </View>
+                            </View>
+                            {person.orderItems && (
+                              <View style={styles.itemsTable}>
+                                {person.orderItems.map((item, idx) => (
+                                  <View key={idx} style={styles.itemRow}>
+                                    <Text style={styles.itemName}>{item.name}</Text>
+                                    <Text style={styles.itemQty}>{item.qty}x</Text>
+                                    <Text style={styles.itemPrice}>{item.price.formatted}</Text>
                                   </View>
-                                )}
+                                ))}
                               </View>
-                            </View>
-                            <View style={styles.friendRight}>
-                              <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
-                              <View style={styles.statusBadgeSuccess}>
-                                <Text style={styles.statusTextSuccess}>Lunas</Text>
-                              </View>
-                            </View>
+                            )}
                           </View>
                         ))}
                         {bill.receiptUrl && (
@@ -553,6 +619,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+  },
+  personSection: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  personHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   friendInfo: {
     flex: 1,
