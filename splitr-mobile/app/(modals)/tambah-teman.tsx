@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Modal, Image } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,8 @@ import { COLORS, FONTS } from '../../constants/theme';
 
 interface Friend {
   id: string;
+  profilePhoto?: string;
+  name: string;
   username: string;
 }
 
@@ -30,11 +32,11 @@ export default function TambahTeman() {
 
   useEffect(() => {
     if (friendSearch.trim() === '') {
-      setFilteredFriends(addedFriends);
+      setFilteredFriends(addedFriends.sort((a, b) => a.name.localeCompare(b.name)));
     } else {
       const filtered = addedFriends.filter(friend => 
         friend.username.toLowerCase().includes(friendSearch.toLowerCase())
-      );
+      ).sort((a, b) => a.name.localeCompare(b.name));
       setFilteredFriends(filtered);
     }
   }, [friendSearch, addedFriends]);
@@ -44,14 +46,18 @@ export default function TambahTeman() {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       const mockAddedFriends: Friend[] = [
-        { id: '1', username: 'nanabila' },
-        { id: '2', username: 'yanana' },
-        { id: '3', username: 'cicil' },
-        { id: '4', username: 'awlia' },
+        { id: '1', name: 'Nabila Sari', username: 'nanabila', profilePhoto: 'https://i.pravatar.cc/150?img=1' },
+        { id: '2', name: 'Yana Putri', username: 'yanana', profilePhoto: 'https://i.pravatar.cc/150?img=2' },
+        { id: '3', name: 'Cicilia Indah', username: 'cicil' },
+        { id: '4', name: 'Citra Panjaitan', username: 'citrapan', profilePhoto: 'https://i.pravatar.cc/150?img=4' },
+        { id: '5', name: 'Ivana Isdi', username: 'vanadi' },
+        {id: '6', name: 'Diyaa Noventino', username: 'diyanoven'},
+        {id: '7', name: 'Haqul Ulhaq', username: 'haqul'} 
       ];
       
-      setAddedFriends(mockAddedFriends);
-      setFilteredFriends(mockAddedFriends);
+      const sortedFriends = mockAddedFriends.sort((a, b) => a.name.localeCompare(b.name));
+      setAddedFriends(sortedFriends);
+      setFilteredFriends(sortedFriends);
     } catch (error) {
       console.error('Load friends error:', error);
     } finally {
@@ -84,9 +90,9 @@ export default function TambahTeman() {
       await new Promise(resolve => setTimeout(resolve, 800));
       
       const mockSearchResults: Friend[] = [
-        { id: '10', username: 'ilhamisidi' },
-        { id: '11', username: 'ahmadrizki' },
-        { id: '12', username: 'sariindah' },
+        { id: '10', name: 'Ilham Sipasi', username: 'ilhampasi', profilePhoto: 'https://i.pravatar.cc/150?img=10' },
+        { id: '11', name: 'Ahmad Rizki', username: 'ahmadrizki' },
+        { id: '12', name: 'Sari Indah', username: 'sariindah', profilePhoto: 'https://i.pravatar.cc/150?img=12' },
       ].filter(user => 
         user.username.toLowerCase().includes(username.toLowerCase())
       );
@@ -165,78 +171,97 @@ export default function TambahTeman() {
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Tambah Teman</Text>
+            <Text style={styles.headerTitle}>Teman</Text>
             <View style={styles.placeholder} />
           </View>
         </View>
 
         <View style={styles.whiteModalContainer}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tambahkan teman</Text>
-              <View style={styles.searchInputContainer}>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Masukkan username"
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholderTextColor={COLORS.placeholder}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <View style={styles.searchIcon}>
-                  {isSearching ? (
-                    <ActivityIndicator size={20} color={COLORS.teal} />
-                  ) : (
-                    <Ionicons name="search" size={20} color={COLORS.teal} />
-                  )}
-                </View>
-              </View>
-              
-              {searchResults.length > 0 && (
-                <View>
-                  <Text style={styles.resultsTitle}>Hasil Pencarian ({searchResults.length})</Text>
-                  {searchResults.map((user) => (
-                    <View key={user.id} style={styles.searchResultCard}>
-                      <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>
-                      </View>
-                      <View style={styles.userInfo}>
-                        <Text style={styles.friendName}>{user.username}</Text>
-                      </View>
-                      <TouchableOpacity 
-                        style={styles.addButton}
-                        onPress={() => handleAddFriendClick(user)}
-                      >
-                        <Ionicons name="add" size={20} color={COLORS.white} />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Daftar teman ({addedFriends.length})</Text>
-              
-              <View style={styles.searchInputContainer}>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Cari teman"
-                  value={friendSearch}
-                  onChangeText={setFriendSearch}
-                  placeholderTextColor={COLORS.placeholder}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <View style={styles.searchIcon}>
+          {/* Sticky Add Friend Section */}
+          <View style={styles.stickySection}>
+            <Text style={styles.sectionTitle}>Tambahkan Teman</Text>
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Masukkan username"
+                value={username}
+                onChangeText={setUsername}
+                placeholderTextColor={COLORS.placeholder}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <View style={styles.searchIcon}>
+                {isSearching ? (
+                  <ActivityIndicator size={20} color={COLORS.teal} />
+                ) : (
                   <Ionicons name="search" size={20} color={COLORS.teal} />
-                </View>
+                )}
               </View>
-              
+            </View>
+          </View>
+
+          {/* Scrollable Search Results */}
+          {searchResults.length > 0 && (
+            <View style={styles.searchResultsContainer}>
+              <ScrollView 
+                style={styles.searchResultsScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                <Text style={styles.resultsTitle}>Hasil Pencarian ({searchResults.length})</Text>
+                {searchResults.map((user) => (
+                  <View key={user.id} style={styles.searchResultCard}>
+                    {user.profilePhoto ? (
+                      <Image 
+                        source={{ uri: user.profilePhoto }} 
+                        style={styles.profileImage}
+                        onError={() => {}}
+                      />
+                    ) : (
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
+                      </View>
+                    )}
+                    <View style={styles.userInfo}>
+                      <Text style={styles.friendName}>{user.name}</Text>
+                      <Text style={styles.friendUsername}>@{user.username}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.addButton}
+                      onPress={() => handleAddFriendClick(user)}
+                    >
+                      <Ionicons name="add" size={20} color={COLORS.white} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Sticky Friends List Section */}
+          <View style={styles.stickySectionWithMargin}>
+            <Text style={styles.sectionTitle}>Daftar Teman ({addedFriends.length})</Text>
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Cari teman"
+                value={friendSearch}
+                onChangeText={setFriendSearch}
+                placeholderTextColor={COLORS.placeholder}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <View style={styles.searchIcon}>
+                <Ionicons name="search" size={20} color={COLORS.teal} />
+              </View>
+            </View>
+          </View>
+
+          {/* Scrollable Friends List */}
+          <View style={styles.friendsListContainer}>
+            <ScrollView 
+              style={styles.friendsListScroll}
+              showsVerticalScrollIndicator={false}
+            >
               {isLoadingFriends ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color={COLORS.teal} />
@@ -247,10 +272,21 @@ export default function TambahTeman() {
               ) : (
                 filteredFriends.map((friend) => (
                   <View key={friend.id} style={styles.friendCard}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>{friend.username.charAt(0).toUpperCase()}</Text>
+                    {friend.profilePhoto ? (
+                      <Image 
+                        source={{ uri: friend.profilePhoto }} 
+                        style={styles.profileImage}
+                        onError={() => {}}
+                      />
+                    ) : (
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>{friend.name.charAt(0).toUpperCase()}</Text>
+                      </View>
+                    )}
+                    <View style={styles.friendInfo}>
+                      <Text style={styles.friendName}>{friend.name}</Text>
+                      <Text style={styles.friendUsername}>@{friend.username}</Text>
                     </View>
-                    <Text style={styles.friendName}>{friend.username}</Text>
                     <TouchableOpacity 
                       style={styles.deleteButton}
                       onPress={() => handleDeleteClick(friend)}
@@ -260,8 +296,8 @@ export default function TambahTeman() {
                   </View>
                 ))
               )}
-            </View>
-          </ScrollView>
+            </ScrollView>
+          </View>
         </View>
         
         <Modal
@@ -278,10 +314,21 @@ export default function TambahTeman() {
               <Text style={styles.successMessage}>Teman berhasil ditambahkan</Text>
               {addedFriend && (
                 <View style={styles.friendPreview}>
-                  <View style={styles.previewAvatar}>
-                    <Text style={styles.avatarText}>{addedFriend.username.charAt(0).toUpperCase()}</Text>
+                  {addedFriend.profilePhoto ? (
+                    <Image 
+                      source={{ uri: addedFriend.profilePhoto }} 
+                      style={styles.previewImage}
+                      onError={() => {}}
+                    />
+                  ) : (
+                    <View style={styles.previewAvatar}>
+                      <Text style={styles.avatarText}>{addedFriend.name.charAt(0).toUpperCase()}</Text>
+                    </View>
+                  )}
+                  <View>
+                    <Text style={styles.previewName}>{addedFriend.name}</Text>
+                    <Text style={styles.previewUsername}>@{addedFriend.username}</Text>
                   </View>
-                  <Text style={styles.previewName}>{addedFriend.username}</Text>
                 </View>
               )}
             </View>
@@ -387,31 +434,59 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000',
+    overflow: 'hidden',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
     marginBottom: -50,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingTop: 24,
-    paddingBottom: 50,
-  },
-  section: {
+  stickySection: {
+    backgroundColor: COLORS.white,
     paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.white,
+    zIndex: 10,
+  },
+  stickySectionWithMargin: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
+    marginTop: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.white,
+    zIndex: 10,
+  },
+  searchResultsContainer: {
+    flex: 1,
+    maxHeight: 180,
+    backgroundColor: COLORS.white,
+  },
+  searchResultsScroll: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  friendsListContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  friendsListScroll: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   searchInputContainer: {
     position: 'relative',
-    marginBottom: 16,
   },
   searchInput: {
     backgroundColor: COLORS.inputBg,
@@ -433,7 +508,7 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 24,
   },
   emptyTitle: {
     fontSize: 18,
@@ -452,7 +527,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
     gap: 8,
   },
   loadingText: {
@@ -464,7 +539,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -489,12 +564,25 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.white,
   },
+  friendInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
   friendName: {
     fontSize: 16,
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginLeft: 12,
-    flex: 1,
+  },
+  friendUsername: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   deleteButton: {
     padding: 8,
@@ -503,14 +591,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginBottom: 12,
-    marginTop: 16,
+    marginBottom: 8,
+    marginTop: 4,
   },
   searchResultCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: COLORS.black,
@@ -590,6 +678,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
+  },
+  previewUsername: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  previewImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
   },
   deleteModal: {
     backgroundColor: COLORS.white,

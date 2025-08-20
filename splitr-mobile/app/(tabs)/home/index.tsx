@@ -245,7 +245,18 @@ export default function HomeScreen() {
 
           {/* FRIENDS SECTION */}
           <View style={styles.modalSection}>
-            <Text style={styles.sectionTitle}>Lihat Teman</Text>
+            <TouchableOpacity 
+              style={styles.sectionHeader}
+              onPress={() => router.push('/(modals)/tambah-teman')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.sectionTitle}>Lihat Teman</Text>
+              <Ionicons 
+                name="chevron-forward" 
+                size={20} 
+                color={COLORS.textSecondary} 
+              />
+            </TouchableOpacity>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -368,11 +379,18 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 8,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingRight: 4,
+  },
   sectionTitle: {
     fontSize: 20,
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
-    marginBottom: 16,
+    marginBottom: 0,
   },
 
   // ACTIVITY CARD
