@@ -7,32 +7,21 @@ import {
   StyleSheet,
   StatusBar,
   Alert,
-  Dimensions,
+  SafeAreaView,
+  KeyboardAvoidingView,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
-import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
-const { width, height } = Dimensions.get('window');
-const isSmallScreen = height < 700;
-const isIOS = Platform.OS === 'ios';
+import { COLORS, FONTS } from '../../../constants/theme';
 
 export default function ResetPasswordScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-  });
-
-  if (!fontsLoaded) {
-    return null;
-  }
 
   const handleResetPassword = () => {
     if (!newPassword || !confirmPassword) {
@@ -54,200 +43,195 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FF8A50" />
-      
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={28} color="#000" />
-      </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.select({ ios: "padding", android: "height" })}
+          style={{ flex: 1 }}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.title}>Reset Password</Text>
+            <View style={styles.placeholder} />
+          </View>
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Lupa Password</Text>
-      </View>
+          {/* White Panel */}
+          <View style={styles.panel}>
+            <View style={styles.panelContent}>
+              <Text style={styles.subtitle}>Masukkan Password Baru</Text>
+              
+              <Text style={styles.description}>
+                Buat password baru yang aman untuk akun Anda. Pastikan password minimal 6 karakter.
+              </Text>
+              
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Password Baru</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Masukkan password baru"
+                    placeholderTextColor="#6B7280"
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry={!showNewPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity 
+                    style={styles.eyeButton}
+                    onPress={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    <Ionicons 
+                      name={showNewPassword ? "eye-off" : "eye"} 
+                      size={20} 
+                      color={COLORS.textSecondary} 
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-      {/* Main Form Container */}
-      <View style={styles.formWrapper}>
-        <View style={styles.formContainer}>
-          <Text style={styles.subtitle}>Masukkan Password Baru</Text>
-          
-          <Text style={styles.description}>
-            Buat password baru yang aman untuk akun Anda. Pastikan password minimal 6 karakter.
-          </Text>
-          
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password Baru</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Masukkan password baru"
-                placeholderTextColor="#CCCCCC"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry={!showNewPassword}
-                autoCapitalize="none"
-              />
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Konfirmasi Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Konfirmasi password baru"
+                    placeholderTextColor="#6B7280"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity 
+                    style={styles.eyeButton}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <Ionicons 
+                      name={showConfirmPassword ? "eye-off" : "eye"} 
+                      size={20} 
+                      color={COLORS.textSecondary} 
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               <TouchableOpacity 
-                style={styles.eyeButton}
-                onPress={() => setShowNewPassword(!showNewPassword)}
+                style={[styles.primaryBtn, (!newPassword || !confirmPassword || newPassword.length < 6) && styles.primaryBtnDisabled]}
+                onPress={handleResetPassword}
+                disabled={!newPassword || !confirmPassword || newPassword.length < 6}
               >
-                <Ionicons 
-                  name={showNewPassword ? "eye-off" : "eye"} 
-                  size={20} 
-                  color="#666" 
-                />
+                <Text style={[styles.primaryBtnText, (!newPassword || !confirmPassword || newPassword.length < 6) && styles.primaryBtnTextDisabled]}>Ubah Password</Text>
               </TouchableOpacity>
             </View>
           </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Konfirmasi Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Konfirmasi password baru"
-                placeholderTextColor="#CCCCCC"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity 
-                style={styles.eyeButton}
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                <Ionicons 
-                  name={showConfirmPassword ? "eye-off" : "eye"} 
-                  size={20} 
-                  color="#666" 
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <TouchableOpacity 
-            style={styles.resetButton}
-            onPress={handleResetPassword}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.resetButtonText}>Ubah Password</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF8736',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   backButton: {
-    position: 'absolute',
-    top: isIOS ? 90 : 70,
-    left: 20,
-    width: 40,
-    height: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    paddingVertical: isSmallScreen ? 20 : 30,
-    paddingTop: isIOS ? 80 : 60,
+    padding: 8,
   },
   title: {
-    fontSize: isSmallScreen ? 20 : 22,
-    fontWeight: '700',
-    color: '#000',
-    letterSpacing: 0.5,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
-  formWrapper: {
-    flex: 1,
-    paddingHorizontal: 0,
-    paddingTop: isSmallScreen ? 10 : 20,
+  placeholder: {
+    width: 40,
   },
-  formContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 60,
-    borderTopRightRadius: 60,
+  panel: {
     flex: 1,
-    paddingHorizontal: width * 0.06,
-    paddingTop: isSmallScreen ? 30 : 40,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
+  },
+  panelContent: {
+    paddingHorizontal: 20,
+    paddingTop: 36,
+    paddingBottom: 200,
+    gap: 14,
   },
   subtitle: {
-    fontSize: isSmallScreen ? 14 : 16,
-    fontWeight: '600',
-    color: '#000000ff',
-    marginBottom: isSmallScreen ? 15 : 20,
-    textAlign: 'left',
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    lineHeight: 22,
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 8,
   },
   description: {
-    fontSize: isSmallScreen ? 12 : 13,
-    fontWeight: '400',
-    color: '#666666',
-    marginBottom: isSmallScreen ? 25 : 30,
-    textAlign: 'left',
-    fontFamily: 'PlusJakartaSans_400Regular',
-    lineHeight: 18,
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+    marginBottom: 20,
   },
   inputContainer: {
-    marginBottom: isSmallScreen ? 20 : 25,
+    marginBottom: 20,
   },
   label: {
-    fontSize: isSmallScreen ? 13 : 14,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 14,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
     marginBottom: 8,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    backgroundColor: '#EEF1F5',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
   },
   passwordInput: {
     flex: 1,
-    paddingHorizontal: 18,
-    paddingVertical: isSmallScreen ? 15 : 18,
-    fontSize: isSmallScreen ? 14 : 16,
-    color: '#333',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
   },
   eyeButton: {
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
-  resetButton: {
-    backgroundColor: '#5DDBD3',
-    borderRadius: 8,
-    paddingVertical: isSmallScreen ? 15 : 18,
+  primaryBtn: {
+    backgroundColor: COLORS.teal,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 5,
-    marginTop: height * 0.30,
-    marginBottom: isIOS ? 30 : 20,
+    marginTop: 20,
   },
-  resetButtonText: {
-    color: '#000',
-    fontSize: isSmallScreen ? 14 : 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+  primaryBtnText: {
+    fontSize: 18,
+    fontFamily: FONTS.extraBold,
+    color: COLORS.white,
+  },
+  primaryBtnDisabled: {
+    backgroundColor: '#D1D5DB',
+  },
+  primaryBtnTextDisabled: {
+    color: '#9CA3AF',
   },
 });
