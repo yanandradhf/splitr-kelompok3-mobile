@@ -8,6 +8,15 @@ function CustomTabBar() {
   const pathname = usePathname();
   const isHome = pathname === '/home' || pathname === '/';
   const isMonitoring = pathname.includes('/monitoring');
+  
+  // Hide tab bar on specific pages
+  const hideTabBar = pathname.includes('/groups') || 
+                     pathname.includes('/group-detail') || 
+                     pathname.includes('/create-group');
+  
+  if (hideTabBar) {
+    return null;
+  }
 
   return (
     <View style={{
