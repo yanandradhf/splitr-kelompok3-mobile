@@ -117,6 +117,7 @@ const ChangePasswordScreen = () => {
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 placeholder="Masukkan password saat ini"
+                placeholderTextColor="#B0B0B0"
                 secureTextEntry={!showCurrentPassword}
                 autoCapitalize="none"
               />
@@ -141,6 +142,7 @@ const ChangePasswordScreen = () => {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 placeholder="Masukkan password baru"
+                placeholderTextColor="#B0B0B0"
                 secureTextEntry={!showNewPassword}
                 autoCapitalize="none"
               />
@@ -165,6 +167,7 @@ const ChangePasswordScreen = () => {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Konfirmasi password baru"
+                placeholderTextColor="#B0B0B0"
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
               />
