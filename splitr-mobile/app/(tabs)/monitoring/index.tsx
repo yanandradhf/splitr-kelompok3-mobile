@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { Colors } from '../../../constants/Colors';
 import { BUTTON_RULES, UI_STATE_PAYLOAD } from '../../../constants/config';
 import { useTransactionStore } from '../../../store/transaction.store';
+import { useCreatedBillsStore } from '../../../store/createdBillsStore';
 
 const DonutChart = ({ progress }: { progress: { percent: number; label?: string } }) => {
   const size = 50;
@@ -158,6 +159,7 @@ export default function MonitoringIndex() {
   const [activeTab, setActiveTab] = useState<'running' | 'completed'>('running');
   const [expandedBills, setExpandedBills] = useState<Set<string>>(new Set());
   const { runningTransactions, completedPayments, isInitialized, initializeTransactions } = useTransactionStore();
+  const { createdBills } = useCreatedBillsStore();
 
   useEffect(() => {
     // Only initialize if store hasn't been initialized yet
@@ -238,17 +240,21 @@ export default function MonitoringIndex() {
 
             {/* Tagihan yang Aku Buat */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{MOCK_DATA.running.myBills.title}</Text>
-              {MOCK_DATA.running.myBills.items.map((bill) => (
-                <View key={bill.id} style={styles.billCard}>
+              <Text style={styles.sectionTitle}>Tagihan yang Aku Buat</Text>
+              {createdBills.map((bill) => (
+                <View key={bill.id} style={styles.completedCard}>
                   <View style={styles.billHeader}>
                     <View style={styles.billInfo}>
                       <Text style={styles.billTitle}>{bill.title}</Text>
+                      <Text style={styles.paymentMethodText}>
+                        {bill.paymentMethod === 'PAY_NOW' ? 'Bayar Sekarang' : 'Bayar Nanti'}
+                        {bill.paymentMethod === 'PAY_LATER' && bill.dueDate && ` • ${bill.dueDate}`}
+                      </Text>
                       <Text style={styles.billDate}>{bill.date}</Text>
                       <Text style={styles.billAmount}>{bill.total.formatted}</Text>
                     </View>
                     <View style={styles.billActions}>
-                      <DonutChart progress={deriveBillProgress(bill)} />
+                      <DonutChart progress={bill.progress} />
                       <Pressable onPress={() => toggleExpanded(bill.id)}>
                         <Ionicons 
                           name={expandedBills.has(bill.id) ? 'chevron-up' : 'chevron-down'} 
@@ -283,13 +289,16 @@ export default function MonitoringIndex() {
                           </View>
                           {person.orderItems && (
                             <View style={styles.itemsTable}>
-                              {person.orderItems.map((item, idx) => (
-                                <View key={idx} style={styles.itemRow}>
-                                  <Text style={styles.itemName}>{item.name}</Text>
-                                  <Text style={styles.itemQty}>{item.qty}x</Text>
-                                  <Text style={styles.itemPrice}>{item.price.formatted}</Text>
-                                </View>
-                              ))}
+                              {person.orderItems.map((item, idx) => {
+                                const itemTotal = item.qty * item.price;
+                                return (
+                                  <View key={idx} style={styles.itemRow}>
+                                    <Text style={styles.itemName}>{item.name}</Text>
+                                    <Text style={styles.itemQty}>{item.qty}x</Text>
+                                    <Text style={styles.itemPrice}>Rp {itemTotal.toLocaleString('id-ID')}</Text>
+                                  </View>
+                                );
+                              })}
                             </View>
                           )}
                         </View>
@@ -649,6 +658,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text,
     flex: 1,
+  },
+  paymentMethodText: {
+    fontSize: 12,
+    color: '#00897B',
+    fontWeight: '600',
+    marginBottom: 2,
   },
   billDate: {
     fontSize: 12,

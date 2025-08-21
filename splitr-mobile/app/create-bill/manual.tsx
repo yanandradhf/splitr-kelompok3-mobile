@@ -1,68 +1,44 @@
 // app/create-bill/manual.tsx
-import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, TextInput } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView, TextInput, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '../../constants/Colors';
+import { useBillStore } from '@/store/billStore';
+import type { BillCategory, BillItem } from '@/types/bill';
+import { formatRp } from '@/lib/currency';
 
-type BillItem = {
-  id: string;
-  name: string;
-  qty: number;
-  price: number;
-};
-
-const CATEGORIES = [
-  'Makanan & Minuman',
-  'Hiburan', 
-  'Belanja',
-  'Lainnya'
+const categories: BillCategory[] = [
+  "Makanan dan Minuman",
+  "Hiburan",
+  "Belanja",
+  "Lainnya",
 ];
 
 export default function ManualScreen() {
-  const [merchantName, setMerchantName] = useState('');
-  const [category, setCategory] = useState('');
+  const { draft, setHeader, addItem, updateItem, removeItem, setFees, recalcTotals } = useBillStore();
+  const [name, setName] = useState(draft.name);
+  const [category, setCategory] = useState<BillCategory | null>(draft.category);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [items, setItems] = useState<BillItem[]>([
-    { id: '1', name: '', qty: 1, price: 0 }
-  ]);
-  const [tax, setTax] = useState(0);
-  const [service, setService] = useState(0);
 
-  const updateItem = (id: string, field: keyof BillItem, value: string | number) => {
-    setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
+  useEffect(() => { recalcTotals(); }, [draft.items, draft.fees]);
 
-  const addItem = () => {
-    const newItem: BillItem = {
-      id: Date.now().toString(),
-      name: '',
+  const canConfirm = useMemo(() => name.trim().length > 0 && !!category && draft.items.length > 0, [name, category, draft.items.length]);
+
+  const onAddItem = () => {
+    const item: BillItem = {
+      id: Math.random().toString(36).slice(2),
+      name: "Item Baru",
       qty: 1,
       price: 0,
     };
-    setItems(prev => [...prev, newItem]);
+    addItem(item);
   };
-
-  const removeItem = (id: string) => {
-    if (items.length > 1) {
-      setItems(prev => prev.filter(item => item.id !== id));
-    }
-  };
-
-  const calculateTotals = () => {
-    const subtotal = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-    const total = subtotal + tax + service;
-    return { subtotal, total };
-  };
-
-  const { subtotal, total } = calculateTotals();
 
   const handleConfirm = () => {
-    // Save bill data and navigate
-    router.push('/(tabs)/home');
+    setHeader(name.trim(), category);
+    router.push('/create-bill/bill-detail');
   };
 
   return (
@@ -79,9 +55,9 @@ export default function ManualScreen() {
           <Text style={styles.sectionTitle}>Nama Tagihan</Text>
           <TextInput
             style={styles.input}
-            value={merchantName}
-            onChangeText={setMerchantName}
-            placeholder="Masukkan nama tagihan"
+            value={name}
+            onChangeText={setName}
+            placeholder="Warung Cak Ilhem"
           />
         </View>
 
@@ -103,7 +79,7 @@ export default function ManualScreen() {
           
           {showCategoryDropdown && (
             <View style={styles.dropdownList}>
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <Pressable
                   key={cat}
                   style={styles.dropdownItem}
@@ -120,103 +96,31 @@ export default function ManualScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detail Tagihan</Text>
-          
-          <View style={styles.itemsContainer}>
-            <View style={styles.itemHeader}>
-              <Text style={[styles.headerText, { flex: 2 }]}>Nama Item</Text>
-              <Text style={[styles.headerText, { flex: 1, textAlign: 'center' }]}>Qty</Text>
-              <Text style={[styles.headerText, { flex: 2, textAlign: 'right' }]}>Harga</Text>
-              <View style={{ width: 32 }} />
-            </View>
-
-            {items.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <TextInput
-                  style={[styles.itemInput, { flex: 2 }]}
-                  value={item.name}
-                  onChangeText={(text) => updateItem(item.id, 'name', text)}
-                  placeholder="Nama item"
-                />
-                <TextInput
-                  style={[styles.itemInput, { flex: 1 }]}
-                  value={item.qty.toString()}
-                  onChangeText={(text) => updateItem(item.id, 'qty', parseInt(text) || 0)}
-                  keyboardType="numeric"
-                  placeholder="1"
-                />
-                <TextInput
-                  style={[styles.itemInput, { flex: 2 }]}
-                  value={item.price.toString()}
-                  onChangeText={(text) => updateItem(item.id, 'price', parseInt(text) || 0)}
-                  keyboardType="numeric"
-                  placeholder="0"
-                />
-                <Pressable 
-                  onPress={() => removeItem(item.id)} 
-                  style={[styles.removeButton, items.length === 1 && styles.disabledButton]}
-                  disabled={items.length === 1}
-                >
-                  <Ionicons name="trash" size={16} color={items.length === 1 ? Colors.disabled : Colors.danger} />
-                </Pressable>
-              </View>
-            ))}
-
-            <Pressable style={styles.addButton} onPress={addItem}>
-              <Ionicons name="add" size={20} color="#00897B" />
-              <Text style={styles.addText}>Tambah Item</Text>
+          <View style={styles.billContainer}>
+            <Text style={styles.sectionTitle}>Detail Tagihan</Text>
+            {draft.items.length === 0 ? (
+              <Text style={styles.emptyText}>Belum ada item. Tekan "+ Tambah Item" untuk mulai.</Text>
+            ) : (
+              draft.items.map((it) => (
+                <View key={it.id} style={styles.itemSummary}>
+                  <Text style={styles.itemName}>{it.name} × {it.qty}</Text>
+                  <Text style={styles.itemPrice}>{formatRp(it.qty * it.price)}</Text>
+                </View>
+              ))
+            )}
+            <Pressable onPress={() => router.push('/create-bill/edit-bill')} style={styles.addButton}>
+              <Text style={styles.addText}>+ Tambah Item</Text>
             </Pressable>
-          </View>
-
-          <View style={styles.additionalCosts}>
-            <Text style={styles.costsTitle}>Biaya Tambahan</Text>
-            
-            <View style={styles.costRow}>
-              <Text style={styles.costLabel}>Pajak</Text>
-              <TextInput
-                style={styles.costInput}
-                value={tax.toString()}
-                onChangeText={(text) => setTax(parseInt(text) || 0)}
-                keyboardType="numeric"
-                placeholder="0"
-              />
-            </View>
-
-            <View style={styles.costRow}>
-              <Text style={styles.costLabel}>Layanan</Text>
-              <TextInput
-                style={styles.costInput}
-                value={service.toString()}
-                onChangeText={(text) => setService(parseInt(text) || 0)}
-                keyboardType="numeric"
-                placeholder="0"
-              />
-            </View>
-          </View>
-
-          <View style={styles.totalsContainer}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>Rp {subtotal.toLocaleString('id-ID')}</Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Pajak</Text>
-              <Text style={styles.totalValue}>Rp {tax.toLocaleString('id-ID')}</Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Layanan</Text>
-              <Text style={styles.totalValue}>Rp {service.toLocaleString('id-ID')}</Text>
-            </View>
-            <View style={[styles.totalRow, styles.grandTotal]}>
-              <Text style={styles.grandTotalLabel}>Total</Text>
-              <Text style={styles.grandTotalValue}>Rp {total.toLocaleString('id-ID')}</Text>
-            </View>
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <Pressable style={styles.confirmButton} onPress={handleConfirm}>
+        <Pressable
+          disabled={!canConfirm}
+          onPress={handleConfirm}
+          style={[styles.confirmButton, { opacity: canConfirm ? 1 : 0.5 }]}
+        >
           <Text style={styles.confirmText}>Konfirmasi</Text>
         </Pressable>
       </View>
@@ -305,132 +209,98 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
+  pill: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  pillActive: {
+    backgroundColor: '#E6FFF3',
+    borderColor: '#20C997',
+  },
+  pillText: {
+    fontSize: 14,
+    color: Colors.text,
+  },
+  dropdown: {
+    backgroundColor: Colors.white,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: Colors.text,
+  },
+  placeholderText: {
+    color: Colors.textSecondary,
+  },
+  dropdownList: {
+    backgroundColor: Colors.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginTop: 4,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
   dropdownItemText: {
     fontSize: 16,
     color: Colors.text,
   },
-  itemsContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    marginBottom: 8,
-  },
-  headerText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    gap: 8,
-  },
-  itemInput: {
+  billContainer: {
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+  },
+  emptyText: {
+    color: Colors.textSecondary,
+    marginVertical: 8,
+  },
+  itemSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  itemName: {
     fontSize: 14,
+    color: Colors.text,
   },
-  removeButton: {
-    padding: 4,
-    width: 32,
-    alignItems: 'center',
-  },
-  disabledButton: {
-    opacity: 0.3,
+  itemPrice: {
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: '600',
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    marginTop: 8,
-  },
-  addText: {
-    color: '#00897B',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  additionalCosts: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  costsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  costRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  costLabel: {
-    fontSize: 14,
-    color: Colors.text,
-  },
-  costInput: {
+    alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 6,
+    borderColor: '#ccc',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 14,
-    width: 100,
-    textAlign: 'right',
+    borderRadius: 8,
+    marginTop: 12,
   },
-  totalsContainer: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  totalLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  totalValue: {
-    fontSize: 14,
-    color: Colors.text,
+  addText: {
     fontWeight: '600',
-  },
-  grandTotal: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    marginTop: 8,
-    paddingTop: 12,
-  },
-  grandTotalLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  grandTotalValue: {
-    fontSize: 16,
-    fontWeight: '700',
     color: '#00897B',
   },
   footer: {

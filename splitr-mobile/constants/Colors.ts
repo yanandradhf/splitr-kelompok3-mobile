@@ -8,6 +8,7 @@ export const Colors = {
   border: '#E0E0E0',         // Light border
   inputBackground: '#F5F5F5', // Input background
   success: '#6EDCD9',        // Success color (same as secondary)
+  danger: '#FF4444',         // Danger/error color
   disabled: '#AAAAAA',       // Disabled state
   shadow: '#000000',         // Shadow color
   
