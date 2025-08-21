@@ -42,11 +42,9 @@ export default function SuccessModal({
               color="#00897B"
             />
           </View>
-          <Text style={styles.successTitle}>
-            Grup "{groupName}" berhasil dibuat!
-          </Text>
+          <Text style={styles.successTitle}>Yeayy !!!</Text>
           <Text style={styles.successSubtitle}>
-            Anda akan diarahkan kembali ke halaman grup
+            Grup "{groupName}" berhasil dibuat!
           </Text>
         </View>
       </View>

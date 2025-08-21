@@ -77,6 +77,18 @@ export default function GroupDetailScreen() {
         status: "active",
         avatar: personImages[0],
       },
+      {
+        id: "pending-1",
+        name: "Ahmad Rizki",
+        status: "pending",
+        avatar: personImages[1],
+      },
+      {
+        id: "pending-2",
+        name: "Sari Dewi",
+        status: "pending",
+        avatar: personImages[2],
+      },
     ];
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -176,24 +188,47 @@ export default function GroupDetailScreen() {
     }
   };
 
+  const removeMember = (memberId: string) => {
+    const updatedMembers = members.filter((member: any) => member.id !== memberId);
+    setMembers(updatedMembers);
+    
+    // Update global state for groups list
+    const updatedGroup = {
+      ...groupData,
+      groupId: groupData?.groupId,
+      memberCount: updatedMembers.length,
+      members: updatedMembers
+    };
+    
+    if (typeof global === "undefined") {
+      (globalThis as any).updatedGroup = updatedGroup;
+    } else {
+      (global as any).updatedGroup = updatedGroup;
+    }
+  };
+
   const renderMember = ({ item }: { item: any }) => (
     <View style={styles.memberItem}>
       <Image source={item.avatar} style={styles.memberAvatar} />
       <View style={styles.memberInfo}>
         <Text style={styles.memberName}>{item.name}</Text>
+        {item.status === "pending" && (
+          <Text style={styles.pendingLabel}>Menunggu konfirmasi</Text>
+        )}
       </View>
-      <View
-        style={[
-          styles.statusIcon,
-          item.status === "active" ? styles.activeIcon : styles.pendingIcon,
-        ]}
-      >
-        <Ionicons
-          name={item.status === "active" ? "checkmark" : "time"}
-          size={getIconSize(16)}
-          color={COLORS.white}
-        />
-      </View>
+      {item.id !== "creator" && (
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => removeMember(item.id)}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="trash-outline"
+            size={getIconSize(16)}
+            color="#FF3B30"
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -280,13 +315,7 @@ export default function GroupDetailScreen() {
               <View style={styles.membersHeader}>
                 <Text style={styles.sectionTitle}>Anggota Grup</Text>
                 <Text style={styles.memberCount}>
-                  {members.filter((m: any) => m.status === "active").length}{" "}
-                  aktif
-                  {members.filter((m: any) => m.status === "pending").length >
-                    0 &&
-                    `, ${
-                      members.filter((m: any) => m.status === "pending").length
-                    } pending`}
+                  {members.length} anggota
                 </Text>
               </View>
               <FlatList
@@ -531,6 +560,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
+  pendingLabel: {
+    fontSize: rf(12),
+    fontFamily: FONTS.regular,
+    color: "#FF9500",
+    marginTop: getSpacing(2),
+  },
   statusIcon: {
     width: wp(6),
     height: wp(6),
@@ -543,6 +578,16 @@ const styles = StyleSheet.create({
   },
   pendingIcon: {
     backgroundColor: "#FF9500",
+  },
+  removeButton: {
+    width: wp(8),
+    height: wp(8),
+    borderRadius: wp(4),
+    backgroundColor: "rgba(255, 59, 48, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 59, 48, 0.2)",
   },
   actionButtons: {
     flexDirection: "row",

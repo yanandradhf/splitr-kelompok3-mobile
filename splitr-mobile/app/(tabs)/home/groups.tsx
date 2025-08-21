@@ -90,7 +90,12 @@ export default function GroupsScreen() {
         setGroups((prev) =>
           prev.map((group) =>
             group.groupId === updatedGroup.groupId
-              ? { ...group, groupName: updatedGroup.groupName }
+              ? { 
+                  ...group, 
+                  groupName: updatedGroup.groupName || group.groupName,
+                  memberCount: updatedGroup.memberCount || group.memberCount,
+                  members: updatedGroup.members || group.members
+                }
               : group
           )
         );
