@@ -20,14 +20,14 @@ import { useProfile } from "../../../hooks/useProfile";
 import { COLORS, FONTS } from "../../../constants/theme";
 
 const LOCAL_COLORS = {
-  background: '#A6D3CE',
+  background: "#A6D3CE",
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
   textPrimary: COLORS.textPrimary,
   textSecondary: COLORS.textSecondary,
   border: COLORS.border,
-  headerBrown: '#00897B',
+  headerBrown: "#00897B",
   gray: COLORS.gray,
 };
 
@@ -41,11 +41,27 @@ const personImages = [
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const { profile: storeProfile } = useProfileStore();
-  const { profile, isLoading: profileLoading, refetch: refetchProfile } = useProfile();
-  const { friends, loading: friendsLoading, refetch: refetchFriends } = useFriends();
-  const { groups, loading: groupsLoading, refetch: refetchGroups } = useGroups();
-  const { notifications, loading: notificationsLoading, refetch: refetchNotifications } = useNotifications();
-  
+  const {
+    profile,
+    isLoading: profileLoading,
+    refetch: refetchProfile,
+  } = useProfile();
+  const {
+    friends,
+    loading: friendsLoading,
+    refetch: refetchFriends,
+  } = useFriends();
+  const {
+    groups,
+    loading: groupsLoading,
+    refetch: refetchGroups,
+  } = useGroups();
+  const {
+    notifications,
+    loading: notificationsLoading,
+    refetch: refetchNotifications,
+  } = useNotifications();
+
   const [refreshing, setRefreshing] = useState(false);
   const [showStats, setShowStats] = useState(true);
 
@@ -55,11 +71,11 @@ export default function HomeScreen() {
       await Promise.all([
         refetchProfile(),
         refetchFriends(),
-        refetchGroups(), 
-        refetchNotifications()
+        refetchGroups(),
+        refetchNotifications(),
       ]);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error("Error refreshing data:", error);
     } finally {
       setRefreshing(false);
     }
@@ -115,7 +131,12 @@ export default function HomeScreen() {
               />
               <View style={styles.welcomeText}>
                 <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
-                <Text style={styles.welcomeName}>{user?.name || profile?.user?.name || storeProfile?.user?.name || "User"}</Text>
+                <Text style={styles.welcomeName}>
+                  {user?.name ||
+                    profile?.user?.name ||
+                    storeProfile?.user?.name ||
+                    "User"}
+                </Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity
@@ -134,30 +155,38 @@ export default function HomeScreen() {
           {/* ACTIVITY SECTION */}
           <View style={styles.activitySection}>
             <View style={styles.tabSwitcher}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.tabButton, showStats && styles.activeTab]}
                 onPress={() => setShowStats(true)}
               >
-                <Ionicons 
-                  name="stats-chart-outline" 
-                  size={16} 
-                  color={showStats ? COLORS.white : COLORS.teal} 
+                <Ionicons
+                  name="stats-chart-outline"
+                  size={16}
+                  color={showStats ? COLORS.white : COLORS.teal}
                 />
-                <Text style={[styles.tabText, showStats && styles.activeTabText]}>Stats</Text>
+                <Text
+                  style={[styles.tabText, showStats && styles.activeTabText]}
+                >
+                  Stats
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.tabButton, !showStats && styles.activeTab]}
                 onPress={() => setShowStats(false)}
               >
-                <Ionicons 
-                  name="card-outline" 
-                  size={16} 
-                  color={!showStats ? COLORS.white : COLORS.teal} 
+                <Ionicons
+                  name="card-outline"
+                  size={16}
+                  color={!showStats ? COLORS.white : COLORS.teal}
                 />
-                <Text style={[styles.tabText, !showStats && styles.activeTabText]}>Bills</Text>
+                <Text
+                  style={[styles.tabText, !showStats && styles.activeTabText]}
+                >
+                  Bills
+                </Text>
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.unifiedCard}>
               {showStats ? (
                 profileLoading ? (
@@ -169,66 +198,84 @@ export default function HomeScreen() {
                     <View style={styles.statRow}>
                       <View style={styles.statItem}>
                         <View style={styles.statIconContainer}>
-                          <Ionicons name="receipt-outline" size={20} color={COLORS.teal} />
+                          <Ionicons
+                            name="receipt-outline"
+                            size={20}
+                            color={COLORS.teal}
+                          />
                         </View>
-                        <Text style={styles.statNumber}>{profile?.stats?.totalBills || 0}</Text>
-                        <Text style={styles.statLabel}>Bills</Text>
+                        <Text style={styles.statNumber}>
+                          {profile?.stats?.totalBills || 0}
+                        </Text>
+                        <Text style={styles.statLabel}>Tagihan</Text>
                       </View>
                       <View style={styles.statItem}>
                         <View style={styles.statIconContainer}>
-                          <Ionicons name="wallet-outline" size={20} color={COLORS.orange} />
+                          <Ionicons
+                            name="wallet-outline"
+                            size={20}
+                            color={COLORS.teal}
+                          />
                         </View>
                         <Text style={styles.statNumber}>
-                          {profile?.stats?.totalSpent ? `${(profile.stats.totalSpent / 1000000).toFixed(1)}M` : '0'}
+                          {profile?.stats?.totalSpent
+                            ? `${(profile.stats.totalSpent / 1000000).toFixed(
+                                1
+                              )}M`
+                            : "0"}
                         </Text>
-                        <Text style={styles.statLabel}>Spent</Text>
+                        <Text style={styles.statLabel}>Terbayar</Text>
                       </View>
                       <View style={[styles.statItem, styles.lastStatItem]}>
                         <View style={styles.statIconContainer}>
-                          <Ionicons name="time-outline" size={20} color={COLORS.red} />
+                          <Ionicons
+                            name="time-outline"
+                            size={20}
+                            color={COLORS.teal}
+                          />
                         </View>
-                        <Text style={styles.statNumber}>{profile?.stats?.pendingPayments || 0}</Text>
-                        <Text style={styles.statLabel}>Pending</Text>
+                        <Text style={styles.statNumber}>
+                          {profile?.stats?.pendingPayments || 0}
+                        </Text>
+                        <Text style={styles.statLabel}>Belum Dibayar</Text>
                       </View>
                     </View>
                   </View>
                 )
+              ) : notificationsLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color={COLORS.teal} />
+                </View>
+              ) : latestNotification ? (
+                <View style={styles.notifContainer}>
+                  <View style={styles.notificationRow}>
+                    <View style={styles.notifIcon}>
+                      <Ionicons name="card-outline" size={24} color="#76B9BB" />
+                    </View>
+                    <View style={styles.notifContent}>
+                      <Text style={styles.notifTitle} numberOfLines={1}>
+                        {latestNotification.title}
+                      </Text>
+                      <Text style={styles.notifMessage} numberOfLines={2}>
+                        {latestNotification.message}
+                      </Text>
+                      <View style={styles.dateContainer}>
+                        <Text style={styles.notifDate}>
+                          {formatDate(latestNotification.createdAt)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
               ) : (
-                notificationsLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color={COLORS.teal} />
-                  </View>
-                ) : latestNotification ? (
-                  <View style={styles.notifContainer}>
-                    <View style={styles.notificationRow}>
-                      <View style={styles.notifIcon}>
-                        <Ionicons
-                          name="card-outline"
-                          size={24}
-                          color='#76B9BB'
-                        />
-                      </View>
-                      <View style={styles.notifContent}>
-                        <Text style={styles.notifTitle} numberOfLines={1}>
-                          {latestNotification.title}
-                        </Text>
-                        <Text style={styles.notifMessage} numberOfLines={2}>
-                          {latestNotification.message}
-                        </Text>
-                        <View style={styles.dateContainer}>
-                          <Text style={styles.notifDate}>
-                            {formatDate(latestNotification.createdAt)}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.emptyContainer}>
-                    <Ionicons name="notifications-off-outline" size={24} color={COLORS.textSecondary} />
-                    <Text style={styles.emptyText}>Tidak ada notifikasi</Text>
-                  </View>
-                )
+                <View style={styles.emptyContainer}>
+                  <Ionicons
+                    name="notifications-off-outline"
+                    size={24}
+                    color={COLORS.textSecondary}
+                  />
+                  <Text style={styles.emptyText}>Tidak ada notifikasi</Text>
+                </View>
               )}
             </View>
           </View>
@@ -305,7 +352,7 @@ export default function HomeScreen() {
 
           {/* SEPARATOR */}
           <View style={styles.separator} />
-          
+
           {/* FRIENDS SECTION */}
           <View style={styles.modalSection}>
             <Text style={styles.sectionTitle}>Lihat Teman</Text>
@@ -424,22 +471,22 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   activityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   tabSwitcher: {
-    flexDirection: 'row',
-    backgroundColor: '#F5F5F5',
+    flexDirection: "row",
+    backgroundColor: "#F5F5F5",
     borderRadius: 20,
     padding: 2,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginBottom: 12,
   },
   tabButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 18,
@@ -474,14 +521,14 @@ const styles = StyleSheet.create({
 
   // ACTIVITY CARD
   activityCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     elevation: 3,
-    shadowColor: '#76B9BB',
+    shadowColor: "#76B9BB",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -500,7 +547,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 12,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -525,7 +572,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dateContainer: {
-    backgroundColor: '#76B9BB',
+    backgroundColor: "#76B9BB",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -554,43 +601,43 @@ const styles = StyleSheet.create({
 
   // UNIFIED CARD
   unifiedCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
     elevation: 3,
-    shadowColor: '#76B9BB',
+    shadowColor: "#76B9BB",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     height: 120,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
-  
+
   // LOADING
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
+
   // STATS CONTENT
   statsContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   statRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    height: "100%",
     paddingHorizontal: 0,
   },
   statItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '33.33%',
-    height: '100%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "33.33%",
+    height: "100%",
     borderRightWidth: 1,
-    borderRightColor: '#E8E8E8',
+    borderRightColor: "#E8E8E8",
   },
   lastStatItem: {
     borderRightWidth: 0,
@@ -599,9 +646,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(118, 185, 187, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(118, 185, 187, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 6,
   },
   statNumber: {
@@ -614,29 +661,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: FONTS.regular,
     color: LOCAL_COLORS.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
   },
-  
+
   // NOTIFICATION CONTENT
   notifContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 4,
   },
   notificationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   notifIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
     backgroundColor: LOCAL_COLORS.cardWhite,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -665,21 +712,20 @@ const styles = StyleSheet.create({
     color: LOCAL_COLORS.textPrimary,
     textAlign: "center",
   },
-  
+
   // EMPTY STATE
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 14,
     fontFamily: FONTS.regular,
     color: LOCAL_COLORS.textSecondary,
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
-
 
   // GROUPS SCROLL
   groupsScroll: {
@@ -708,12 +754,12 @@ const styles = StyleSheet.create({
   groupId: {
     fontSize: 12,
     fontFamily: FONTS.semiBold,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   groupHost: {
     fontSize: 12,
     fontFamily: FONTS.semiBold,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   groupContent: {
     backgroundColor: LOCAL_COLORS.cardWhite,
@@ -771,10 +817,10 @@ const styles = StyleSheet.create({
   // SEPARATOR
   separator: {
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     marginHorizontal: 0,
     marginVertical: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
