@@ -198,20 +198,37 @@ export default function GroupsScreen() {
 
                     <View style={styles.groupContent}>
                       <View style={styles.groupAvatars}>
-                        {[0, 1, 2, 3].map((avatarIndex) => {
-                          const member = group.members?.[avatarIndex];
-                          return (
-                            <Image
-                              key={avatarIndex}
-                              source={personImages[avatarIndex % 4]}
-                              style={[
-                                styles.avatar,
-                                avatarIndex > 0 && styles.avatarOverlap,
-                                !member && { opacity: 0 },
-                              ]}
-                            />
-                          );
-                        })}
+                        {(() => {
+                          const allMembers = group.members || [];
+                          const displayMembers = allMembers.slice(0, 4);
+                          
+                          if (displayMembers.length === 0 && group.memberCount > 0) {
+                            return Array.from({ length: Math.min(group.memberCount, 4) }, (_, index) => (
+                              <Image
+                                key={`placeholder-${index}`}
+                                source={personImages[index % 4]}
+                                style={[
+                                  styles.avatar,
+                                  index > 0 && styles.avatarOverlap,
+                                ]}
+                              />
+                            ));
+                          }
+                          
+                          return displayMembers.map((member, index) => {
+                            const avatarSource = member.avatar || member.profilePicture || personImages[index % 4];
+                            return (
+                              <Image
+                                key={member.id || member.userId || index}
+                                source={typeof avatarSource === 'string' ? { uri: avatarSource } : avatarSource}
+                                style={[
+                                  styles.avatar,
+                                  index > 0 && styles.avatarOverlap,
+                                ]}
+                              />
+                            );
+                          });
+                        })()}
                       </View>
 
                       <View style={styles.groupInfo}>
@@ -219,7 +236,7 @@ export default function GroupsScreen() {
                           {group.groupName || "Unnamed Group"}
                         </Text>
                         <Text style={styles.groupMembers}>
-                          {group.memberCount || 0} orang aktif dalam grup ini
+                          {group.members?.length || group.memberCount || 0} orang dalam grup ini
                         </Text>
                       </View>
                     </View>

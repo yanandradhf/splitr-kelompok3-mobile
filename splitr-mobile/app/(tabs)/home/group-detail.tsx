@@ -22,6 +22,7 @@ import {
   getBorderRadius,
   getIconSize,
 } from "../../../utils/responsive";
+import { useApi } from "../../../hooks/useApi";
 
 const personImages = [
   require("../../../assets/images/person1.png"),
@@ -40,40 +41,49 @@ export default function GroupDetailScreen() {
     groupData?.groupName || "Makan Bersama"
   );
   const [members, setMembers] = useState(() => {
-    // Create members with mix of active and pending status
-    const totalMembers = (groupData?.memberCount || 3) + 1; // +1 for pending members
-    return Array.from({ length: totalMembers }, (_, index) => {
-      if (index === 0) {
-        // Host is always active
-        return {
-          id: `member-${index}`,
+    if (groupData?.members && Array.isArray(groupData.members)) {
+      // Use actual members from group data
+      const actualMembers = groupData.members.map(
+        (member: any, index: number) => ({
+          id: member.id || `member-${index}`,
+          name: member.name || member.username || `Member ${index + 1}`,
+          status: member.status || "active",
+          avatar: member.avatar || personImages[index % 4],
+        })
+      );
+
+      // Add creator as first member if not already included
+      const creatorExists = actualMembers.some(
+        (m: any) => m.name === "You" || m.name === groupData.creatorName
+      );
+
+      if (!creatorExists) {
+        actualMembers.unshift({
+          id: "creator",
           name: groupData?.isCreator ? "You" : groupData?.creatorName || "Host",
           status: "active",
-          avatar: personImages[index % 4],
-        };
-      } else if (index < (groupData?.memberCount || 3)) {
-        // Active members
-        return {
-          id: `member-${index}`,
-          name: `Member ${index}`,
-          status: "active",
-          avatar: personImages[index % 4],
-        };
-      } else {
-        // Pending members
-        return {
-          id: `member-${index}`,
-          name: `Pending User ${index - (groupData?.memberCount || 3) + 1}`,
-          status: "pending",
-          avatar: personImages[index % 4],
-        };
+          avatar: personImages[0],
+        });
       }
-    });
+
+      return actualMembers;
+    }
+
+    // Fallback for empty or missing members
+    return [
+      {
+        id: "creator",
+        name: groupData?.isCreator ? "You" : groupData?.creatorName || "Host",
+        status: "active",
+        avatar: personImages[0],
+      },
+    ];
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const { updateGroup: apiUpdateGroup, deleteGroup: apiDeleteGroup } = useApi();
 
   const updateGroupName = async () => {
     if (groupName.trim().length === 0) {
@@ -83,8 +93,17 @@ export default function GroupDetailScreen() {
     }
 
     try {
-      // API call to update group name
-      console.log("Updating group name to:", groupName);
+      setLoading(true);
+
+      // TODO: Replace with actual API call
+      // const response = await api.put(`/api/mobile/groups/${groupData?.groupId}`, {
+      //   groupName: groupName.trim()
+      // });
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Group name updated successfully:", groupName);
 
       // Update global state for groups list
       if (typeof global === "undefined") {
@@ -102,14 +121,24 @@ export default function GroupDetailScreen() {
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating group name:", error);
+      // Reset to original name on error
+      setGroupName(groupData?.groupName || "Makan Bersama");
+      setIsEditing(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   const deleteGroup = async () => {
     setLoading(true);
     try {
+      // TODO: Replace with actual API call
+      // const response = await api.delete(`/api/mobile/groups/${groupData?.groupId}`);
+
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log("Group deleted successfully:", groupData?.groupId);
 
       // Store deleted group ID in global state
       if (typeof global === "undefined") {
@@ -127,14 +156,24 @@ export default function GroupDetailScreen() {
       }, 3000);
     } catch (error) {
       console.error("Error deleting group:", error);
+      setShowDeleteModal(false);
     } finally {
       setLoading(false);
     }
   };
 
-  const addMember = () => {
-    // Navigate to add member screen
-    console.log("Add member");
+  const addMember = async () => {
+    try {
+      // TODO: Navigate to add member screen or show member selection modal
+      // router.push({
+      //   pathname: "/(tabs)/home/add-member",
+      //   params: { groupId: groupData?.groupId }
+      // });
+
+      console.log("Add member to group:", groupData?.groupId);
+    } catch (error) {
+      console.error("Error adding member:", error);
+    }
   };
 
   const renderMember = ({ item }: { item: any }) => (
@@ -241,8 +280,13 @@ export default function GroupDetailScreen() {
               <View style={styles.membersHeader}>
                 <Text style={styles.sectionTitle}>Anggota Grup</Text>
                 <Text style={styles.memberCount}>
-                  {members.filter((m) => m.status === "active").length} aktif,{" "}
-                  {members.filter((m) => m.status === "pending").length} pending
+                  {members.filter((m: any) => m.status === "active").length}{" "}
+                  aktif
+                  {members.filter((m: any) => m.status === "pending").length >
+                    0 &&
+                    `, ${
+                      members.filter((m: any) => m.status === "pending").length
+                    } pending`}
                 </Text>
               </View>
               <FlatList

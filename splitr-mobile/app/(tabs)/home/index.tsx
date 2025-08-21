@@ -285,7 +285,14 @@ export default function HomeScreen() {
         <View style={styles.whiteModalContainer}>
           {/* GROUPS SECTION */}
           <View style={styles.modalSection}>
-            <Text style={styles.sectionTitle}>Lihat grup</Text>
+            <TouchableOpacity 
+              onPress={() => router.push("/(tabs)/home/groups")}
+              activeOpacity={0.7}
+              style={styles.sectionHeader}
+            >
+              <Text style={styles.sectionTitle}>Lihat grup</Text>
+              <Ionicons name="chevron-forward" size={20} color={LOCAL_COLORS.textPrimary} />
+            </TouchableOpacity>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -516,7 +523,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
-    marginBottom: 16,
   },
   sectionHeader: {
     flexDirection: "row",

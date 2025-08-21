@@ -47,12 +47,38 @@ const mockUsers = [
 export default function CreateGroupScreen() {
   const [namaGrup, setNamaGrup] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [daftarTeman, setDaftarTeman] = useState<any[]>(mockUsers);
+  const [daftarTeman, setDaftarTeman] = useState<any[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(true);
   const [temanTerpilih, setTemanTerpilih] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const api = useApi();
+  const { getFriends, createGroup: apiCreateGroup } = useApi();
+
+  // Fetch friends list
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        setLoadingFriends(true);
+        
+        // TODO: Replace with actual API call
+        // const response = await getFriends();
+        // setDaftarTeman(response.friends || []);
+        
+        // Simulate API call with mock data
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        setDaftarTeman(mockUsers);
+        
+      } catch (error) {
+        console.error("Error fetching friends:", error);
+        setDaftarTeman(mockUsers); // Fallback to mock data
+      } finally {
+        setLoadingFriends(false);
+      }
+    };
+
+    fetchFriends();
+  }, []);
 
   const toggleFriend = (user: any) => {
     const isSelected = temanTerpilih.find((friend) => friend.id === user.id);
@@ -73,22 +99,38 @@ export default function CreateGroupScreen() {
     setLoading(true);
     try {
       const memberIds = temanTerpilih.map((friend) => friend.id);
-
-      // Simulate API call - replace with actual API call
+      
+      // TODO: Replace with actual API call
+      // const response = await api.post('/api/mobile/groups', {
+      //   groupName: namaGrup.trim(),
+      //   memberIds: memberIds
+      // });
+      
+      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Create new group object
+      // Create new group object with proper member structure
       const newGroup = {
         groupId: "GRP" + Date.now(),
         groupName: namaGrup.trim(),
         isCreator: true,
         creatorName: "You",
-        memberCount: temanTerpilih.length + 1, // +1 for creator (only active members)
-        members: temanTerpilih.map((friend) => ({
-          ...friend,
-          status: "active",
-        })),
-        pendingMembers: [], // Initially no pending members
+        memberCount: temanTerpilih.length + 1, // +1 for creator
+        members: [
+          // Add creator as first member
+          {
+            id: "creator",
+            name: "You",
+            username: "you",
+            status: "active",
+            avatar: personImages[0],
+          },
+          // Add selected friends
+          ...temanTerpilih.map((friend) => ({
+            ...friend,
+            status: "active",
+          }))
+        ],
         createdAt: new Date().toISOString(),
       };
 
@@ -170,18 +212,24 @@ export default function CreateGroupScreen() {
                   />
                 </View>
 
-                {/* Filtered Friends List */}
-                {daftarTeman
-                  .filter(
-                    (friend) =>
-                      friend.username
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                      friend.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase())
-                  )
-                  .map((friend) => {
+                {/* Loading State */}
+                {loadingFriends ? (
+                  <View style={styles.noResultsContainer}>
+                    <Text style={styles.noResultsText}>Memuat daftar teman...</Text>
+                  </View>
+                ) : (
+                  /* Filtered Friends List */
+                  daftarTeman
+                    .filter(
+                      (friend) =>
+                        friend.username
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase()) ||
+                        friend.name
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                    )
+                    .map((friend) => {
                     const isSelected = temanTerpilih.find(
                       (selected) => selected.id === friend.id
                     );
@@ -218,10 +266,11 @@ export default function CreateGroupScreen() {
                         </View>
                       </TouchableOpacity>
                     );
-                  })}
+                    })
+                )}
 
                 {/* No Results */}
-                {searchQuery &&
+                {!loadingFriends && searchQuery &&
                   daftarTeman.filter(
                     (friend) =>
                       friend.username
@@ -245,6 +294,23 @@ export default function CreateGroupScreen() {
                       </Text>
                     </View>
                   )}
+
+                {/* Empty Friends State */}
+                {!loadingFriends && daftarTeman.length === 0 && (
+                  <View style={styles.noResultsContainer}>
+                    <Ionicons
+                      name="people-outline"
+                      size={getIconSize(32)}
+                      color={COLORS.textSecondary}
+                    />
+                    <Text style={styles.noResultsText}>
+                      Belum ada teman
+                    </Text>
+                    <Text style={styles.noResultsSubtext}>
+                      Tambahkan teman terlebih dahulu
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Create Group Button */}
