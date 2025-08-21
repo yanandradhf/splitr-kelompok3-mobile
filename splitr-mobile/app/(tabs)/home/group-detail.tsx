@@ -40,6 +40,9 @@ export default function GroupDetailScreen() {
   const [groupName, setGroupName] = useState(
     groupData?.groupName || "Makan Bersama"
   );
+  const [groupDescription, setGroupDescription] = useState(
+    groupData?.groupDescription || "Deskripsi grup belum diatur"
+  );
   const [members, setMembers] = useState(() => {
     if (groupData?.members && Array.isArray(groupData.members)) {
       // Use actual members from group data
@@ -94,9 +97,14 @@ export default function GroupDetailScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
+  const [showConfirmFriendModal, setShowConfirmFriendModal] = useState(false);
+  const [showSuccessFriendModal, setShowSuccessFriendModal] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<any>(null);
+  const [selectedFriend, setSelectedFriend] = useState<any>(null);
+  const [friendsList, setFriendsList] = useState<string[]>(["creator"]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
   const { updateGroup: apiUpdateGroup, deleteGroup: apiDeleteGroup } = useApi();
 
   const updateGroupName = async () => {
@@ -138,6 +146,31 @@ export default function GroupDetailScreen() {
       // Reset to original name on error
       setGroupName(groupData?.groupName || "Makan Bersama");
       setIsEditing(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateGroupDescription = async () => {
+    try {
+      setLoading(true);
+
+      // TODO: Replace with actual API call
+      // const response = await api.put(`/api/mobile/groups/${groupData?.groupId}`, {
+      //   groupDescription: groupDescription.trim()
+      // });
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Group description updated successfully:", groupDescription);
+
+      setIsEditingDescription(false);
+    } catch (error) {
+      console.error("Error updating group description:", error);
+      // Reset to original description on error
+      setGroupDescription(groupData?.groupDescription || "Deskripsi grup belum diatur");
+      setIsEditingDescription(false);
     } finally {
       setLoading(false);
     }
@@ -190,6 +223,39 @@ export default function GroupDetailScreen() {
     }
   };
 
+  const leaveGroup = async () => {
+    setLoading(true);
+    try {
+      // TODO: Replace with actual API call
+      // const response = await api.post(`/api/mobile/groups/${groupData?.groupId}/leave`);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log("Left group successfully:", groupData?.groupId);
+
+      // Store deleted group ID in global state (same effect as deleting for user)
+      if (typeof global === "undefined") {
+        (globalThis as any).deletedGroupId = groupData?.groupId;
+      } else {
+        (global as any).deletedGroupId = groupData?.groupId;
+      }
+
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        router.back();
+      }, 3000);
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      setShowDeleteModal(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const showRemoveMemberConfirmation = (member: any) => {
     setMemberToRemove(member);
     setShowRemoveMemberModal(true);
@@ -219,6 +285,28 @@ export default function GroupDetailScreen() {
     setMemberToRemove(null);
   };
 
+  const checkIsFriend = (userId: string) => {
+    return friendsList.includes(userId);
+  };
+
+  const openConfirmModal = (friendData: any) => {
+    setSelectedFriend(friendData);
+    setShowConfirmFriendModal(true);
+  };
+
+  const addFriend = () => {
+    if (!selectedFriend) return;
+    
+    setFriendsList(prev => [...prev, selectedFriend.id]);
+    setShowConfirmFriendModal(false);
+    setShowSuccessFriendModal(true);
+    
+    setTimeout(() => {
+      setShowSuccessFriendModal(false);
+      setSelectedFriend(null);
+    }, 2500);
+  };
+
   const renderMember = ({ item }: { item: any }) => (
     <View style={styles.memberItem}>
       <Image source={item.avatar} style={styles.memberAvatar} />
@@ -228,7 +316,20 @@ export default function GroupDetailScreen() {
           <Text style={styles.pendingLabel}>Menunggu konfirmasi</Text>
         )}
       </View>
-      {item.id !== "creator" && (
+      {!groupData?.isCreator && item.id !== "creator" && !checkIsFriend(item.id) && (
+        <TouchableOpacity
+          style={styles.addFriendButton}
+          onPress={() => openConfirmModal(item)}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="add"
+            size={20}
+            color="#00897B"
+          />
+        </TouchableOpacity>
+      )}
+      {item.id !== "creator" && groupData?.isCreator && (
         <TouchableOpacity
           style={styles.removeButton}
           onPress={() => showRemoveMemberConfirmation(item)}
@@ -281,29 +382,31 @@ export default function GroupDetailScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Nama Grup</Text>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => {
-                    if (isEditing) {
-                      updateGroupName();
-                    } else {
-                      setIsEditing(true);
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={isEditing ? "checkmark" : "pencil"}
-                    size={getIconSize(16)}
-                    color="#00897B"
-                  />
-                  <Text style={styles.editButtonText}>
-                    {isEditing ? "Simpan" : "Edit"}
-                  </Text>
-                </TouchableOpacity>
+                {groupData?.isCreator && (
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                      if (isEditing) {
+                        updateGroupName();
+                      } else {
+                        setIsEditing(true);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={isEditing ? "checkmark" : "pencil"}
+                      size={getIconSize(16)}
+                      color="#00897B"
+                    />
+                    <Text style={styles.editButtonText}>
+                      {isEditing ? "Simpan" : "Edit"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
-              {isEditing ? (
+              {groupData?.isCreator && isEditing ? (
                 <TextInput
                   style={styles.input}
                   value={groupName}
@@ -318,6 +421,54 @@ export default function GroupDetailScreen() {
               ) : (
                 <View style={styles.groupNameDisplay}>
                   <Text style={styles.groupNameText}>{groupName}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Group Description Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Deskripsi Grup</Text>
+                {groupData?.isCreator && (
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                      if (isEditingDescription) {
+                        updateGroupDescription();
+                      } else {
+                        setIsEditingDescription(true);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={isEditingDescription ? "checkmark" : "pencil"}
+                      size={getIconSize(16)}
+                      color="#00897B"
+                    />
+                    <Text style={styles.editButtonText}>
+                      {isEditingDescription ? "Simpan" : "Edit"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {groupData?.isCreator && isEditingDescription ? (
+                <TextInput
+                  style={styles.textArea}
+                  value={groupDescription}
+                  onChangeText={setGroupDescription}
+                  onSubmitEditing={updateGroupDescription}
+                  placeholder="Masukkan deskripsi grup"
+                  placeholderTextColor={COLORS.placeholder}
+                  multiline={true}
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  autoFocus={true}
+                />
+              ) : (
+                <View style={styles.groupDescriptionDisplay}>
+                  <Text style={styles.groupDescriptionText}>{groupDescription}</Text>
                 </View>
               )}
             </View>
@@ -340,21 +491,33 @@ export default function GroupDetailScreen() {
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => setShowDeleteModal(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.deleteButtonText}>Hapus Grup</Text>
-              </TouchableOpacity>
+              {groupData?.isCreator ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => setShowDeleteModal(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.deleteButtonText}>Hapus Grup</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={addMember}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.addButtonText}>Tambah Anggota</Text>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={addMember}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.addButtonText}>Tambah Anggota</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={styles.leaveButton}
+                  onPress={() => setShowDeleteModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.leaveButtonText}>Keluar Grup</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </ScrollView>
         </View>
@@ -374,9 +537,13 @@ export default function GroupDetailScreen() {
                   color="#FF9500"
                 />
               </View>
-              <Text style={styles.deleteTitle}>Hapus Grup?</Text>
+              <Text style={styles.deleteTitle}>
+                {groupData?.isCreator ? "Hapus Grup?" : "Keluar Grup?"}
+              </Text>
               <Text style={styles.deleteMessage}>
-                Anda yakin ingin menghapus grup ini ?
+                {groupData?.isCreator 
+                  ? "Anda yakin ingin menghapus grup ini ?" 
+                  : "Anda yakin ingin keluar dari grup ini?"}
               </Text>
               <View style={styles.deleteActions}>
                 <TouchableOpacity
@@ -387,11 +554,13 @@ export default function GroupDetailScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmDeleteButton}
-                  onPress={deleteGroup}
+                  onPress={groupData?.isCreator ? deleteGroup : leaveGroup}
                   disabled={loading}
                 >
                   <Text style={styles.confirmDeleteText}>
-                    {loading ? "Menghapus..." : "Hapus"}
+                    {loading 
+                      ? (groupData?.isCreator ? "Menghapus..." : "Keluar...") 
+                      : (groupData?.isCreator ? "Hapus" : "Keluar")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -414,7 +583,9 @@ export default function GroupDetailScreen() {
                   color="#00897B"
                 />
               </View>
-              <Text style={styles.successTitle}>Grup Berhasil dihapus</Text>
+              <Text style={styles.successTitle}>
+                {groupData?.isCreator ? "Grup Berhasil dihapus" : "Berhasil keluar dari grup"}
+              </Text>
             </View>
           </View>
         </Modal>
@@ -458,6 +629,67 @@ export default function GroupDetailScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* Confirm Add Friend Modal */}
+        <Modal
+          visible={showConfirmFriendModal}
+          transparent={true}
+          animationType="fade"
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.deleteModal}>
+              <View style={styles.friendIcon}>
+                <Ionicons
+                  name="person-add"
+                  size={getIconSize(40)}
+                  color="#00897B"
+                />
+              </View>
+              <Text style={styles.deleteMessage}>
+                Apakah anda yakin menambahkan {selectedFriend?.name} sebagai teman?
+              </Text>
+              <View style={styles.deleteActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowConfirmFriendModal(false);
+                    setSelectedFriend(null);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Tidak</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmFriendButton}
+                  onPress={addFriend}
+                >
+                  <Text style={styles.confirmFriendText}>Ya</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Success Add Friend Modal */}
+        <Modal
+          visible={showSuccessFriendModal}
+          transparent={true}
+          animationType="fade"
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.successModal}>
+              <View style={styles.successIcon}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={getIconSize(60)}
+                  color="#00897B"
+                />
+              </View>
+              <Text style={styles.successTitle}>
+                {selectedFriend?.name} sudah berhasil ditambahkan
+              </Text>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -497,7 +729,7 @@ const styles = StyleSheet.create({
   },
   whiteModalContainer: {
     flex: 1,
-    backgroundColor: LOCAL_COLORS.cardWhite,
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     shadowColor: "#000",
@@ -505,10 +737,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    marginBottom: -24,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: hp(6),
+    paddingBottom: 24,
   },
   groupInfoCard: {
     backgroundColor: "#A6D3CE",
@@ -758,5 +991,76 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.white,
     textAlign: "center",
+  },
+  leaveButton: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: "#FF3B30",
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
+    alignItems: "center",
+  },
+  leaveButtonText: {
+    fontSize: rf(16),
+    fontFamily: FONTS.semiBold,
+    color: "#FF3B30",
+  },
+  memberActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: getSpacing(8),
+  },
+  addFriendButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(0, 137, 123, 0.2)",
+  },
+  friendIcon: {
+    marginBottom: getSpacing(16),
+  },
+  confirmFriendButton: {
+    flex: 1,
+    backgroundColor: "#00897B",
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(12),
+    alignItems: "center",
+  },
+  confirmFriendText: {
+    fontSize: rf(16),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
+  },
+  textArea: {
+    backgroundColor: COLORS.inputBg,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
+    fontSize: rf(16),
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+    minHeight: 80,
+  },
+  groupDescriptionDisplay: {
+    backgroundColor: COLORS.inputBg,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+    minHeight: 80,
+  },
+  groupDescriptionText: {
+    fontSize: rf(16),
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    lineHeight: 22,
   },
 });

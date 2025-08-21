@@ -46,6 +46,7 @@ const mockUsers = [
 
 export default function CreateGroupScreen() {
   const [namaGrup, setNamaGrup] = useState("");
+  const [deskripsiGrup, setDeskripsiGrup] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [daftarTeman, setDaftarTeman] = useState<any[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
@@ -113,6 +114,7 @@ export default function CreateGroupScreen() {
       const newGroup = {
         groupId: "GRP" + Date.now(),
         groupName: namaGrup.trim(),
+        groupDescription: deskripsiGrup.trim(),
         isCreator: true,
         creatorName: "You",
         memberCount: temanTerpilih.length + 1, // +1 for creator
@@ -188,6 +190,21 @@ export default function CreateGroupScreen() {
                   value={namaGrup}
                   onChangeText={setNamaGrup}
                   placeholderTextColor={COLORS.placeholder}
+                />
+              </View>
+
+              {/* Group Description Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Deskripsi Grup</Text>
+                <TextInput
+                  style={styles.textArea}
+                  placeholder="Jelaskan tujuan atau kebutuhan grup ini..."
+                  value={deskripsiGrup}
+                  onChangeText={setDeskripsiGrup}
+                  placeholderTextColor={COLORS.placeholder}
+                  multiline={true}
+                  numberOfLines={3}
+                  textAlignVertical="top"
                 />
               </View>
 
@@ -388,7 +405,7 @@ const styles = StyleSheet.create({
   },
   whiteModalContainer: {
     flex: 1,
-    backgroundColor: LOCAL_COLORS.cardWhite,
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     shadowColor: "#000",
@@ -396,10 +413,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    marginBottom: -24,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: hp(6),
+    paddingBottom: 24,
   },
   formSection: {
     paddingHorizontal: 24,
@@ -424,6 +442,18 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
+  },
+  textArea: {
+    backgroundColor: COLORS.inputBg,
+    borderRadius: getBorderRadius(12),
+    paddingVertical: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
+    fontSize: rf(16),
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+    minHeight: 80,
   },
   searchInputContainer: {
     flexDirection: "row",
