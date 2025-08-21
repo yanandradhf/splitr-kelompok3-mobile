@@ -68,8 +68,8 @@ const EditProfileScreen = () => {
       <SafeAreaView style={styles.safeArea}>
         <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
 
-        {/* Purple Background Section */}
-        <View style={styles.purpleSection}>
+        {/* Background Section */}
+        <View style={styles.backgroundSection}>
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -83,15 +83,19 @@ const EditProfileScreen = () => {
 
           {/* Profile Image */}
           <View style={styles.profileSection}>
-            <Image
-              source={{
-                uri: "https://picsum.photos/id/64/120/120",
-              }}
-              style={styles.profileImage}
-            />
-            <TouchableOpacity style={styles.editIconContainer}>
-              <Ionicons name="camera" size={16} color={COLORS.teal} />
-            </TouchableOpacity>
+            <View style={styles.profileImageContainer}>
+              <Image
+                source={{
+                  uri: "https://picsum.photos/id/64/120/120",
+                }}
+                style={styles.profileImage}
+              />
+              <TouchableOpacity style={styles.editIconContainer}>
+                <Ionicons name="camera" size={16} color={COLORS.teal} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.profileName}>{profile?.user?.name || 'User'}</Text>
+            <Text style={styles.profileUsername}>@{profile?.user?.username || 'username'}</Text>
           </View>
         </View>
 
@@ -101,11 +105,10 @@ const EditProfileScreen = () => {
             style={{ flex: 1 }} 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{profile?.user?.username || 'User'}</Text>
-          <Text style={styles.profileId}>{profile?.user?.bniAccountNumber || '-'}</Text>
-        </View>
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+            >
 
         {/* Form Fields */}
         <View style={styles.formContainer}>
@@ -169,17 +172,16 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  purpleSection: {
+  backgroundSection: {
     backgroundColor: COLORS.backgroundMain,
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginTop: 20,
+    paddingVertical: 16,
   },
   backButton: {
     padding: 5,
@@ -195,49 +197,31 @@ const styles = StyleSheet.create({
   profileSection: {
     alignItems: "center",
     marginTop: 20,
-    marginBottom: 40,
+    marginBottom: 20,
+  },
+  profileImageContainer: {
+    position: 'relative',
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 25,
-    backgroundColor: "#4A90E2",
-    borderWidth: 3,
-    borderColor: "#FFF",
-  },
-  whiteModalContainer: {
-    flex: 1,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    marginBottom: -50,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  profileInfo: {
-    alignItems: "center",
-    paddingBottom: 20,
+    borderWidth: 3,
+    borderColor: COLORS.white,
   },
   editIconContainer: {
-    position: "absolute",
-    right: "35%",
-    top: 90,
-    backgroundColor: "#FFF",
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    backgroundColor: COLORS.white,
     borderRadius: 15,
     width: 30,
     height: 30,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 3,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -246,12 +230,30 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
+    marginTop: 16,
   },
-  profileId: {
-    fontSize: 14,
+  profileUsername: {
+    fontSize: 16,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
-    marginTop: 5,
+    marginTop: 4,
+  },
+  whiteModalContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    flex: 1,
+    marginBottom: -50,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 150,
   },
   formContainer: {
     paddingBottom: 30,

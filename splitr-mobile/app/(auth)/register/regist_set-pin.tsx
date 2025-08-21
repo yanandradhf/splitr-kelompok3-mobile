@@ -98,17 +98,7 @@ export default function RegisterSetPin() {
     try {
       setStep5Data({ pin });
       await completeRegister();
-      Alert.alert(
-        "🎉 Registrasi Berhasil",
-        "Akun anda telah berhasil dibuat. \nSilahkan Login dengan username dan password yang telah didaftarkan",
-        [
-          {
-            text: "Login Sekarang",
-            onPress: () => router.push("/(auth)/login"),
-          },
-        ],
-        { cancelable: false }
-      );
+      router.replace("/(auth)/register/success");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     }

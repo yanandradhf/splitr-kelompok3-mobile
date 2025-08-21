@@ -1,67 +1,65 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Dimensions,
-  Platform,
-} from 'react-native';
-import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-
-const { width, height } = Dimensions.get('window');
-const isSmallScreen = height < 700;
-const isIOS = Platform.OS === 'ios';
+  SafeAreaView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { COLORS, FONTS } from "../../../constants/theme";
 
 export default function PasswordSuccessScreen() {
-  const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-  });
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
   const handleContinue = () => {
-    router.replace('/login');
+    router.replace("/(auth)/login");
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FF8A50" />
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={COLORS.backgroundMain}
+          barStyle="dark-content"
+        />
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Lupa Password</Text>
-      </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.placeholder} />
 
-      {/* Main Form Container */}
-      <View style={styles.formWrapper}>
-        <View style={styles.formContainer}>
-          <Text style={styles.subtitle}>Password Berhasil Diubah</Text>
-
-          <View style={styles.successIconContainer}>
-            <Ionicons name="checkmark-circle" size={200} color="#5DDBD3" />
-          </View>
-          
-          <Text style={styles.description}>
-            Password Anda telah berhasil diubah. Sekarang Anda dapat menggunakan password baru untuk masuk ke akun Anda.
-          </Text>
-
-          <TouchableOpacity 
-            style={styles.continueButton}
-            onPress={handleContinue}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.continueButtonText}>Lanjutkan ke Aplikasi</Text>
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
         </View>
-      </View>
+
+        {/* White Panel */}
+        <View style={styles.panel}>
+          <View style={styles.panelContent}>
+            <Text style={styles.subtitle}>Password Berhasil Diubah</Text>
+
+            <View style={styles.successIcon}>
+              <View style={styles.checkmarkOuter}>
+                <View style={styles.checkmarkInner}>
+                  <Ionicons name="checkmark" size={40} color={COLORS.white} />
+                </View>
+              </View>
+            </View>
+
+            <Text style={styles.description}>
+              Password Anda telah berhasil diubah. Sekarang Anda dapat
+              menggunakan password baru untuk masuk ke akun Anda.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinue}
+            >
+              <Text style={styles.continueButtonText}>
+                Lanjutkan ke Aplikasi
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
     </View>
   );
 }
@@ -69,81 +67,91 @@ export default function PasswordSuccessScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF8736',
+    backgroundColor: COLORS.backgroundMain,
   },
-  titleContainer: {
-    alignItems: 'center',
-    paddingVertical: isSmallScreen ? 20 : 30,
-    paddingTop: isIOS ? 80 : 60,
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   title: {
-    fontSize: isSmallScreen ? 18 : 20,
-    fontWeight: '700',
-    color: '#000',
-    letterSpacing: 0.5,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
-  formWrapper: {
-    flex: 1,
-    paddingHorizontal: 0,
-    paddingTop: isSmallScreen ? 10 : 20,
+  placeholder: {
+    width: 40,
   },
-  formContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 60,
-    borderTopRightRadius: 60,
+  panel: {
     flex: 1,
-    paddingHorizontal: width * 0.06,
-    paddingTop: isSmallScreen ? 40 : 50,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
-    alignItems: 'center',
+    shadowRadius: 8,
+    elevation: 5,
+    marginBottom: -50,
   },
-  successIconContainer: {
-    marginBottom: isSmallScreen ? 20 : 25,
-    marginTop: isSmallScreen ? 10 : 15,
+  panelContent: {
+    paddingHorizontal: 20,
+    paddingTop: 36,
+    paddingBottom: 200,
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
   },
   subtitle: {
-    fontSize: isSmallScreen ? 12 : 18,
-    fontWeight: '600',
-    color: '#000000ff',
-    marginBottom: isSmallScreen ? 15 : 20,
-    textAlign: 'center',
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+    marginBottom: 40,
+  },
+  successIcon: {
+    marginBottom: 40,
+  },
+  checkmarkOuter: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(0, 137, 123, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkmarkInner: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.teal,
+    justifyContent: "center",
+    alignItems: "center",
   },
   description: {
-    fontSize: isSmallScreen ? 12 : 14,
-    fontWeight: '400',
-    color: '#666666',
-    marginBottom: isSmallScreen ? 40 : 50,
-    textAlign: 'justify',
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: "center",
     lineHeight: 22,
-    paddingHorizontal: 10,
+    marginBottom: 40,
+    paddingHorizontal: 20,
   },
   continueButton: {
-    backgroundColor: '#5DDBD3',
-    borderRadius: 8,
-    paddingVertical: isSmallScreen ? 15 : 18,
-    alignItems: 'center',
-    marginHorizontal: 5,
-    marginTop: height * 0.20,
-    marginBottom: isIOS ? 30 : 20,
-    width: '100%',
+    backgroundColor: COLORS.teal,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+    alignItems: "center",
   },
   continueButtonText: {
-    color: '#000',
-    fontSize: isSmallScreen ? 14 : 16,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: COLORS.white,
+    fontSize: 16,
+    fontFamily: FONTS.bold,
   },
 });
