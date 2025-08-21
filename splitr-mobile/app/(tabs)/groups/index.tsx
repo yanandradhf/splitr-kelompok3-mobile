@@ -134,7 +134,17 @@ export default function GroupsScreen() {
               />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Grup</Text>
-            <View style={{ width: getIconSize(24) }} />
+            <TouchableOpacity
+              style={styles.headerCreateButton}
+              onPress={() => router.push("/(tabs)/groups/create")}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="add"
+                size={getIconSize(20)}
+                color={COLORS.white}
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Search Bar */}
@@ -262,16 +272,7 @@ export default function GroupsScreen() {
               )}
             </View>
 
-            {/* Create Group Button */}
-            <TouchableOpacity
-              style={styles.createGroupButton}
-              onPress={() => {
-                router.push("/(tabs)/groups/create");
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.createGroupText}>Buat Grup</Text>
-            </TouchableOpacity>
+
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -419,19 +420,18 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginBottom: getSpacing(8),
   },
-  createGroupButton: {
+  headerCreateButton: {
     backgroundColor: COLORS.teal,
-    marginHorizontal: getSpacing(24),
-    marginTop: getSpacing(20),
-    paddingVertical: getSpacing(18),
-    borderRadius: getBorderRadius(12),
+    width: getIconSize(36),
+    height: getIconSize(36),
+    borderRadius: getIconSize(18),
+    justifyContent: "center",
     alignItems: "center",
-  },
-  createGroupText: {
-    fontSize: rf(FONT_SIZES.lg),
-    fontFamily: FONTS.bold,
-    color: COLORS.white,
-    letterSpacing: 0.5,
+    shadowColor: COLORS.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   loader: {
     marginTop: getSpacing(40),

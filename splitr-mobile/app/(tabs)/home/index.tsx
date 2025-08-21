@@ -290,22 +290,24 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               style={styles.sectionHeader}
             >
-              <Text style={styles.sectionTitle}>Lihat grup</Text>
+              <Text style={styles.sectionTitle}>Lihat Grup</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
                 color={LOCAL_COLORS.textPrimary}
               />
             </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.groupsScroll}
-            >
-              {groupsLoading ? (
-                <ActivityIndicator size="small" color={COLORS.card} />
-              ) : (
-                groups.map((group, index) => (
+            {groupsLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={COLORS.teal} />
+              </View>
+            ) : groups.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.groupsScroll}
+              >
+                {groups.map((group, index) => (
                   <View
                     key={group.groupId || index}
                     style={[styles.groupCard, { marginRight: 16 }]}
@@ -356,9 +358,31 @@ export default function HomeScreen() {
                       </View>
                     </View>
                   </View>
-                ))
-              )}
-            </ScrollView>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyGroupState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons
+                    name="people-outline"
+                    size={24}
+                    color={COLORS.teal}
+                  />
+                </View>
+                <Text style={styles.emptyTitle}>Belum ada grup</Text>
+                <Text style={styles.emptySubtitle}>
+                  Buat grup pertama untuk mulai berbagi tagihan
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyActionButton}
+                  onPress={() => router.push("/(tabs)/groups")}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="people" size={16} color={COLORS.white} />
+                  <Text style={styles.emptyActionText}>Buat Grup</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* SEPARATOR */}
@@ -378,15 +402,17 @@ export default function HomeScreen() {
                 color={COLORS.textSecondary}
               />
             </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.friendsScroll}
-            >
-              {friendsLoading ? (
-                <ActivityIndicator size="small" color={COLORS.card} />
-              ) : (
-                friends.slice(0, 4).map((friendData, index) => (
+            {friendsLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={COLORS.teal} />
+              </View>
+            ) : friends.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.friendsScroll}
+              >
+                {friends.slice(0, 4).map((friendData, index) => (
                   <TouchableOpacity
                     key={friendData.friend.userId || index}
                     style={styles.friendItem}
@@ -400,19 +426,41 @@ export default function HomeScreen() {
                       {friendData.friend.name}
                     </Text>
                   </TouchableOpacity>
-                ))
-              )}
-              <TouchableOpacity
-                style={styles.friendItem}
-                activeOpacity={0.7}
-                onPress={() => router.push("/(modals)/add-friend")}
-              >
-                <View style={styles.addFriendCircle}>
-                  <Ionicons name="add" size={28} color={COLORS.white} />
+                ))}
+                <TouchableOpacity
+                  style={styles.friendItem}
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/(modals)/add-friend")}
+                >
+                  <View style={styles.addFriendCircle}>
+                    <Ionicons name="add" size={28} color={COLORS.white} />
+                  </View>
+                  <Text style={styles.friendName}>Tambah teman</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyFriendState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons
+                    name="person-add-outline"
+                    size={32}
+                    color={COLORS.teal}
+                  />
                 </View>
-                <Text style={styles.friendName}>Tambah teman</Text>
-              </TouchableOpacity>
-            </ScrollView>
+                <Text style={styles.emptyTitle}>Belum ada teman</Text>
+                <Text style={styles.emptySubtitle}>
+                  Tambahkan teman untuk mulai berbagi tagihan
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyActionButton}
+                  onPress={() => router.push("/(modals)/add-friend")}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="person-add" size={16} color={COLORS.white} />
+                  <Text style={styles.emptyActionText}>Tambah Teman</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <View style={{ height: 100 }} />
@@ -887,5 +935,74 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
+  },
+
+  // EMPTY STATES
+  emptyGroupState: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginHorizontal: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyFriendState: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginHorizontal: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  emptyActionButton: {
+    backgroundColor: COLORS.teal,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: COLORS.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  emptyActionText: {
+    fontSize: 13,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
+    marginLeft: 6,
   },
 });

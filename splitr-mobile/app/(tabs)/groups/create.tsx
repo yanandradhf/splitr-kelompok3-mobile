@@ -8,6 +8,9 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -54,6 +57,7 @@ export default function CreateGroupScreen() {
 
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [buttonAnimation] = useState(new Animated.Value(0));
   const { getFriends, createGroup: apiCreateGroup } = useApi();
 
   // Fetch friends list
@@ -93,6 +97,26 @@ export default function CreateGroupScreen() {
   };
 
   const isFormValid = namaGrup.trim().length > 0 && temanTerpilih.length > 0;
+  const showButton = temanTerpilih.length > 0;
+
+  // Animate button when friends are selected
+  useEffect(() => {
+    if (showButton) {
+      Animated.spring(buttonAnimation, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8,
+      }).start();
+    } else {
+      Animated.spring(buttonAnimation, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8,
+      }).start();
+    }
+  }, [showButton]);
 
   const createGroup = async () => {
     if (!isFormValid) return;
@@ -155,7 +179,10 @@ export default function CreateGroupScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <SafeAreaView style={styles.safeArea}>
         {/* Purple Background Section */}
         <View style={styles.purpleSection}>
@@ -175,15 +202,20 @@ export default function CreateGroupScreen() {
 
         {/* White Modal Container */}
         <View style={styles.whiteModalContainer}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Form Section */}
-            <View style={styles.formSection}>
+          <View style={styles.contentWrapper}>
+            <ScrollView
+              style={styles.scrollContainer}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Form Section */}
+              <View style={styles.formSection}>
               {/* Group Name Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Nama Grup</Text>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Nama Grup</Text>
+                  <Text style={styles.required}>*</Text>
+                </View>
                 <TextInput
                   style={styles.input}
                   placeholder="Masukkan nama grup"
@@ -195,22 +227,102 @@ export default function CreateGroupScreen() {
 
               {/* Group Description Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Deskripsi Grup</Text>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Deskripsi Grup</Text>
+                  <Text style={styles.optional}>(Opsional)</Text>
+                </View>
                 <TextInput
                   style={styles.textArea}
-                  placeholder="Jelaskan tujuan atau kebutuhan grup ini..."
+                  placeholder="Jelaskan tujuan grup ini..."
                   value={deskripsiGrup}
                   onChangeText={setDeskripsiGrup}
                   placeholderTextColor={COLORS.placeholder}
                   multiline={true}
-                  numberOfLines={3}
+                  numberOfLines={2}
                   textAlignVertical="top"
                 />
               </View>
 
+              {/* Selected Members Preview */}
+              {temanTerpilih.length > 0 && (
+                <View style={styles.selectedSection}>
+                <Text style={styles.selectedTitle}>
+                  Anggota Grup ({temanTerpilih.length + 1})
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.selectedMembers}>
+                    {/* Host (Creator) - Always First */}
+                    <View style={styles.hostMember}>
+                      <Image source={personImages[0]} style={styles.hostAvatar} />
+                      <Text style={styles.hostName}>You (Host)</Text>
+                    </View>
+                    
+                    {/* Separator */}
+                    {temanTerpilih.length > 0 && (
+                      <View style={styles.memberSeparator}>
+                        <View style={styles.separatorLine} />
+                      </View>
+                    )}
+                    
+                    {/* Selected Friends */}
+                    {temanTerpilih.map((friend) => (
+                      <View key={friend.id} style={styles.selectedFriend}>
+                        <Image source={friend.avatar} style={styles.selectedAvatar} />
+                        <Text style={styles.selectedName} numberOfLines={1}>{friend.name}</Text>
+                        <TouchableOpacity
+                          style={styles.removeButton}
+                          onPress={() => toggleFriend(friend)}
+                        >
+                          <Ionicons name="close" size={12} color={COLORS.white} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
+                </View>
+              )}
+
+              {/* Smart Button Above Friends Section */}
+              {showButton && (
+                <Animated.View 
+                  style={[
+                    styles.compactButtonContainer,
+                    {
+                      transform: [
+                        {
+                          translateY: buttonAnimation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-30, 0],
+                          }),
+                        },
+                      ],
+                      opacity: buttonAnimation,
+                    },
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={styles.compactButton}
+                    onPress={createGroup}
+                    disabled={loading}
+                    activeOpacity={0.8}
+                  >
+                    {loading ? (
+                      <Text style={styles.compactButtonText}>Membuat...</Text>
+                    ) : (
+                      <View style={styles.compactButtonContent}>
+                        <Ionicons name="people" size={14} color={COLORS.white} />
+                        <Text style={styles.compactButtonText}>
+                          Buat Grup ({temanTerpilih.length + 1})
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
+
               {/* Friends List with Search */}
               <View style={styles.friendsSection}>
-                <Text style={styles.sectionTitle}>Daftar teman</Text>
+                <Text style={styles.sectionTitle}>Pilih Anggota</Text>
 
                 {/* Search Input */}
                 <View style={styles.searchInputContainer}>
@@ -218,139 +330,132 @@ export default function CreateGroupScreen() {
                     name="search"
                     size={getIconSize(20)}
                     color={COLORS.textSecondary}
-                    style={styles.searchIcon}
                   />
                   <TextInput
                     style={styles.searchInput}
-                    placeholder="Cari teman berdasarkan username"
+                    placeholder="Cari teman..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholderTextColor={COLORS.placeholder}
                   />
                 </View>
 
-                {/* Loading State */}
-                {loadingFriends ? (
-                  <View style={styles.noResultsContainer}>
-                    <Text style={styles.noResultsText}>Memuat daftar teman...</Text>
-                  </View>
-                ) : (
-                  /* Filtered Friends List */
-                  daftarTeman
-                    .filter(
-                      (friend) =>
-                        friend.username
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase()) ||
-                        friend.name
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-                    )
-                    .map((friend) => {
-                    const isSelected = temanTerpilih.find(
-                      (selected) => selected.id === friend.id
-                    );
-                    return (
-                      <TouchableOpacity
-                        key={friend.id}
-                        style={styles.friendItem}
-                        onPress={() => toggleFriend(friend)}
-                        activeOpacity={0.7}
-                      >
-                        <Image
-                          source={friend.avatar}
-                          style={styles.friendAvatar}
-                        />
-                        <View style={styles.friendInfo}>
-                          <Text style={styles.friendName}>{friend.name}</Text>
-                          <Text style={styles.friendUsername}>
-                            @{friend.username}
+                {/* Scrollable Friends List */}
+                <ScrollView 
+                  style={styles.friendsListContainer}
+                  contentContainerStyle={styles.friendsListContent}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                >
+                  {loadingFriends ? (
+                    <View style={styles.noResultsContainer}>
+                      <Text style={styles.noResultsText}>Memuat daftar teman...</Text>
+                    </View>
+                  ) : (
+                    <>
+                      {daftarTeman
+                        .filter(
+                          (friend) =>
+                            friend.username
+                              .toLowerCase()
+                              .includes(searchQuery.toLowerCase()) ||
+                            friend.name
+                              .toLowerCase()
+                              .includes(searchQuery.toLowerCase())
+                        )
+                        .map((friend) => {
+                        const isSelected = temanTerpilih.find(
+                          (selected) => selected.id === friend.id
+                        );
+                        return (
+                          <TouchableOpacity
+                            key={friend.id}
+                            style={[
+                              styles.friendItem,
+                              isSelected && styles.friendItemSelected
+                            ]}
+                            onPress={() => toggleFriend(friend)}
+                            activeOpacity={0.7}
+                          >
+                            <Image
+                              source={friend.avatar}
+                              style={styles.friendAvatar}
+                            />
+                            <View style={styles.friendInfo}>
+                              <Text style={styles.friendName}>{friend.name}</Text>
+                              <Text style={styles.friendUsername}>
+                                @{friend.username}
+                              </Text>
+                            </View>
+                            <View
+                              style={[
+                                styles.statusIcon,
+                                isSelected
+                                  ? styles.selectedIcon
+                                  : styles.unselectedIcon,
+                              ]}
+                            >
+                              <Ionicons
+                                name={isSelected ? "checkmark" : "add"}
+                                size={getIconSize(16)}
+                                color={COLORS.white}
+                              />
+                            </View>
+                          </TouchableOpacity>
+                        );
+                        })}
+
+                      {/* No Results */}
+                      {!loadingFriends && searchQuery &&
+                        daftarTeman.filter(
+                          (friend) =>
+                            friend.username
+                              .toLowerCase()
+                              .includes(searchQuery.toLowerCase()) ||
+                            friend.name
+                              .toLowerCase()
+                              .includes(searchQuery.toLowerCase())
+                        ).length === 0 && (
+                          <View style={styles.noResultsContainer}>
+                            <Ionicons
+                              name="search"
+                              size={getIconSize(32)}
+                              color={COLORS.textSecondary}
+                            />
+                            <Text style={styles.noResultsText}>
+                              Tidak ada teman ditemukan
+                            </Text>
+                            <Text style={styles.noResultsSubtext}>
+                              Coba kata kunci lain
+                            </Text>
+                          </View>
+                        )}
+
+                      {/* Empty Friends State */}
+                      {!loadingFriends && daftarTeman.length === 0 && (
+                        <View style={styles.noResultsContainer}>
+                          <Ionicons
+                            name="people-outline"
+                            size={getIconSize(32)}
+                            color={COLORS.textSecondary}
+                          />
+                          <Text style={styles.noResultsText}>
+                            Belum ada teman
+                          </Text>
+                          <Text style={styles.noResultsSubtext}>
+                            Tambahkan teman terlebih dahulu
                           </Text>
                         </View>
-                        <View
-                          style={[
-                            styles.statusIcon,
-                            isSelected
-                              ? styles.selectedIcon
-                              : styles.unselectedIcon,
-                          ]}
-                        >
-                          <Ionicons
-                            name={isSelected ? "checkmark" : "add"}
-                            size={getIconSize(16)}
-                            color={COLORS.white}
-                          />
-                        </View>
-                      </TouchableOpacity>
-                    );
-                    })
-                )}
-
-                {/* No Results */}
-                {!loadingFriends && searchQuery &&
-                  daftarTeman.filter(
-                    (friend) =>
-                      friend.username
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                      friend.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase())
-                  ).length === 0 && (
-                    <View style={styles.noResultsContainer}>
-                      <Ionicons
-                        name="search"
-                        size={getIconSize(32)}
-                        color={COLORS.textSecondary}
-                      />
-                      <Text style={styles.noResultsText}>
-                        Tidak ada teman ditemukan
-                      </Text>
-                      <Text style={styles.noResultsSubtext}>
-                        Coba kata kunci lain
-                      </Text>
-                    </View>
+                      )}
+                    </>
                   )}
-
-                {/* Empty Friends State */}
-                {!loadingFriends && daftarTeman.length === 0 && (
-                  <View style={styles.noResultsContainer}>
-                    <Ionicons
-                      name="people-outline"
-                      size={getIconSize(32)}
-                      color={COLORS.textSecondary}
-                    />
-                    <Text style={styles.noResultsText}>
-                      Belum ada teman
-                    </Text>
-                    <Text style={styles.noResultsSubtext}>
-                      Tambahkan teman terlebih dahulu
-                    </Text>
-                  </View>
-                )}
+                </ScrollView>
               </View>
-
-              {/* Create Group Button */}
-              <TouchableOpacity
-                style={[
-                  styles.createButton,
-                  !isFormValid && styles.createButtonDisabled,
-                ]}
-                onPress={createGroup}
-                disabled={!isFormValid || loading}
-                activeOpacity={0.8}
-              >
-                <Text
-                  style={[
-                    styles.createButtonText,
-                    !isFormValid && styles.createButtonTextDisabled,
-                  ]}
-                >
-                  {loading ? "Membuat Grup..." : "Buat Grup"}
-                </Text>
-              </TouchableOpacity>
             </View>
-          </ScrollView>
+            </ScrollView>
+
+
+          </View>
         </View>
 
         {/* Success Modal */}
@@ -363,7 +468,7 @@ export default function CreateGroupScreen() {
           groupName={namaGrup}
         />
       </SafeAreaView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -406,38 +511,60 @@ const styles = StyleSheet.create({
   whiteModalContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: getBorderRadius(24),
+    borderTopRightRadius: getBorderRadius(24),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    marginBottom: -24,
+    marginBottom: -hp(6),
+  },
+  contentWrapper: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 24,
+    paddingBottom: hp(6),
   },
   formSection: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   inputGroup: {
-    marginBottom: getSpacing(20),
+    marginBottom: getSpacing(SPACING.sm),
+  },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: getSpacing(SPACING.sm),
   },
   label: {
-    fontSize: rf(16),
+    fontSize: rf(FONT_SIZES.base),
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginBottom: getSpacing(8),
+  },
+  required: {
+    fontSize: rf(FONT_SIZES.base),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.red,
+    marginLeft: 4,
+  },
+  optional: {
+    fontSize: rf(FONT_SIZES.sm),
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginLeft: 6,
   },
   input: {
     backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(16),
-    paddingHorizontal: getSpacing(16),
-    fontSize: rf(16),
+    borderRadius: getBorderRadius(10),
+    paddingVertical: getSpacing(12),
+    paddingHorizontal: getSpacing(14),
+    fontSize: rf(15),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
     borderWidth: 1,
@@ -445,40 +572,47 @@ const styles = StyleSheet.create({
   },
   textArea: {
     backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(16),
-    paddingHorizontal: getSpacing(16),
-    fontSize: rf(16),
+    borderRadius: getBorderRadius(10),
+    paddingVertical: getSpacing(10),
+    paddingHorizontal: getSpacing(14),
+    fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
-    minHeight: 80,
+    minHeight: 60,
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
+    borderRadius: getBorderRadius(10),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
-    paddingHorizontal: getSpacing(16),
-    marginBottom: getSpacing(16),
+    paddingHorizontal: getSpacing(14),
+    marginBottom: getSpacing(12),
   },
   searchIcon: {
     marginRight: getSpacing(8),
   },
   searchInput: {
     flex: 1,
-    paddingVertical: getSpacing(16),
-    fontSize: rf(16),
+    paddingVertical: getSpacing(12),
+    fontSize: rf(15),
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
   },
 
   friendsSection: {
-    marginTop: getSpacing(20),
-    marginBottom: getSpacing(40),
+    flex: 1,
+    marginTop: getSpacing(SPACING.md),
+  },
+  friendsListContainer: {
+    flex: 1,
+    maxHeight: hp(40),
+  },
+  friendsListContent: {
+    paddingBottom: getSpacing(SPACING.xl),
   },
   sectionTitle: {
     fontSize: rf(FONT_SIZES.lg),
@@ -489,11 +623,11 @@ const styles = StyleSheet.create({
   friendItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: getSpacing(14),
-    paddingHorizontal: getSpacing(16),
+    paddingVertical: getSpacing(12),
+    paddingHorizontal: getSpacing(14),
     backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    marginBottom: getSpacing(8),
+    borderRadius: getBorderRadius(10),
+    marginBottom: getSpacing(6),
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
   },
@@ -555,10 +689,10 @@ const styles = StyleSheet.create({
   },
   noResultsContainer: {
     alignItems: "center",
-    paddingVertical: getSpacing(30),
+    paddingVertical: getSpacing(20),
     backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    marginTop: getSpacing(8),
+    borderRadius: getBorderRadius(10),
+    marginTop: getSpacing(6),
   },
   noResultsText: {
     fontSize: rf(14),
@@ -572,23 +706,132 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
-  createButton: {
-    backgroundColor: "#00897B",
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(18),
+  compactButtonContainer: {
+    marginBottom: getSpacing(SPACING.md),
     alignItems: "center",
-    marginTop: getSpacing(20),
+  },
+  compactButton: {
+    backgroundColor: COLORS.teal,
+    borderRadius: getBorderRadius(20),
+    paddingVertical: getSpacing(10),
+    paddingHorizontal: getSpacing(16),
+    alignItems: "center",
+    shadowColor: COLORS.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  compactButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   createButtonDisabled: {
     backgroundColor: COLORS.gray,
   },
-  createButtonText: {
+  compactButtonText: {
     color: COLORS.white,
-    fontSize: rf(FONT_SIZES.lg),
-    fontFamily: FONTS.bold,
-    letterSpacing: 0.5,
+    fontSize: rf(FONT_SIZES.sm),
+    fontFamily: FONTS.semiBold,
+    marginLeft: 6,
   },
   createButtonTextDisabled: {
     color: COLORS.textSecondary,
+  },
+
+  // SELECTED FRIENDS PREVIEW
+  selectedSection: {
+    marginBottom: getSpacing(SPACING.md),
+    backgroundColor: "rgba(0, 137, 123, 0.05)",
+    borderRadius: getBorderRadius(10),
+    padding: getSpacing(12),
+    borderWidth: 1,
+    borderColor: "rgba(0, 137, 123, 0.2)",
+  },
+  selectedTitle: {
+    fontSize: rf(FONT_SIZES.base),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.teal,
+    marginBottom: getSpacing(SPACING.sm),
+  },
+  selectedMembers: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: getSpacing(4),
+  },
+  hostMember: {
+    alignItems: "center",
+    marginRight: getSpacing(SPACING.md),
+    width: wp(16),
+  },
+  hostAvatar: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    marginBottom: getSpacing(4),
+    borderWidth: 2,
+    borderColor: COLORS.orange,
+  },
+  hostName: {
+    fontSize: rf(FONT_SIZES.xs),
+    fontFamily: FONTS.semiBold,
+    color: COLORS.orange,
+    textAlign: "center",
+  },
+  memberSeparator: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: getSpacing(SPACING.sm),
+  },
+  separatorLine: {
+    width: 1,
+    height: wp(8),
+    backgroundColor: COLORS.border,
+  },
+  selectedFriend: {
+    alignItems: "center",
+    marginRight: getSpacing(SPACING.md),
+    position: "relative",
+    width: wp(16),
+  },
+  selectedAvatar: {
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    marginBottom: getSpacing(4),
+    borderWidth: 2,
+    borderColor: COLORS.teal,
+  },
+  selectedName: {
+    fontSize: rf(FONT_SIZES.xs),
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+  },
+  removeButton: {
+    position: "absolute",
+    top: -4,
+    right: 8,
+    backgroundColor: COLORS.red,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  friendItemSelected: {
+    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    borderColor: COLORS.teal,
+    borderWidth: 2,
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
