@@ -159,7 +159,11 @@ export default function MonitoringIndex() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {activeTab === 'running' ? (
           <>
             {/* Summary Cards */}
@@ -492,6 +496,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingBottom: 120,
+    flexGrow: 1,
   },
   summaryRow: {
     flexDirection: 'row',
