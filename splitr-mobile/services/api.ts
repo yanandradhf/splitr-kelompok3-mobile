@@ -73,6 +73,10 @@ export const authAPI = {
     console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.RESET_PASSWORD);
     return api.post(API_CONFIG.ENDPOINTS.RESET_PASSWORD, data);
   },
+  getMyAccount: () => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.MY_ACCOUNT);
+    return api.get(API_CONFIG.ENDPOINTS.MY_ACCOUNT);
+  },
 };
 
 export const profileAPI = {
