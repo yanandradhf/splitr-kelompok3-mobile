@@ -64,17 +64,17 @@ export const UI_STATE_PAYLOAD = {
       summary: [
         {
           title: "Pembayaran Tertunda",
-          value: { amount: 975000, currency: "IDR", formatted: "Rp 975.000" },
-          subtitle: "Teman belum bayar",
+          value: { amount: 11985000, currency: "IDR", formatted: "Rp 11.985.000" },
+          subtitle: "Yang harus dibayar",
         },
         {
-          title: "Total Tagihan Saya",
+          title: "Tagihan yang Dibuat",
           value: {
-            amount: 11000000,
+            amount: 975000,
             currency: "IDR",
-            formatted: "Rp 11.000.000",
+            formatted: "Rp 975.000",
           },
-          subtitle: "Saya berhutang",
+          subtitle: "Yang saya buat",
         },
       ],
       myBills: {
