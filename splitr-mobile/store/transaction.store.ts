@@ -31,6 +31,16 @@ interface CompletedPayment {
   };
   status: 'lunas';
   isExpanded: boolean;
+  receiptUrl?: string;
+  items?: {
+    name: string;
+    qty: number;
+    price: {
+      amount: number;
+      currency: string;
+      formatted: string;
+    };
+  }[];
 }
 
 interface TransactionStore {
