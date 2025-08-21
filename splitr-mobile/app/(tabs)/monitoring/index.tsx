@@ -276,14 +276,37 @@ export default function MonitoringIndex() {
                               style={styles.payNowButton}
                               onPress={() => {
                                 console.log('Paying for transaction:', bill.id, bill.title, bill.amount.formatted);
-                                router.push(`/monitoring/transaction/bayarSekarang?transactionId=${bill.id}&title=${encodeURIComponent(bill.title)}&from=${encodeURIComponent(bill.from)}&amount=${encodeURIComponent(bill.amount.formatted)}`);
+                                router.push({
+                                  pathname: '/monitoring/transaction/pembayaran',
+                                  params: {
+                                    transactionId: bill.id,
+                                    title: bill.title,
+                                    from: bill.from,
+                                    amount: bill.amount.formatted,
+                                    paymentMethod: 'sekarang'
+                                  }
+                                });
                               }}
                             >
                               <Text style={styles.payNowText}>Bayar Sekarang</Text>
                             </Pressable>
                           )}
                           {actions.payLater && (
-                            <Pressable style={styles.payLaterButton}>
+                            <Pressable 
+                              style={styles.payLaterButton}
+                              onPress={() => {
+                                console.log('Bayar Nanti for transaction:', bill.id, bill.title, bill.amount.formatted);
+                                router.push({
+                                  pathname: '/monitoring/transaction/pembayaran',
+                                  params: {
+                                    transactionId: bill.id,
+                                    title: bill.title,
+                                    from: bill.from,
+                                    amount: bill.amount.formatted
+                                  }
+                                });
+                              }}
+                            >
                               <Text style={styles.payLaterText}>Bayar Nanti</Text>
                             </Pressable>
                           )}
@@ -736,7 +759,7 @@ const styles = StyleSheet.create({
   payLaterText: {
     color: Colors.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '900',
   },
   overdueButton: {
     flex: 1,

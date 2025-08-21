@@ -37,7 +37,7 @@ interface TransactionStore {
   runningTransactions: Transaction[];
   completedPayments: CompletedPayment[];
   isInitialized: boolean;
-  completeTransaction: (transactionId: string, paidAmount: string) => void;
+  completeTransaction: (transactionId: string, paidAmount: string, paymentMethod?: string) => void;
   initializeTransactions: () => void;
 }
 
@@ -96,6 +96,45 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
           },
           actions: { payNow: false, payLater: false, overdue: true },
         },
+        {
+          id: "notif-004",
+          status: "pengingat",
+          title: "Bioskop XXI",
+          from: "Sarah Putri",
+          dueDate: "2025-08-25",
+          amount: {
+            amount: 150000,
+            currency: "IDR",
+            formatted: "Rp 150.000",
+          },
+          actions: { payNow: true, payLater: true, overdue: false },
+        },
+        {
+          id: "notif-005",
+          status: "permintaan",
+          title: "Karaoke Inul Vista",
+          from: "Andi Pratama",
+          dueDate: "2025-08-23",
+          amount: {
+            amount: 250000,
+            currency: "IDR",
+            formatted: "Rp 250.000",
+          },
+          actions: { payNow: true, payLater: true, overdue: false },
+        },
+        {
+          id: "notif-006",
+          status: "pengingat",
+          title: "Makan di Padang Merdeka",
+          from: "Dina Sari",
+          dueDate: "2025-08-26",
+          amount: {
+            amount: 85000,
+            currency: "IDR",
+            formatted: "Rp 85.000",
+          },
+          actions: { payNow: true, payLater: true, overdue: false },
+        },
       ],
       completedPayments: [
         {
@@ -128,11 +167,31 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
           status: "lunas",
           isExpanded: false,
         },
+        {
+          id: "pay-004",
+          hostName: "Reza Ahmad",
+          title: "Cafe Starbucks",
+          method: "bayar-sekarang",
+          methodDate: "2025-08-21",
+          amount: { amount: 120000, currency: "IDR", formatted: "Rp 120.000" },
+          status: "lunas",
+          isExpanded: false,
+        },
+        {
+          id: "pay-005",
+          hostName: "Maya Sinta",
+          title: "Bensin Motor",
+          method: "auto-transfer",
+          methodDate: "2025-08-18",
+          amount: { amount: 50000, currency: "IDR", formatted: "Rp 50.000" },
+          status: "lunas",
+          isExpanded: false,
+        },
       ],
     });
   },
 
-  completeTransaction: (transactionId: string, paidAmount: string) => {
+  completeTransaction: (transactionId: string, paidAmount: string, paymentMethod?: string) => {
     console.log('=== STARTING TRANSACTION COMPLETION ===');
     const state = get();
     console.log('Current running transactions:', state.runningTransactions.map(t => ({ id: t.id, title: t.title })));
@@ -152,12 +211,15 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     // Remove from running transactions
     const updatedRunningTransactions = state.runningTransactions.filter(t => t.id !== transactionId);
     
+    // Determine method based on paymentMethod parameter
+    const method = paymentMethod === 'nanti' ? 'auto-transfer' : 'bayar-sekarang';
+    
     // Add to completed payments
     const newCompletedPayment: CompletedPayment = {
       id: `completed-${transactionId}-${Date.now()}`,
       hostName: transactionToComplete.from,
       title: transactionToComplete.title,
-      method: 'bayar-sekarang',
+      method: method,
       methodDate: new Date().toLocaleDateString('id-ID', { 
         day: '2-digit', 
         month: 'long', 
@@ -174,6 +236,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     console.log('- Running transactions:', updatedRunningTransactions.length);
     console.log('- Completed payments:', updatedCompletedPayments.length);
     console.log('- New completed payment:', newCompletedPayment.title);
+    console.log('- Payment method:', method);
 
     set({
       runningTransactions: updatedRunningTransactions,

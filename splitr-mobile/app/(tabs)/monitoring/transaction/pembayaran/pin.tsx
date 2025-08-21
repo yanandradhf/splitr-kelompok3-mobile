@@ -12,7 +12,7 @@ import { COLORS, FONTS } from '../../../../../constants/theme';
 
 export default function PinScreen() {
   const params = useLocalSearchParams();
-  const { nominal = '0', transactionId, title = 'TIKET KONSER COLDPLAY', from = 'Hans Sye' } = params;
+  const { amount = '0', transactionId, title = 'TIKET KONSER COLDPLAY', from = 'Hans Sye', paymentMethod, note } = params;
   const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,7 +32,7 @@ export default function PinScreen() {
       // Simulate API call
       setTimeout(() => {
         setIsLoading(false);
-        router.push(`/monitoring/transaction/bayarSekarang/berhasil?nominal=${encodeURIComponent(nominal as string)}&transactionId=${transactionId}&title=${encodeURIComponent(title as string)}&from=${encodeURIComponent(from as string)}`);
+        router.push(`/monitoring/transaction/pembayaran/berhasil?nominal=${encodeURIComponent(amount as string)}&transactionId=${transactionId}&title=${encodeURIComponent(title as string)}&from=${encodeURIComponent(from as string)}&paymentMethod=${paymentMethod}&note=${encodeURIComponent(note as string || '')}`);
       }, 1500);
     }
   };
@@ -128,23 +128,25 @@ export default function PinScreen() {
             
             {renderNumberPad()}
 
-            <TouchableOpacity
-              style={[
-                styles.confirmButton,
-                pin.length !== 6 && styles.confirmButtonDisabled,
-              ]}
-              onPress={handleConfirm}
-              disabled={pin.length !== 6 || isLoading}
-            >
-              <Text
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
                 style={[
-                  styles.confirmButtonText,
-                  pin.length !== 6 && styles.confirmButtonTextDisabled,
+                  styles.confirmButton,
+                  pin.length !== 6 && styles.confirmButtonDisabled,
                 ]}
+                onPress={handleConfirm}
+                disabled={pin.length !== 6 || isLoading}
               >
-                {isLoading ? 'Memproses...' : 'Konfirmasi'}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.confirmButtonText,
+                    pin.length !== 6 && styles.confirmButtonTextDisabled,
+                  ]}
+                >
+                  {isLoading ? 'Memproses...' : 'Konfirmasi'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -162,14 +164,15 @@ const styles = StyleSheet.create({
   },
   purpleSection: {
     backgroundColor: COLORS.backgroundMain,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 24,
+    marginTop: 20,
   },
   backButton: {
     padding: 8,
@@ -193,6 +196,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     marginBottom: -50,
+    marginTop: -50,
   },
   content: {
     flex: 1,
@@ -265,16 +269,22 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
+  buttonContainer: {
+    marginTop: 60,
+    width: '100%',
+    paddingHorizontal: 20,
+  },
   confirmButton: {
-    backgroundColor: COLORS.teal,
-    borderRadius: 12,
+    backgroundColor: '#00897B',
+    borderRadius: 20,
     paddingVertical: 16,
-    paddingHorizontal: 60,
     alignItems: 'center',
-    marginTop: 20,
+    minHeight: 48,
+    width: '100%',
   },
   confirmButtonDisabled: {
-    backgroundColor: COLORS.gray,
+    backgroundColor: '#B0BEC5',
+    opacity: 0.6,
   },
   confirmButtonText: {
     color: COLORS.white,
