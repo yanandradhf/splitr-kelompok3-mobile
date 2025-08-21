@@ -357,7 +357,7 @@ export default function HomeScreen() {
           <View style={styles.modalSection}>
             <TouchableOpacity 
               style={styles.sectionHeader}
-              onPress={() => router.push('/(modals)/tambah-teman')}
+              onPress={() => router.push('/(modals)/add-friend')}
               activeOpacity={0.7}
             >
               <Text style={styles.sectionTitle}>Lihat Teman</Text>
@@ -394,7 +394,7 @@ export default function HomeScreen() {
               <TouchableOpacity 
                 style={styles.friendItem} 
                 activeOpacity={0.7}
-                onPress={() => router.push('/(modals)/tambah-teman')}
+                onPress={() => router.push('/(modals)/add-friend')}
               >
                 <View style={styles.addFriendCircle}>
                   <Ionicons name="add" size={28} color={COLORS.white} />

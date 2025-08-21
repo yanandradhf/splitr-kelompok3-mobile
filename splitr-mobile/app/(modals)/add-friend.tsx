@@ -1,8 +1,17 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Modal, Image } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS } from '../../constants/theme';
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import { useFriends } from '../../hooks/useApi';
+import api from '../../services/api';
+
+const personImages = [
+  require("../../assets/images/person1.png"),
+  require("../../assets/images/person2.png"),
+  require("../../assets/images/person3.png"),
+  require("../../assets/images/person4.png"),
+];
 
 interface Friend {
   id: string;
@@ -11,14 +20,31 @@ interface Friend {
   username: string;
 }
 
+interface SearchResult {
+  found: boolean;
+  user: {
+    userId: string;
+    username: string;
+    name: string;
+    email: string;
+    accountNumber: string;
+  };
+  isAlreadyFriend: boolean;
+  canAddFriend: boolean;
+}
+
 export default function TambahTeman() {
   const [username, setUsername] = useState('');
   const [friendSearch, setFriendSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [addedFriends, setAddedFriends] = useState<Friend[]>([]);
-  const [isLoadingFriends, setIsLoadingFriends] = useState(true);
+  const [showNoResults, setShowNoResults] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [isDeletingFriend, setIsDeletingFriend] = useState(false);
   const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
+  
+  const { friends: apiFriends, loading: isLoadingFriends, refetch } = useFriends();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [addedFriend, setAddedFriend] = useState<Friend | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -26,13 +52,19 @@ export default function TambahTeman() {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Friend | null>(null);
 
-  useEffect(() => {
-    loadAddedFriends();
-  }, []);
+  // Transform API friends data to match our Friend interface
+  const addedFriends = useMemo(() => 
+    apiFriends.map((friendData: any) => ({
+      id: friendData.friend.userId,
+      name: friendData.friend.name,
+      username: friendData.friend.username || friendData.friend.name.toLowerCase().replace(/\s+/g, ''),
+      profilePhoto: friendData.friend.profilePhoto
+    })), [apiFriends]
+  );
 
   useEffect(() => {
     if (friendSearch.trim() === '') {
-      setFilteredFriends(addedFriends.sort((a, b) => a.name.localeCompare(b.name)));
+      setFilteredFriends([...addedFriends].sort((a, b) => a.name.localeCompare(b.name)));
     } else {
       const filtered = addedFriends.filter(friend => 
         friend.username.toLowerCase().includes(friendSearch.toLowerCase())
@@ -41,65 +73,60 @@ export default function TambahTeman() {
     }
   }, [friendSearch, addedFriends]);
 
-  const loadAddedFriends = async () => {
-    setIsLoadingFriends(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const mockAddedFriends: Friend[] = [
-        { id: '1', name: 'Nabila Sari', username: 'nanabila', profilePhoto: 'https://i.pravatar.cc/150?img=1' },
-        { id: '2', name: 'Yana Putri', username: 'yanana', profilePhoto: 'https://i.pravatar.cc/150?img=2' },
-        { id: '3', name: 'Cicilia Indah', username: 'cicil' },
-        { id: '4', name: 'Citra Panjaitan', username: 'citrapan', profilePhoto: 'https://i.pravatar.cc/150?img=4' },
-        { id: '5', name: 'Ivana Isdi', username: 'vanadi' },
-        {id: '6', name: 'Diyaa Noventino', username: 'diyanoven'},
-        {id: '7', name: 'Haqul Ulhaq', username: 'haqul'} 
-      ];
-      
-      const sortedFriends = mockAddedFriends.sort((a, b) => a.name.localeCompare(b.name));
-      setAddedFriends(sortedFriends);
-      setFilteredFriends(sortedFriends);
-    } catch (error) {
-      console.error('Load friends error:', error);
-    } finally {
-      setIsLoadingFriends(false);
-    }
-  };
 
-  useEffect(() => {
-    if (username.trim() === '') {
-      setSearchResults([]);
-      return;
-    }
-    
-    const searchTimer = setTimeout(() => {
-      handleUsernameSearch();
-    }, 500);
-    
-    return () => clearTimeout(searchTimer);
-  }, [username]);
+
+
 
   const handleUsernameSearch = async () => {
     if (!username.trim()) {
       setSearchResults([]);
+      setShowNoResults(false);
+      setSearchError('');
       return;
     }
 
     setIsSearching(true);
+    setShowNoResults(false);
+    setSearchError('');
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Add 1.5 second delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const mockSearchResults: Friend[] = [
-        { id: '10', name: 'Ilham Sipasi', username: 'ilhampasi', profilePhoto: 'https://i.pravatar.cc/150?img=10' },
-        { id: '11', name: 'Ahmad Rizki', username: 'ahmadrizki' },
-        { id: '12', name: 'Sari Indah', username: 'sariindah', profilePhoto: 'https://i.pravatar.cc/150?img=12' },
-      ].filter(user => 
-        user.username.toLowerCase().includes(username.toLowerCase())
-      );
+      const response = await api.get(`/api/mobile/friends/search?username=${encodeURIComponent(username)}`);
+      const searchResult: SearchResult = response.data;
       
-      setSearchResults(mockSearchResults);
-    } catch (error) {
+      if (searchResult.found && searchResult.canAddFriend) {
+        const friendData: Friend = {
+          id: searchResult.user.userId,
+          name: searchResult.user.name,
+          username: searchResult.user.username,
+          profilePhoto: undefined
+        };
+        setSearchResults([friendData]);
+        setShowNoResults(false);
+        setSearchError('');
+      } else if (searchResult.found && searchResult.isAlreadyFriend) {
+        setSearchResults([]);
+        setShowNoResults(false);
+        setSearchError(`${searchResult.user.name} sudah menjadi teman Anda`);
+      } else {
+        setSearchResults([]);
+        setShowNoResults(true);
+        setSearchError('');
+      }
+    } catch (error: any) {
       console.error('Search error:', error);
+      setSearchResults([]);
+      setSearchError('');
+      
+      // Check if it's a 400 error (user not found)
+      if (error.message?.includes('400') || error.response?.status === 400) {
+        setShowNoResults(true);
+      } else {
+        setSearchError('Terjadi kesalahan saat mencari pengguna');
+        setShowNoResults(false);
+      }
     } finally {
       setIsSearching(false);
     }
@@ -110,20 +137,34 @@ export default function TambahTeman() {
     setShowConfirmationModal(true);
   };
 
-  const handleConfirmAdd = () => {
-    if (selectedUser) {
+  const handleConfirmAdd = async () => {
+    if (!selectedUser) return;
+    
+    setIsAddingFriend(true);
+    
+    try {
+      await api.post('/api/mobile/friends/add', {
+        friendUserId: selectedUser.id
+      });
+      
       setShowConfirmationModal(false);
       setAddedFriend(selectedUser);
       setShowSuccessModal(true);
       
       setTimeout(() => {
-        setAddedFriends(prev => [...prev, selectedUser]);
-        setFilteredFriends(prev => [...prev, selectedUser]);
         setSearchResults(prev => prev.filter(f => f.id !== selectedUser.id));
         setShowSuccessModal(false);
         setAddedFriend(null);
         setSelectedUser(null);
+        refetch(); // Refresh friends list from API
       }, 2000);
+    } catch (error) {
+      console.error('Add friend error:', error);
+      setShowConfirmationModal(false);
+      setSelectedUser(null);
+      setSearchError('Gagal menambahkan teman. Silakan coba lagi.');
+    } finally {
+      setIsAddingFriend(false);
     }
   };
 
@@ -137,13 +178,25 @@ export default function TambahTeman() {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedFriend) {
-      setAddedFriends(prev => prev.filter(f => f.id !== selectedFriend.id));
-      setFilteredFriends(prev => prev.filter(f => f.id !== selectedFriend.id));
+  const handleConfirmDelete = async () => {
+    if (!selectedFriend) return;
+    
+    setIsDeletingFriend(true);
+    
+    try {
+      await api.delete(`/api/mobile/friends/remove/${selectedFriend.id}`);
+      
+      setShowDeleteModal(false);
+      setSelectedFriend(null);
+      refetch(); // Refresh friends list from API
+    } catch (error) {
+      console.error('Delete friend error:', error);
+      setShowDeleteModal(false);
+      setSelectedFriend(null);
+      // Could add error toast/alert here if needed
+    } finally {
+      setIsDeletingFriend(false);
     }
-    setShowDeleteModal(false);
-    setSelectedFriend(null);
   };
 
   const handleCancelDelete = () => {
@@ -190,49 +243,70 @@ export default function TambahTeman() {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              <View style={styles.searchIcon}>
+              <TouchableOpacity style={styles.searchIcon} onPress={handleUsernameSearch}>
                 {isSearching ? (
                   <ActivityIndicator size={20} color={COLORS.teal} />
                 ) : (
                   <Ionicons name="search" size={20} color={COLORS.teal} />
                 )}
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
 
           {/* Scrollable Search Results */}
-          {searchResults.length > 0 && (
+          {(searchResults.length > 0 || showNoResults || searchError) && (
             <View style={styles.searchResultsContainer}>
               <ScrollView 
                 style={styles.searchResultsScroll}
                 showsVerticalScrollIndicator={false}
               >
-                <Text style={styles.resultsTitle}>Hasil Pencarian ({searchResults.length})</Text>
-                {searchResults.map((user) => (
-                  <View key={user.id} style={styles.searchResultCard}>
-                    {user.profilePhoto ? (
-                      <Image 
-                        source={{ uri: user.profilePhoto }} 
-                        style={styles.profileImage}
-                        onError={() => {}}
-                      />
-                    ) : (
-                      <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
-                      </View>
-                    )}
-                    <View style={styles.userInfo}>
-                      <Text style={styles.friendName}>{user.name}</Text>
-                      <Text style={styles.friendUsername}>@{user.username}</Text>
-                    </View>
-                    <TouchableOpacity 
-                      style={styles.addButton}
-                      onPress={() => handleAddFriendClick(user)}
-                    >
-                      <Ionicons name="add" size={20} color={COLORS.white} />
-                    </TouchableOpacity>
+                {isSearching ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={COLORS.teal} />
+                    <Text style={styles.loadingText}>Mencari pengguna...</Text>
                   </View>
-                ))}
+                ) : searchResults.length > 0 ? (
+                  <>
+                    <Text style={styles.resultsTitle}>Hasil Pencarian ({searchResults.length})</Text>
+                    {searchResults.map((user) => (
+                      <View key={user.id} style={styles.searchResultCard}>
+                        {user.profilePhoto ? (
+                          <Image 
+                            source={{ uri: user.profilePhoto }} 
+                            style={styles.profileImage}
+                            onError={() => {}}
+                          />
+                        ) : (
+                          <View style={styles.avatar}>
+                            <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
+                          </View>
+                        )}
+                        <View style={styles.userInfo}>
+                          <Text style={styles.friendName}>{user.name}</Text>
+                          <Text style={styles.friendUsername}>@{user.username}</Text>
+                        </View>
+                        <TouchableOpacity 
+                          style={styles.addButton}
+                          onPress={() => handleAddFriendClick(user)}
+                        >
+                          <Ionicons name="add" size={20} color={COLORS.white} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </>
+                ) : searchError ? (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="people" size={64} color={COLORS.teal} />
+                    <Text style={styles.emptyTitle}>Sudah Berteman</Text>
+                    <Text style={styles.emptySubtitle}>{searchError}</Text>
+                  </View>
+                ) : showNoResults ? (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="search-outline" size={64} color={COLORS.gray} />
+                    <Text style={styles.emptyTitle}>Pengguna Tidak Ditemukan</Text>
+                    <Text style={styles.emptySubtitle}>Username "@{username}" tidak terdaftar di Splitr</Text>
+                  </View>
+                ) : null}
               </ScrollView>
             </View>
           )}
@@ -270,19 +344,12 @@ export default function TambahTeman() {
               ) : filteredFriends.length === 0 ? (
                 renderEmptyFriends()
               ) : (
-                filteredFriends.map((friend) => (
+                filteredFriends.map((friend, index) => (
                   <View key={friend.id} style={styles.friendCard}>
-                    {friend.profilePhoto ? (
-                      <Image 
-                        source={{ uri: friend.profilePhoto }} 
-                        style={styles.profileImage}
-                        onError={() => {}}
-                      />
-                    ) : (
-                      <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{friend.name.charAt(0).toUpperCase()}</Text>
-                      </View>
-                    )}
+                    <Image
+                      source={personImages[index % 4]}
+                      style={styles.profileImage}
+                    />
                     <View style={styles.friendInfo}>
                       <Text style={styles.friendName}>{friend.name}</Text>
                       <Text style={styles.friendUsername}>@{friend.username}</Text>
@@ -314,17 +381,10 @@ export default function TambahTeman() {
               <Text style={styles.successMessage}>Teman berhasil ditambahkan</Text>
               {addedFriend && (
                 <View style={styles.friendPreview}>
-                  {addedFriend.profilePhoto ? (
-                    <Image 
-                      source={{ uri: addedFriend.profilePhoto }} 
-                      style={styles.previewImage}
-                      onError={() => {}}
-                    />
-                  ) : (
-                    <View style={styles.previewAvatar}>
-                      <Text style={styles.avatarText}>{addedFriend.name.charAt(0).toUpperCase()}</Text>
-                    </View>
-                  )}
+                  <Image
+                    source={personImages[0]}
+                    style={styles.previewImage}
+                  />
                   <View>
                     <Text style={styles.previewName}>{addedFriend.name}</Text>
                     <Text style={styles.previewUsername}>@{addedFriend.username}</Text>
@@ -355,10 +415,15 @@ export default function TambahTeman() {
                   <Text style={styles.cancelButtonText}>Batal</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  style={styles.confirmAddButton}
+                  style={[styles.confirmAddButton, isAddingFriend && styles.disabledButton]}
                   onPress={handleConfirmAdd}
+                  disabled={isAddingFriend}
                 >
-                  <Text style={styles.confirmAddButtonText}>Tambah</Text>
+                  {isAddingFriend ? (
+                    <ActivityIndicator size={16} color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.confirmAddButtonText}>Tambah</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -385,10 +450,15 @@ export default function TambahTeman() {
                   <Text style={styles.cancelButtonText}>Batal</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  style={styles.confirmDeleteButton}
+                  style={[styles.confirmDeleteButton, isDeletingFriend && styles.disabledButton]}
                   onPress={handleConfirmDelete}
+                  disabled={isDeletingFriend}
                 >
-                  <Text style={styles.confirmDeleteButtonText}>Hapus</Text>
+                  {isDeletingFriend ? (
+                    <ActivityIndicator size={16} color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.confirmDeleteButtonText}>Hapus</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -490,11 +560,11 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     backgroundColor: COLORS.inputBg,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.sm + 4,
+    paddingHorizontal: SPACING.md,
     paddingRight: 50,
-    fontSize: 16,
+    fontSize: FONT_SIZES.base,
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
     borderWidth: 1,
@@ -537,9 +607,9 @@ const styles = StyleSheet.create({
   },
   friendCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -569,12 +639,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   friendName: {
-    fontSize: 16,
+    fontSize: FONT_SIZES.base,
     fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
   friendUsername: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     marginTop: 2,
@@ -790,5 +860,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: FONTS.semiBold,
     color: COLORS.white,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });

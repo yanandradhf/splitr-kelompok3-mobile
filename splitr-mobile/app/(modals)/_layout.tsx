@@ -6,7 +6,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="enter-pin" />
       <Stack.Screen name="pick-date" />
       <Stack.Screen name="pick-my-bill" />
-      <Stack.Screen name="tambah-teman" />
+      <Stack.Screen name="add-friend" />
     </Stack>
   );
 }
