@@ -93,6 +93,8 @@ export default function GroupDetailScreen() {
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { updateGroup: apiUpdateGroup, deleteGroup: apiDeleteGroup } = useApi();
@@ -188,8 +190,15 @@ export default function GroupDetailScreen() {
     }
   };
 
-  const removeMember = (memberId: string) => {
-    const updatedMembers = members.filter((member: any) => member.id !== memberId);
+  const showRemoveMemberConfirmation = (member: any) => {
+    setMemberToRemove(member);
+    setShowRemoveMemberModal(true);
+  };
+
+  const confirmRemoveMember = () => {
+    if (!memberToRemove) return;
+    
+    const updatedMembers = members.filter((member: any) => member.id !== memberToRemove.id);
     setMembers(updatedMembers);
     
     // Update global state for groups list
@@ -205,6 +214,9 @@ export default function GroupDetailScreen() {
     } else {
       (global as any).updatedGroup = updatedGroup;
     }
+    
+    setShowRemoveMemberModal(false);
+    setMemberToRemove(null);
   };
 
   const renderMember = ({ item }: { item: any }) => (
@@ -219,7 +231,7 @@ export default function GroupDetailScreen() {
       {item.id !== "creator" && (
         <TouchableOpacity
           style={styles.removeButton}
-          onPress={() => removeMember(item.id)}
+          onPress={() => showRemoveMemberConfirmation(item)}
           activeOpacity={0.7}
         >
           <Ionicons
@@ -403,6 +415,46 @@ export default function GroupDetailScreen() {
                 />
               </View>
               <Text style={styles.successTitle}>Grup Berhasil dihapus</Text>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Remove Member Confirmation Modal */}
+        <Modal
+          visible={showRemoveMemberModal}
+          transparent={true}
+          animationType="fade"
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.deleteModal}>
+              <View style={styles.warningIcon}>
+                <Ionicons
+                  name="warning"
+                  size={getIconSize(40)}
+                  color="#FF9500"
+                />
+              </View>
+              <Text style={styles.deleteTitle}>Hapus Anggota?</Text>
+              <Text style={styles.deleteMessage}>
+                Apakah Anda yakin ingin menghapus {memberToRemove?.name} dari grup ini?
+              </Text>
+              <View style={styles.deleteActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowRemoveMemberModal(false);
+                    setMemberToRemove(null);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmDeleteButton}
+                  onPress={confirmRemoveMember}
+                >
+                  <Text style={styles.confirmDeleteText}>Hapus</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
