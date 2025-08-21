@@ -12,6 +12,7 @@ export const Colors = {
   shadow: '#000000',         // Shadow color
   
   // Additional colors for specific use cases
+  backgroundMain: '#F2F4F7',     // Main background color
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
