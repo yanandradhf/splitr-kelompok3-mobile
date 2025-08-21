@@ -48,6 +48,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           
           console.log('🔥 Saved to SecureStore');
           
+          // Verify token was saved
+          const savedToken = await SecureStore.getItemAsync('auth_token');
+          console.log('🔑 Token verification - Saved successfully:', !!savedToken);
+          console.log('🔑 Token preview:', savedToken ? savedToken.substring(0, 20) + '...' : 'No token');
+          
           set({ 
             user, 
             token, 

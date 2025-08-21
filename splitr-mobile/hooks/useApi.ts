@@ -67,10 +67,40 @@ export const useApi = () => {
     return response.data;
   };
 
+  const createGroup = async (groupData: { groupName: string; memberIds: string[] }) => {
+    const response = await api.post('/api/mobile/groups', groupData);
+    return response.data;
+  };
+
+  const updateGroup = async (groupId: string, updateData: { groupName?: string }) => {
+    const response = await api.put(`/api/mobile/groups/${groupId}`, updateData);
+    return response.data;
+  };
+
+  const deleteGroup = async (groupId: string) => {
+    const response = await api.delete(`/api/mobile/groups/${groupId}`);
+    return response.data;
+  };
+
+  const getGroupDetail = async (groupId: string) => {
+    const response = await api.get(`/api/mobile/groups/${groupId}`);
+    return response.data;
+  };
+
+  const addGroupMember = async (groupId: string, memberIds: string[]) => {
+    const response = await api.post(`/api/mobile/groups/${groupId}/members`, { memberIds });
+    return response.data;
+  };
+
   return {
     getFriends,
     getGroups,
     getNotifications,
+    createGroup,
+    updateGroup,
+    deleteGroup,
+    getGroupDetail,
+    addGroupMember,
   };
 };
 

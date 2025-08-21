@@ -10,6 +10,9 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../../constants/theme';
+import { profileAPI, authAPI } from '../../../services/api';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
+import * as SecureStore from 'expo-secure-store';
 
 function Stepper({ current }: { current: number }) {
   const steps = [1, 2, 3];
@@ -60,6 +63,7 @@ const ChangePinScreen = () => {
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const getKeypadNumbers = () => {
     const baseNumbers = [
@@ -107,18 +111,44 @@ const ChangePinScreen = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 'current') {
-      // TODO: Validate current PIN
+      if (currentPin.length !== 6) {
+        alert('PIN harus 6 digit');
+        return;
+      }
       setStep('new');
     } else if (step === 'new') {
+      if (newPin.length !== 6) {
+        alert('PIN baru harus 6 digit');
+        return;
+      }
       setStep('confirm');
     } else if (step === 'confirm') {
-      if (newPin === confirmPin) {
-        setStep('success');
-      } else {
-        // Show error
+      if (newPin !== confirmPin) {
         alert('PIN tidak cocok');
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const response = await profileAPI.changePin({
+          currentPin,
+          newPin,
+          confirmPin
+        });
+        
+        if (response.status === 200) {
+          setStep('success');
+        }
+      } catch (error: any) {
+        console.error('Change PIN error:', error);
+        console.error('PIN Error status:', error.response?.status);
+        console.error('PIN Error data:', error.response?.data);
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Gagal mengubah PIN. Silakan coba lagi.';
+        alert(errorMessage);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -159,6 +189,18 @@ const ChangePinScreen = () => {
     }
   };
 
+  const handleLogoutAfterSuccess = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.log('Logout API error:', error);
+    } finally {
+      await SecureStore.deleteItemAsync('auth_token');
+      await SecureStore.deleteItemAsync('user_data');
+      router.replace('/(auth)/login');
+    }
+  };
+
   if (step === 'success') {
     return (
       <View style={styles.container}>
@@ -167,16 +209,14 @@ const ChangePinScreen = () => {
           
           <View style={styles.backgroundSection}>
             <View style={styles.header}>
-              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Ubah PIN</Text>
+              <View style={styles.placeholder} />
+              <Text style={styles.headerTitle}>PIN Berhasil Diubah</Text>
               <View style={styles.placeholder} />
             </View>
           </View>
         
         <View style={styles.successContainer}>
-          <Text style={styles.successSubtitle}>Pin Berhasil Diubah</Text>
+          <Text style={styles.successSubtitle}>PIN Anda telah berhasil diubah. Silakan login kembali dengan PIN baru.</Text>
           
           <View style={styles.successIcon}>
             <View style={styles.checkmarkOuter}>
@@ -185,6 +225,13 @@ const ChangePinScreen = () => {
               </View>
             </View>
           </View>
+          
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogoutAfterSuccess}
+          >
+            <Text style={styles.logoutButtonText}>Login Kembali</Text>
+          </TouchableOpacity>
           </View>
         </SafeAreaView>
       </View>
@@ -251,11 +298,15 @@ const ChangePinScreen = () => {
             getCurrentPin().length < 6 && styles.nextButtonDisabled
           ]}
           onPress={handleNext}
-          disabled={getCurrentPin().length < 6}
+          disabled={getCurrentPin().length < 6 || isLoading}
         >
-          <Text style={styles.nextButtonText}>{getButtonText()}</Text>
+          <Text style={styles.nextButtonText}>
+            {isLoading ? 'Mengubah...' : getButtonText()}
+          </Text>
         </TouchableOpacity>
         </View>
+        
+        {isLoading && <LoadingScreen />}
       </SafeAreaView>
     </View>
   );
@@ -451,6 +502,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.teal,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: COLORS.teal,
+    paddingHorizontal: 40,
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  logoutButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontFamily: FONTS.bold,
   },
 });
 
