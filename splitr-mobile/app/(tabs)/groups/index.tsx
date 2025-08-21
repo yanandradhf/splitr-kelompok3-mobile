@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { COLORS, FONTS } from "../../../constants/theme";
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
 import { useApi } from "../../../hooks/useApi";
 import {
   wp,
@@ -183,7 +183,7 @@ export default function GroupsScreen() {
                     style={styles.groupCard}
                     onPress={() =>
                       router.push({
-                        pathname: "/(tabs)/home/group-detail",
+                        pathname: "/(tabs)/groups/detail",
                         params: { groupData: JSON.stringify(group) },
                       })
                     }
@@ -266,7 +266,7 @@ export default function GroupsScreen() {
             <TouchableOpacity
               style={styles.createGroupButton}
               onPress={() => {
-                router.push("/(tabs)/home/create-group");
+                router.push("/(tabs)/groups/create");
               }}
               activeOpacity={0.8}
             >
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: rf(FONT_SIZES.xl),
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
   },
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   groupName: {
-    fontSize: rf(18),
+    fontSize: rf(FONT_SIZES.lg),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     marginBottom: getSpacing(4),
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   createGroupText: {
-    fontSize: rf(18),
+    fontSize: rf(FONT_SIZES.lg),
     fontFamily: FONTS.bold,
     color: COLORS.white,
     letterSpacing: 0.5,

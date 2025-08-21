@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { COLORS, FONTS } from "../../../constants/theme";
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
 import { useApi } from "../../../hooks/useApi";
 import SuccessModal from "../../../components/ui/SuccessModal";
 import {
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: rf(FONT_SIZES.xl),
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
   },
@@ -481,10 +481,10 @@ const styles = StyleSheet.create({
     marginBottom: getSpacing(40),
   },
   sectionTitle: {
-    fontSize: rf(18),
+    fontSize: rf(FONT_SIZES.lg),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: getSpacing(16),
+    marginBottom: getSpacing(SPACING.md),
   },
   friendItem: {
     flexDirection: "row",
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   },
   createButtonText: {
     color: COLORS.white,
-    fontSize: rf(18),
+    fontSize: rf(FONT_SIZES.lg),
     fontFamily: FONTS.bold,
     letterSpacing: 0.5,
   },

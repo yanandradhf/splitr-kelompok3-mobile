@@ -286,7 +286,7 @@ export default function HomeScreen() {
           {/* GROUPS SECTION */}
           <View style={styles.modalSection}>
             <TouchableOpacity
-              onPress={() => router.push("/(tabs)/home/groups")}
+              onPress={() => router.push("/(tabs)/groups")}
               activeOpacity={0.7}
               style={styles.sectionHeader}
             >

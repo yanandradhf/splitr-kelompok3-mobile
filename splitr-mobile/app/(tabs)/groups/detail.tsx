@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { COLORS, FONTS } from "../../../constants/theme";
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
 import {
   wp,
   hp,
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: rf(FONT_SIZES.xl),
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
   },
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: rf(FONT_SIZES.lg),
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
   },
@@ -934,10 +934,10 @@ const styles = StyleSheet.create({
     marginBottom: getSpacing(16),
   },
   deleteTitle: {
-    fontSize: rf(20),
+    fontSize: rf(FONT_SIZES.xl),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: getSpacing(8),
+    marginBottom: getSpacing(SPACING.sm),
   },
   deleteMessage: {
     fontSize: rf(14),
