@@ -1,5 +1,6 @@
 // app/(tabs)/monitoring/index.tsx
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -9,8 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import { Colors } from '../../../constants/Colors';
 import { BUTTON_RULES, UI_STATE_PAYLOAD } from '../../../constants/config';
+import { useTransactionStore } from '../../../store/transaction.store';
 
 const DonutChart = ({ progress }: { progress: { percent: number; label?: string } }) => {
   const size = 50;
@@ -154,6 +157,25 @@ const deriveBillProgress = (bill: any): DonutProgress => {
 export default function MonitoringIndex() {
   const [activeTab, setActiveTab] = useState<'running' | 'completed'>('running');
   const [expandedBills, setExpandedBills] = useState<Set<string>>(new Set());
+  const { runningTransactions, completedPayments, isInitialized, initializeTransactions } = useTransactionStore();
+
+  useEffect(() => {
+    // Only initialize if store hasn't been initialized yet
+    if (!isInitialized) {
+      initializeTransactions();
+    }
+  }, [isInitialized]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Refresh data when screen comes into focus
+      console.log('=== MONITORING SCREEN FOCUSED ===');
+      console.log('Running transactions:', runningTransactions.length);
+      console.log('Completed payments:', completedPayments.length);
+      console.log('Running transaction titles:', runningTransactions.map(t => t.title));
+      console.log('Completed payment titles:', completedPayments.map(p => p.title));
+    }, [runningTransactions, completedPayments])
+  );
 
   const toggleExpanded = (billId: string) => {
     const newExpanded = new Set(expandedBills);
@@ -195,7 +217,11 @@ export default function MonitoringIndex() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {activeTab === 'running' ? (
           <>
             {/* Summary Cards */}
@@ -279,8 +305,8 @@ export default function MonitoringIndex() {
 
             {/* Tagihan yang Harus Dibayar */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{MOCK_DATA.running.payables.title}</Text>
-              {MOCK_DATA.running.payables.items.map((bill) => (
+              <Text style={styles.sectionTitle}>Tagihan yang Harus Dibayar</Text>
+              {runningTransactions.map((bill) => (
                 <View key={bill.id} style={styles.paymentCard}>
                   <View style={styles.paymentInfo}>
                     <View style={styles.paymentHeader}>
@@ -308,12 +334,41 @@ export default function MonitoringIndex() {
                       return (
                         <>
                           {actions.payNow && (
-                            <Pressable style={styles.payNowButton}>
+                            <Pressable 
+                              style={styles.payNowButton}
+                              onPress={() => {
+                                console.log('Paying for transaction:', bill.id, bill.title, bill.amount.formatted);
+                                router.push({
+                                  pathname: '/monitoring/transaction/pembayaran',
+                                  params: {
+                                    transactionId: bill.id,
+                                    title: bill.title,
+                                    from: bill.from,
+                                    amount: bill.amount.formatted,
+                                    paymentMethod: 'sekarang'
+                                  }
+                                });
+                              }}
+                            >
                               <Text style={styles.payNowText}>Bayar Sekarang</Text>
                             </Pressable>
                           )}
                           {actions.payLater && (
-                            <Pressable style={styles.payLaterButton}>
+                            <Pressable 
+                              style={styles.payLaterButton}
+                              onPress={() => {
+                                console.log('Bayar Nanti for transaction:', bill.id, bill.title, bill.amount.formatted);
+                                router.push({
+                                  pathname: '/monitoring/transaction/pembayaran',
+                                  params: {
+                                    transactionId: bill.id,
+                                    title: bill.title,
+                                    from: bill.from,
+                                    amount: bill.amount.formatted
+                                  }
+                                });
+                              }}
+                            >
                               <Text style={styles.payLaterText}>Bayar Nanti</Text>
                             </Pressable>
                           )}
@@ -408,7 +463,7 @@ export default function MonitoringIndex() {
             {/* Payment History - Pembayaran Selesai */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Pembayaran Selesai</Text>
-              {MOCK_DATA.completed.payments.map((payment) => (
+              {completedPayments.map((payment) => (
                 <View key={payment.id} style={styles.paymentHistoryCard}>
                   <View style={styles.paymentHistoryHeader}>
                     <View style={styles.avatarContainer}>
@@ -530,6 +585,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingBottom: 120,
+    flexGrow: 1,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -665,7 +724,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
   },
   statusLunas: {
-    backgroundColor: Colors.success,
+    backgroundColor: '#DCFCE7',
   },
   statusTertunda: {
     backgroundColor: '#FEF3C7',
@@ -676,7 +735,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   statusTextLunas: {
-    color: Colors.white,
+    color: '#16A34A',
   },
   statusTextTertunda: {
     color: '#D97706',
@@ -778,7 +837,7 @@ const styles = StyleSheet.create({
   payLaterText: {
     color: Colors.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '900',
   },
   overdueButton: {
     flex: 1,

@@ -19,6 +19,9 @@ export const COLORS = {
   textSecondary: '#666666',
   placeholder: '#9CA3AF',
   
+  // Background Colors
+  backgroundLight: '#F3F4F6',
+  
   // Legacy support
   tosca: '#00897B',        // Alias for teal
   background: '#B2DBD7',   // Alias for backgroundMain
