@@ -32,8 +32,8 @@ const SettingsScreen = () => {
           barStyle="dark-content"
         />
 
-        {/* Purple Background Section */}
-        <View style={styles.purpleSection}>
+        {/* Background Section */}
+        <View style={styles.backgroundSection}>
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -48,35 +48,14 @@ const SettingsScreen = () => {
             <Text style={styles.headerTitle}>Pengaturan</Text>
             <View style={styles.placeholder} />
           </View>
-
-          {/* Profile Image */}
-          <View style={styles.profileSection}>
-            <Image
-              source={{
-                uri: "https://picsum.photos/id/64/120/120",
-              }}
-              style={styles.profileImage}
-            />
-            <View style={styles.editIconContainer}>
-              <Ionicons name="camera" size={16} color={COLORS.teal} />
-            </View>
-          </View>
         </View>
 
         {/* White Modal Container */}
         <View style={styles.whiteModalContainer}>
           <ScrollView
-            style={styles.content}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>
-                {profile?.user?.username || "User"}
-              </Text>
-              <Text style={styles.profileId}>
-                {profile?.user?.bniAccountNumber || "-"}
-              </Text>
-            </View>
 
             {/* Security Section */}
             <View style={styles.section}>
@@ -147,7 +126,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  purpleSection: {
+  backgroundSection: {
     backgroundColor: COLORS.backgroundMain,
     paddingBottom: 20,
   },
@@ -156,81 +135,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginTop: 20,
+    paddingVertical: 16,
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#000",
+    fontSize: 20,
     fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
   placeholder: {
-    width: 34,
-  },
-  profileSection: {
-    alignItems: "center",
-    marginTop: 40,
-    marginBottom: 60,
-    zIndex: 2,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 25,
-    backgroundColor: "#4A90E2",
-    borderWidth: 3,
-    borderColor: "#FFF",
+    width: 40,
   },
   whiteModalContainer: {
-    flex: 1,
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: COLORS.black,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    flex: 1,
     marginBottom: -50,
   },
-  content: {
+  scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 24,
-  },
-  profileInfo: {
-    alignItems: "center",
-    paddingBottom: 20,
-  },
-  editIconContainer: {
-    position: "absolute",
-    right: "35%",
-    top: 90,
-    backgroundColor: "#FFF",
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  profileName: {
-    fontSize: 24,
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  profileId: {
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginTop: 5,
+    paddingBottom: 100,
   },
   section: {
     marginBottom: 30,

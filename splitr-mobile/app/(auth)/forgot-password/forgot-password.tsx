@@ -16,11 +16,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { COLORS, FONTS } from '../../../constants/theme';
+import { authAPI } from '../../../services/api';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
     if (!email) {
       Alert.alert('Error', 'Masukkan email anda terlebih dahulu');
       return;
@@ -31,8 +34,24 @@ export default function ForgotPasswordScreen() {
       return;
     }
 
-    Alert.alert('Berhasil', 'Kode OTP telah dikirim ke email anda');
-    router.push('/forgot-password/verify-otp');
+    setIsLoading(true);
+    try {
+      const response = await authAPI.sendResetOTP({ email });
+      
+      if (response.status === 200) {
+        Alert.alert('Berhasil', 'Kode OTP telah dikirim ke email anda');
+        router.push({
+          pathname: '/forgot-password/verify-otp',
+          params: { email }
+        });
+      }
+    } catch (error: any) {
+      console.error('Send OTP error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Gagal mengirim OTP. Silakan coba lagi.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isValidEmail = (email: string) => {
@@ -74,16 +93,20 @@ export default function ForgotPasswordScreen() {
               />
 
               <TouchableOpacity 
-                style={[styles.primaryBtn, !email && styles.primaryBtnDisabled]}
+                style={[styles.primaryBtn, (!email || isLoading) && styles.primaryBtnDisabled]}
                 onPress={handleSendOTP}
-                disabled={!email}
+                disabled={!email || isLoading}
               >
-                <Text style={[styles.primaryBtnText, !email && styles.primaryBtnTextDisabled]}>Kirim OTP</Text>
+                <Text style={[styles.primaryBtnText, (!email || isLoading) && styles.primaryBtnTextDisabled]}>
+                  {isLoading ? 'Mengirim...' : 'Kirim OTP'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+      
+      {isLoading && <LoadingScreen />}
     </SafeAreaView>
   );
 }

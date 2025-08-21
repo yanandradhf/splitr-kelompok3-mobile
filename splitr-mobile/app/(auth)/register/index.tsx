@@ -12,8 +12,11 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { COLORS as THEME_COLORS, FONTS } from "../../../constants/theme";
+import { useRegisterStore } from "../../../store/register.store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain, // new theme background
@@ -74,6 +77,8 @@ export default function RegisterStep1() {
   const [accName, setAccName] = useState("");
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState({ accNo: "", accName: "", phone: "" });
+  
+  const { validateBni, isLoading, setStep1Data } = useRegisterStore();
 
   const validateAccNo = (value: string) => {
     if (value.length === 0) return "";
@@ -96,7 +101,7 @@ export default function RegisterStep1() {
   const isAccNoValid = accNo.length === 10 && !validateAccNo(accNo);
   const isAccNameValid = accName.length > 0 && !validateAccName(accName);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const newErrors = { accNo: "", accName: "", phone: "" };
     
     if (!accNo) newErrors.accNo = "Masukkan nomor rekening";
@@ -111,7 +116,17 @@ export default function RegisterStep1() {
     setErrors(newErrors);
     
     if (!newErrors.accNo && !newErrors.accName && !newErrors.phone) {
-      router.push("/(auth)/register/regist_email");
+      try {
+        const isValid = await validateBni(accNo, accName);
+        if (isValid) {
+          setStep1Data({ nomorRekening: accNo, namaRekening: accName, phone });
+          router.push("/(auth)/register/regist_email");
+        } else {
+          Alert.alert("Error", "Data rekening tidak valid atau tidak ditemukan");
+        }
+      } catch (error: any) {
+        Alert.alert("Error", error.message);
+      }
     }
   };
 
@@ -194,10 +209,14 @@ export default function RegisterStep1() {
 
             <Pressable 
               onPress={handleNext} 
-              style={[styles.primaryBtn, (!accNo || !accName || !phone) && styles.primaryBtnDisabled]}
-              disabled={!accNo || !accName || !phone}
+              style={[styles.primaryBtn, (!accNo || !accName || !phone || isLoading) && styles.primaryBtnDisabled]}
+              disabled={!accNo || !accName || !phone || isLoading}
             >
-              <Text style={[styles.primaryBtnText, (!accNo || !accName || !phone) && styles.primaryBtnTextDisabled]}>Lanjut</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={[styles.primaryBtnText, (!accNo || !accName || !phone || isLoading) && styles.primaryBtnTextDisabled]}>Lanjut</Text>
+              )}
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
