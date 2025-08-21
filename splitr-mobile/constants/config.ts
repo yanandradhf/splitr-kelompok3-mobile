@@ -1,6 +1,7 @@
 export const API_CONFIG = {
-  BASE_URL: "https://bbad82a9b9c6.ngrok-free.app", // Ganti dengan IP address komputer Anda
+  BASE_URL: "https://9180e66ae20a.ngrok-free.app",
   ENDPOINTS: {
+    // Auth
     LOGIN: "/api/mobile/auth/login",
     REGISTER: "/api/mobile/auth/register",
     VALIDATE_BNI: "/api/mobile/auth/validate-bni",
@@ -8,13 +9,28 @@ export const API_CONFIG = {
     VERIFY_OTP: "/api/mobile/auth/verify-otp",
     ME: "/api/mobile/auth/me",
     LOGOUT: "/api/mobile/auth/logout",
-    PROFILE: "/api/mobile/profile",
-    CHANGE_PASSWORD: "/api/mobile/profile/change-password",
-    CHANGE_PIN: "/api/mobile/profile/change-pin",
     SEND_RESET_OTP: "/api/mobile/auth/send-reset-otp",
     VERIFY_RESET_OTP: "/api/mobile/auth/verify-reset-otp",
     RESET_PASSWORD: "/api/mobile/auth/reset-password",
     MY_ACCOUNT: "/api/mobile/auth/my-account",
+    
+    // Profile
+    PROFILE: "/api/mobile/profile",
+    CHANGE_PASSWORD: "/api/mobile/profile/change-password",
+    CHANGE_PIN: "/api/mobile/profile/change-pin",
+    
+    // Friends
+    FRIENDS: "/api/mobile/friends",
+    ADD_FRIEND: "/api/mobile/friends/add",
+    
+    // Groups
+    GROUPS: "/api/mobile/groups",
+    CREATE_GROUP: "/api/mobile/groups/create",
+    
+    // Notifications
+    NOTIFICATIONS: "/api/mobile/notifications",
+    NOTIFICATION_ACTION: "/api/mobile/notifications/group-action",
+    MARK_ALL_READ: "/api/mobile/notifications/read-all",
   },
   TIMEOUT: 10000,
 };
@@ -36,6 +52,12 @@ export const BUTTON_RULES = {
   ],
 };
 
+export const DEBOUNCE_DELAY = {
+  API_CALLS: 5000, // 5 seconds between API calls
+  USER_INPUT: 300, // 300ms for user input debouncing
+};
+
+// Move this to a separate constants file if needed
 export const UI_STATE_PAYLOAD = {
   theme: {
     colors: {

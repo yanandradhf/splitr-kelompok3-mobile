@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { COLORS, FONTS } from '../../../../../constants/theme';
-import { useTransactionStore } from '../../../../../store/transaction.store';
+import { useTransactionStore } from '../../../../../store';
 
 export default function BerhasilScreen() {
   const params = useLocalSearchParams();

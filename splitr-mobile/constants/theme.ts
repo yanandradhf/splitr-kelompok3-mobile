@@ -29,6 +29,12 @@ export const COLORS = {
   inputBorder: '#B3B3B3',
   textLight: '#9CA3AF',
   surface: '#F9FAFB',
+  
+  // Additional colors for monitoring
+  text: '#000000',         // Alias for textPrimary
+  shadow: '#000000',       // Shadow color
+  success: '#10B981',      // Success green
+  disabled: '#9CA3AF',     // Disabled state
 };
 
 export const FONTS = {

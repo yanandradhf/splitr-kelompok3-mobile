@@ -14,20 +14,53 @@ import {
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FONTS } from "../../../constants/theme";
-import { useProfile } from "../../../hooks/useProfile";
+import { useProfileStore } from "../../../store";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
+import { SkeletonProfile } from "../../../components/ui/Skeleton";
 import { authAPI } from "../../../services/api";
 import * as SecureStore from "expo-secure-store";
 
 export default function ProfileScreen() {
-  const { profile, isLoading } = useProfile();
+  const { user, stats, isLoading, fetchProfile } = useProfileStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [forceLoading, setForceLoading] = useState(true);
+
+  React.useEffect(() => {
+    if (!user) fetchProfile();
+    setTimeout(() => setForceLoading(false), 1600);
+  }, []);
 
 
 
-  if (isLoading) {
-    return <LoadingScreen />;
+  if (isLoading || forceLoading) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.backgroundSection}>
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Profil</Text>
+              <View style={styles.placeholder} />
+            </View>
+            <SkeletonProfile />
+          </View>
+          <View style={styles.whiteModalContainer}>
+            <View style={styles.scrollContent}>
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.menuItem}>
+                  <View style={[styles.menuIconContainer, { backgroundColor: '#E1E5E9' }]} />
+                  <View style={{ flex: 1, height: 16, backgroundColor: '#E1E5E9', borderRadius: 4, marginRight: 12 }} />
+                  <View style={{ width: 20, height: 20, backgroundColor: '#E1E5E9', borderRadius: 4 }} />
+                </View>
+              ))}
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
   }
 
   return (
@@ -64,17 +97,17 @@ export default function ProfileScreen() {
                 }}
                 style={styles.profileImage}
               />
-              {profile?.user?.isVerified && (
+              {user?.isVerified && (
                 <View style={styles.verifiedBadge}>
                   <Ionicons name="checkmark" size={16} color={COLORS.white} />
                 </View>
               )}
             </View>
             <Text style={styles.profileName}>
-              {profile?.user?.name || "User"}
+              {user?.name || "User"}
             </Text>
             <Text style={styles.profileUsername}>
-              @{profile?.user?.username || "username"}
+              @{user?.username || "username"}
             </Text>
           </View>
         </View>
@@ -106,14 +139,14 @@ export default function ProfileScreen() {
                   </View>
                 </View>
                 <Text style={styles.bankNumber}>
-                  {profile?.user?.bniAccountNumber || "-"}
+                  {user?.bniAccountNumber || "-"}
                 </Text>
                 <View style={styles.bankFooter}>
                   <Text style={styles.accountHolderName}>
-                    {profile?.user?.name || "Nama Pemegang Rekening"}
+                    {user?.name || "Nama Pemegang Rekening"}
                   </Text>
                   <Text style={styles.bankBranch}>
-                    Cabang {profile?.user?.bniBranchCode || "-"}
+                    Cabang {user?.bniBranchCode || "-"}
                   </Text>
                 </View>
               </TouchableOpacity>

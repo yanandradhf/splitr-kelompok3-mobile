@@ -52,16 +52,27 @@ export default function TermsScreen() {
     setIsAgreed(!isAgreed);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (isAtBottom && isAgreed) {
-      router.push('/(auth)/login');
+      // This is only for register flow - complete registration
+      const { completeRegister } = require('../../store').useRegisterStore.getState();
+      try {
+        await completeRegister();
+        router.replace('/(auth)/register/success');
+      } catch (error) {
+        console.error('Registration error:', error);
+      }
     }
   };
 
   const canProceed = isAtBottom && isAgreed;
 
   const handleBack = () => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(public)/onboarding');
+    }
   };
 
   return (
@@ -228,7 +239,7 @@ export default function TermsScreen() {
               disabled={!canProceed}
             >
               <Text style={[styles.continueBtnText, !canProceed && styles.continueBtnTextDisabled]}>
-                Setuju & Lanjutkan
+                Setuju & Daftar
               </Text>
             </TouchableOpacity>
           </Animated.View>

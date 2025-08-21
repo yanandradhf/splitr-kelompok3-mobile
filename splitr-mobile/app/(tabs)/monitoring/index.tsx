@@ -11,9 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Colors } from '../../../constants/Colors';
+import { COLORS } from '../../../constants/theme';
 import { BUTTON_RULES, UI_STATE_PAYLOAD } from '../../../constants/config';
-import { useTransactionStore } from '../../../store/transaction.store';
+import { useTransactionStore } from '../../../store';
 
 const DonutChart = ({ progress }: { progress: { percent: number; label?: string } }) => {
   const size = 50;
@@ -193,7 +193,7 @@ export default function MonitoringIndex() {
                         <Ionicons 
                           name={expandedBills.has(bill.id) ? 'chevron-up' : 'chevron-down'} 
                           size={20} 
-                          color={Colors.textSecondary} 
+                          color={COLORS.textSecondary} 
                         />
                       </Pressable>
                     </View>
@@ -344,7 +344,7 @@ export default function MonitoringIndex() {
                           <Ionicons 
                             name={expandedBills.has(bill.id) ? 'chevron-up' : 'chevron-down'} 
                             size={20} 
-                            color={Colors.textSecondary} 
+                            color={COLORS.textSecondary} 
                           />
                         </Pressable>
                       </View>
@@ -421,7 +421,7 @@ export default function MonitoringIndex() {
                         <Ionicons 
                           name={expandedBills.has(payment.id) ? 'chevron-up' : 'chevron-down'} 
                           size={20} 
-                          color={Colors.textSecondary} 
+                          color={COLORS.textSecondary} 
                         />
                       </Pressable>
                     </View>
@@ -483,17 +483,17 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 28,
   },
   headerTitle: {
-    color: Colors.white,
+    color: COLORS.white,
     fontSize: 20,
     fontWeight: '700',
   },
   segmentedControl: {
     flexDirection: 'row',
     margin: 16,
-    backgroundColor: Colors.white,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 4,
-    shadowColor: Colors.shadow,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -511,10 +511,10 @@ const styles = StyleSheet.create({
   segmentText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
   },
   activeSegmentText: {
-    color: Colors.white,
+    color: COLORS.white,
   },
   content: {
     flex: 1,
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     backgroundColor: UI_STATE_PAYLOAD.theme.colors.cardBg,
     borderRadius: UI_STATE_PAYLOAD.theme.radius,
     padding: 16,
-    shadowColor: Colors.shadow,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 8,
   },
   summaryAmount: {
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text,
+    color: COLORS.text,
     marginBottom: 12,
   },
   billCard: {
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     borderRadius: UI_STATE_PAYLOAD.theme.radius,
     padding: 16,
     marginBottom: 12,
-    shadowColor: Colors.shadow,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -581,12 +581,12 @@ const styles = StyleSheet.create({
   billTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text,
+    color: COLORS.text,
     flex: 1,
   },
   billDate: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   billAmount: {
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: COLORS.border,
   },
   friendRow: {
     flexDirection: 'row',
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: COLORS.border,
   },
   friendInfo: {
     flex: 1,
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
   friendName: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text,
+    color: COLORS.text,
     marginBottom: 4,
   },
   orderItems: {
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
   },
   orderItem: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 2,
   },
   friendRight: {
@@ -637,13 +637,13 @@ const styles = StyleSheet.create({
   friendAmount: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text,
+    color: COLORS.text,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: Colors.success,
+    backgroundColor: COLORS.success,
   },
   statusLunas: {
     backgroundColor: '#DCFCE7',
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 10,
     fontWeight: '600',
-    color: Colors.white,
+    color: COLORS.white,
   },
   statusTextLunas: {
     color: '#16A34A',
@@ -676,11 +676,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   paymentCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: Colors.shadow,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -725,12 +725,12 @@ const styles = StyleSheet.create({
   },
   payerName: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   dueDate: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 8,
   },
   paymentActions: {
@@ -745,51 +745,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   payNowText: {
-    color: Colors.white,
+    color: COLORS.white,
     fontSize: 12,
     fontWeight: '600',
   },
   payLaterButton: {
     flex: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: COLORS.border,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
   },
   payLaterText: {
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     fontSize: 12,
     fontWeight: '900',
   },
   overdueButton: {
     flex: 1,
-    backgroundColor: Colors.disabled,
+    backgroundColor: COLORS.disabled,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
   },
   overdueText: {
-    color: Colors.white,
+    color: COLORS.white,
     fontSize: 12,
     fontWeight: '600',
   },
   completedCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: Colors.shadow,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   paymentHistoryCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: Colors.shadow,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.border,
+    backgroundColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -817,25 +817,25 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
   },
   paymentMainInfo: {
     flex: 1,
   },
   paymentLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   paymentTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text,
+    color: COLORS.text,
     marginBottom: 4,
   },
   paymentMethod: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
   },
   paymentRight: {
     alignItems: 'flex-end',
@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: COLORS.border,
   },
   expandedHeader: {
     flexDirection: 'row',
@@ -870,18 +870,18 @@ const styles = StyleSheet.create({
   },
   expandedHeaderText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginLeft: 8,
   },
   expandedTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text,
+    color: COLORS.text,
     marginBottom: 8,
   },
   expandedStatus: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 12,
   },
   expandedAmountRow: {
@@ -902,13 +902,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: Colors.border,
+    borderColor: COLORS.border,
     marginBottom: 12,
   },
   dividerText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text,
+    color: COLORS.text,
   },
   receiptButtonSmall: {
     paddingVertical: 6,
@@ -932,11 +932,11 @@ const styles = StyleSheet.create({
   itemName: {
     flex: 1,
     fontSize: 14,
-    color: Colors.text,
+    color: COLORS.text,
   },
   itemQty: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: COLORS.textSecondary,
     marginRight: 16,
     minWidth: 30,
     textAlign: 'center',
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text,
+    color: COLORS.text,
     textAlign: 'right',
     minWidth: 80,
   },

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../../../components/layout/Screen';
-import { useTransactionStore } from '../../../store/transaction.store';
+import { useTransactionStore } from '../../../store';
 import { COLORS, FONTS } from '../../../constants/theme';
 
 const { width, height } = Dimensions.get('window');

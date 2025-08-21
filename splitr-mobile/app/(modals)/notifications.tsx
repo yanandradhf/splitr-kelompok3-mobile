@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useNotifications } from '../../hooks/useApi';
+import { useNotificationsStore } from '../../store';
 import { COLORS, FONTS } from '../../constants/theme';
+import { SkeletonList } from '../../components/ui/Skeleton';
 
 const LOCAL_COLORS = {
   background: COLORS.backgroundMain,
@@ -23,6 +25,54 @@ const LOCAL_COLORS = {
 
 export default function NotificationsScreen() {
   const { notifications, loading } = useNotifications();
+  const { handleNotificationAction, markAsRead } = useNotificationsStore();
+  const [forceLoading, setForceLoading] = useState(true);
+  
+  useEffect(() => {
+    setTimeout(() => setForceLoading(false), 1500);
+  }, []);
+
+  const handleNotificationPress = async (notification: any) => {
+    try {
+      // Only group_invitation needs API call to navigate to group detail
+      if (notification.type === 'group_invitation') {
+        try {
+          const result = await handleNotificationAction(notification.notificationId, 'view_group');
+          if (result?.groupId) {
+            router.push({
+              pathname: '/(modals)/groups/detail',
+              params: { groupId: result.groupId }
+            });
+            return;
+          }
+        } catch (error) {
+          console.error('API failed for group invitation:', error);
+        }
+        
+        // Fallback: use groupId from notification
+        const groupId = notification.groupId || notification.metadata?.groupId;
+        if (groupId) {
+          await markAsRead(notification.notificationId);
+          router.push({
+            pathname: '/(modals)/groups/detail',
+            params: { groupId }
+          });
+          return;
+        }
+      }
+      
+      // For all other notifications (removed, left, deleted, etc), just mark as read
+      await markAsRead(notification.notificationId);
+    } catch (error) {
+      console.error('Error handling notification:', error);
+      // Always try to mark as read
+      try {
+        await markAsRead(notification.notificationId);
+      } catch (readError) {
+        console.error('Failed to mark as read:', readError);
+      }
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -48,6 +98,16 @@ export default function NotificationsScreen() {
         return 'card-outline';
       case 'payment_received':
         return 'checkmark-circle-outline';
+      case 'group_invitation':
+        return 'person-add-outline';
+      case 'group_member_left':
+        return 'exit-outline';
+      case 'group_member_removed':
+        return 'person-remove-outline';
+      case 'group_updated':
+        return 'create-outline';
+      case 'group_deleted':
+        return 'trash-outline';
       case 'group_invite':
         return 'people-outline';
       default:
@@ -61,7 +121,13 @@ export default function NotificationsScreen() {
         {/* Purple Background Section */}
         <View style={styles.purpleSection}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <TouchableOpacity onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)/home');
+              }
+            }} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Notifikasi</Text>
@@ -75,11 +141,8 @@ export default function NotificationsScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.orange} />
-                <Text style={styles.loadingText}>Memuat notifikasi...</Text>
-              </View>
+            {loading || forceLoading ? (
+              <SkeletonList />
             ) : notifications.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Ionicons name="notifications-off-outline" size={64} color={COLORS.gray} />
@@ -88,7 +151,15 @@ export default function NotificationsScreen() {
               </View>
             ) : (
               notifications.map((notification, index) => (
-                <View key={notification.notificationId || index} style={styles.notificationCard}>
+                <TouchableOpacity 
+                  key={notification.notificationId || index} 
+                  style={[
+                    styles.notificationCard,
+                    !notification.isRead && styles.unreadNotification
+                  ]}
+                  onPress={() => handleNotificationPress(notification)}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.cardContent}>
                     <View style={styles.notificationIcon}>
                       <Ionicons 
@@ -98,14 +169,20 @@ export default function NotificationsScreen() {
                       />
                     </View>
                     <View style={styles.notificationContent}>
-                      <Text style={styles.notificationTitle}>{notification.title}</Text>
+                      <Text style={[
+                        styles.notificationTitle,
+                        !notification.isRead && styles.unreadText
+                      ]}>
+                        {notification.title}
+                      </Text>
                       <Text style={styles.notificationMessage}>{notification.message}</Text>
                       <View style={styles.dateContainer}>
                         <Text style={styles.notificationDate}>{formatDate(notification.createdAt)}</Text>
                       </View>
                     </View>
+                    {!notification.isRead && <View style={styles.unreadDot} />}
                   </View>
-                </View>
+                </TouchableOpacity>
               ))
             )}
             <View style={{ height: 50 }} />
@@ -247,5 +324,22 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: LOCAL_COLORS.textPrimary,
     textAlign: 'center',
+  },
+  unreadNotification: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#00897B',
+    backgroundColor: '#F8FFFF',
+  },
+  unreadText: {
+    fontFamily: FONTS.bold,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#00897B',
+    position: 'absolute',
+    top: 16,
+    right: 16,
   },
 });

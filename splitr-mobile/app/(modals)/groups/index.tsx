@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
 import { useApi } from "../../../hooks/useApi";
+import { useGroupsStore } from "../../../store";
 import {
   wp,
   hp,
@@ -33,85 +34,37 @@ const personImages = [
 
 export default function GroupsScreen() {
   const [searchText, setSearchText] = useState("");
-  const [groups, setGroups] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { getGroups } = useApi();
+  const [forceLoading, setForceLoading] = useState(true);
+  const { 
+    groups, 
+    isLoading: loading, 
+    fetchGroups 
+  } = useGroupsStore();
 
-  const fetchGroups = async () => {
-    try {
-      const response = await getGroups();
-      setGroups(response.groups || []);
-    } catch (error) {
-      console.error("Error fetching groups:", error);
-      setGroups([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [lastFetchTime, setLastFetchTime] = useState(0);
 
   useEffect(() => {
     fetchGroups();
+    setTimeout(() => setForceLoading(false), 1800);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      // Check for new group when returning from create-group
-      const newGroup =
-        (global as any)?.newGroup || (globalThis as any)?.newGroup;
-      if (newGroup) {
-        console.log("Adding new group to list:", newGroup);
-        setGroups((prev) => [newGroup, ...prev]);
-        // Clear the global reference
-        if ((global as any)?.newGroup) delete (global as any).newGroup;
-        if ((globalThis as any)?.newGroup) delete (globalThis as any).newGroup;
+      const now = Date.now();
+      // Only fetch if not loading and last fetch was more than 2 seconds ago
+      if (!loading && now - lastFetchTime > 2000) {
+        fetchGroups();
+        setLastFetchTime(now);
       }
-
-      // Check for deleted group when returning from group-detail
-      const deletedGroupId =
-        (global as any)?.deletedGroupId || (globalThis as any)?.deletedGroupId;
-      if (deletedGroupId) {
-        console.log("Removing deleted group from list:", deletedGroupId);
-        setGroups((prev) =>
-          prev.filter((group) => group.groupId !== deletedGroupId)
-        );
-        // Clear the global reference
-        if ((global as any)?.deletedGroupId)
-          delete (global as any).deletedGroupId;
-        if ((globalThis as any)?.deletedGroupId)
-          delete (globalThis as any).deletedGroupId;
-      }
-
-      // Check for updated group when returning from group-detail
-      const updatedGroup =
-        (global as any)?.updatedGroup || (globalThis as any)?.updatedGroup;
-      if (updatedGroup) {
-        console.log("Updating group in list:", updatedGroup);
-        setGroups((prev) =>
-          prev.map((group) =>
-            group.groupId === updatedGroup.groupId
-              ? { 
-                  ...group, 
-                  groupName: updatedGroup.groupName || group.groupName,
-                  memberCount: updatedGroup.memberCount || group.memberCount,
-                  members: updatedGroup.members || group.members
-                }
-              : group
-          )
-        );
-        // Clear the global reference
-        if ((global as any)?.updatedGroup) delete (global as any).updatedGroup;
-        if ((globalThis as any)?.updatedGroup)
-          delete (globalThis as any).updatedGroup;
-      }
-    }, [])
+    }, [lastFetchTime, loading])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchGroups();
     setRefreshing(false);
-  }, []);
+  }, [fetchGroups]);
 
   const filteredGroups = groups.filter(
     (group) =>
@@ -126,7 +79,13 @@ export default function GroupsScreen() {
         <View style={styles.purpleSection}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)/home');
+              }
+            }}>
               <Ionicons
                 name="arrow-back"
                 size={getIconSize(24)}
@@ -136,7 +95,7 @@ export default function GroupsScreen() {
             <Text style={styles.headerTitle}>Grup</Text>
             <TouchableOpacity
               style={styles.headerCreateButton}
-              onPress={() => router.push("/(tabs)/groups/create")}
+              onPress={() => router.push("/(modals)/groups/create")}
               activeOpacity={0.8}
             >
               <Ionicons
@@ -180,12 +139,28 @@ export default function GroupsScreen() {
           >
             {/* Groups List */}
             <View style={styles.listContainer}>
-              {loading ? (
-                <ActivityIndicator
-                  size="large"
-                  color={COLORS.teal}
-                  style={styles.loader}
-                />
+              {loading || forceLoading ? (
+                <View>
+                  {[1, 2, 3].map((i) => (
+                    <View key={i} style={styles.groupCard}>
+                      <View style={styles.groupHeader}>
+                        <View style={{ width: 80, height: 14, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4 }} />
+                        <View style={{ width: 100, height: 14, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4 }} />
+                      </View>
+                      <View style={styles.groupContent}>
+                        <View style={styles.groupAvatars}>
+                          {[1, 2, 3, 4].map((j) => (
+                            <View key={j} style={[styles.avatar, { backgroundColor: '#E1E5E9' }, j > 1 && styles.avatarOverlap]} />
+                          ))}
+                        </View>
+                        <View style={styles.groupInfo}>
+                          <View style={{ width: 120, height: 18, backgroundColor: '#E1E5E9', borderRadius: 4, marginBottom: 4 }} />
+                          <View style={{ width: 80, height: 14, backgroundColor: '#E1E5E9', borderRadius: 4 }} />
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                </View>
               ) : filteredGroups.length > 0 ? (
                 filteredGroups.map((group, index) => (
                   <TouchableOpacity
@@ -193,7 +168,7 @@ export default function GroupsScreen() {
                     style={styles.groupCard}
                     onPress={() =>
                       router.push({
-                        pathname: "/(tabs)/groups/detail",
+                        pathname: "/(modals)/groups/detail",
                         params: { groupData: JSON.stringify(group) },
                       })
                     }

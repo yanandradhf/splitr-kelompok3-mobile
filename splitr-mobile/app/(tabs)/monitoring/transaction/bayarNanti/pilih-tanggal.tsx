@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONTS } from '../../../../../constants/theme';
-import { useTransactionStore } from '../../../../../store/transaction.store';
+import { useTransactionStore } from '../../../../../store';
 
 export default function PilihTanggalScreen() {
   const params = useLocalSearchParams();

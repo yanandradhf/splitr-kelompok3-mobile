@@ -16,7 +16,7 @@ import {
   Alert,
 } from "react-native";
 import { COLORS as THEME_COLORS, FONTS } from "../../../constants/theme";
-import { useRegisterStore } from "../../../store/register.store";
+import { useRegisterStore } from "../../../store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain, // new theme background

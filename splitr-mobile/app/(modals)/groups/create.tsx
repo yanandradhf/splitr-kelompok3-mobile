@@ -15,7 +15,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
-import { useApi } from "../../../hooks/useApi";
+import { useApi, useFriends } from "../../../hooks/useApi";
+import { useGroupsStore } from "../../../store";
 import SuccessModal from "../../../components/ui/SuccessModal";
 import {
   wp,
@@ -33,57 +34,33 @@ const personImages = [
   require("../../../assets/images/person4.png"),
 ];
 
-const mockUsers = [
-  { id: "1", name: "Akmelia", username: "akmelia", avatar: personImages[0] },
-  { id: "2", name: "Nanabila", username: "nanabila", avatar: personImages[1] },
-  { id: "3", name: "Rizki Ahmad", username: "rizki", avatar: personImages[2] },
-  { id: "4", name: "Sarah Putri", username: "sarah", avatar: personImages[3] },
-  { id: "5", name: "Budi Santoso", username: "budi", avatar: personImages[0] },
-  {
-    id: "6",
-    name: "Siti Nurhaliza",
-    username: "siti",
-    avatar: personImages[1],
-  },
-];
+
 
 export default function CreateGroupScreen() {
   const [namaGrup, setNamaGrup] = useState("");
   const [deskripsiGrup, setDeskripsiGrup] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [daftarTeman, setDaftarTeman] = useState<any[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(true);
   const [temanTerpilih, setTemanTerpilih] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [buttonAnimation] = useState(new Animated.Value(0));
-  const { getFriends, createGroup: apiCreateGroup } = useApi();
+  const { createGroup: apiCreateGroup, isCreating } = useGroupsStore();
+  const { friends, loading: loadingFriends } = useFriends();
 
-  // Fetch friends list
-  useEffect(() => {
-    const fetchFriends = async () => {
-      try {
-        setLoadingFriends(true);
-        
-        // TODO: Replace with actual API call
-        // const response = await getFriends();
-        // setDaftarTeman(response.friends || []);
-        
-        // Simulate API call with mock data
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setDaftarTeman(mockUsers);
-        
-      } catch (error) {
-        console.error("Error fetching friends:", error);
-        setDaftarTeman(mockUsers); // Fallback to mock data
-      } finally {
-        setLoadingFriends(false);
-      }
-    };
-
-    fetchFriends();
-  }, []);
+  // Transform friends data for UI
+  const daftarTeman = React.useMemo(() => {
+    if (!friends || friends.length === 0) {
+      return []; // Return empty array if no friends
+    }
+    
+    return friends.map((friendItem: any, index: number) => ({
+      id: friendItem.friend.userId,
+      name: friendItem.friend.name,
+      username: friendItem.friend.username || friendItem.friend.name.toLowerCase().replace(' ', ''),
+      avatar: friendItem.friend.avatar || personImages[index % 4],
+    }));
+  }, [friends]);
 
   const toggleFriend = (user: any) => {
     const isSelected = temanTerpilih.find((friend) => friend.id === user.id);
@@ -121,60 +98,26 @@ export default function CreateGroupScreen() {
   const createGroup = async () => {
     if (!isFormValid) return;
 
-    setLoading(true);
     try {
       const memberIds = temanTerpilih.map((friend) => friend.id);
       
-      // TODO: Replace with actual API call
-      // const response = await api.post('/api/mobile/groups', {
-      //   groupName: namaGrup.trim(),
-      //   memberIds: memberIds
-      // });
-      
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Create new group object with proper member structure
-      const newGroup = {
-        groupId: "GRP" + Date.now(),
+      const newGroup = await apiCreateGroup({
         groupName: namaGrup.trim(),
-        groupDescription: deskripsiGrup.trim(),
-        isCreator: true,
-        creatorName: "You",
-        memberCount: temanTerpilih.length + 1, // +1 for creator
-        members: [
-          // Add creator as first member
-          {
-            id: "creator",
-            name: "You",
-            username: "you",
-            status: "active",
-            avatar: personImages[0],
-          },
-          // Add selected friends
-          ...temanTerpilih.map((friend) => ({
-            ...friend,
-            status: "active",
-          }))
-        ],
-        createdAt: new Date().toISOString(),
-      };
-
-      // Store new group in global state
-      if (typeof global === "undefined") {
-        (globalThis as any).newGroup = newGroup;
-      } else {
-        (global as any).newGroup = newGroup;
-      }
+        description: deskripsiGrup.trim(),
+        memberIds: memberIds
+      });
 
       console.log("New group created:", newGroup);
 
-      // Show success modal
+      // Show success modal briefly then navigate back
       setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        if (router.canGoBack()) { router.back(); } else { router.replace("/(modals)/groups"); }
+      }, 600);
     } catch (error) {
       console.error("Error creating group:", error);
-    } finally {
-      setLoading(false);
+      // Error is handled by the store
     }
   };
 
@@ -188,7 +131,13 @@ export default function CreateGroupScreen() {
         <View style={styles.purpleSection}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => {
+              if (router.canGoBack()) {
+                if (router.canGoBack()) { router.back(); } else { router.replace("/(modals)/groups"); }
+              } else {
+                router.replace('/(modals)/groups');
+              }
+            }}>
               <Ionicons
                 name="arrow-back"
                 size={getIconSize(24)}
@@ -301,13 +250,15 @@ export default function CreateGroupScreen() {
                   ]}
                 >
                   <TouchableOpacity
-                    style={styles.compactButton}
+                    style={[styles.compactButton, isCreating && styles.compactButtonDisabled]}
                     onPress={createGroup}
-                    disabled={loading}
+                    disabled={isCreating}
                     activeOpacity={0.8}
                   >
-                    {loading ? (
-                      <Text style={styles.compactButtonText}>Membuat...</Text>
+                    {isCreating ? (
+                      <View style={styles.compactButtonContent}>
+                        <Text style={styles.compactButtonText}>Membuat...</Text>
+                      </View>
                     ) : (
                       <View style={styles.compactButtonContent}>
                         <Ionicons name="people" size={14} color={COLORS.white} />
@@ -387,20 +338,19 @@ export default function CreateGroupScreen() {
                                 @{friend.username}
                               </Text>
                             </View>
-                            <View
-                              style={[
-                                styles.statusIcon,
-                                isSelected
-                                  ? styles.selectedIcon
-                                  : styles.unselectedIcon,
-                              ]}
-                            >
-                              <Ionicons
-                                name={isSelected ? "checkmark" : "add"}
-                                size={getIconSize(16)}
-                                color={COLORS.white}
-                              />
-                            </View>
+                            {isSelected ? (
+                              <View style={styles.selectedIcon}>
+                                <Ionicons
+                                  name="checkmark-circle"
+                                  size={getIconSize(24)}
+                                  color="#00897B"
+                                />
+                              </View>
+                            ) : (
+                              <View style={styles.addButton}>
+                                <Text style={styles.addButtonText}>Add to Group</Text>
+                              </View>
+                            )}
                           </TouchableOpacity>
                         );
                         })}
@@ -458,12 +408,12 @@ export default function CreateGroupScreen() {
           </View>
         </View>
 
-        {/* Success Modal */}
+        {/* Success Modal with Blur Background */}
         <SuccessModal
           visible={showSuccessModal}
           onClose={() => {
             setShowSuccessModal(false);
-            router.back();
+            if (router.canGoBack()) { router.back(); } else { router.replace("/(modals)/groups"); }
           }}
           groupName={namaGrup}
         />
@@ -651,18 +601,22 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
-  statusIcon: {
-    width: wp(6),
-    height: wp(6),
-    borderRadius: wp(3),
+  selectedIcon: {
     justifyContent: "center",
     alignItems: "center",
   },
-  selectedIcon: {
-    backgroundColor: "#00897B",
+  addButton: {
+    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    borderWidth: 1,
+    borderColor: "#00897B",
+    borderRadius: getBorderRadius(16),
+    paddingHorizontal: getSpacing(12),
+    paddingVertical: getSpacing(6),
   },
-  unselectedIcon: {
-    backgroundColor: COLORS.teal,
+  addButtonText: {
+    fontSize: rf(12),
+    fontFamily: FONTS.semiBold,
+    color: "#00897B",
   },
 
   emptyFriendsState: {
@@ -721,6 +675,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+  },
+  compactButtonDisabled: {
+    backgroundColor: COLORS.gray,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   compactButtonContent: {
     flexDirection: "row",

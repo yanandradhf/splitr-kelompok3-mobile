@@ -12,15 +12,21 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useProfile } from "../../../hooks/useProfile";
+import { useProfileStore } from "../../../store";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { COLORS, FONTS } from "../../../constants/theme";
 
 const SettingsScreen = () => {
-  const { profile, isLoading } = useProfile();
+  const { user, isLoading, fetchProfile } = useProfileStore();
   const [emailNotifications, setEmailNotifications] = useState(false);
+  const [forceLoading, setForceLoading] = useState(true);
 
-  if (isLoading) {
+  React.useEffect(() => {
+    if (!user) fetchProfile();
+    setTimeout(() => setForceLoading(false), 1200);
+  }, []);
+
+  if (isLoading || forceLoading) {
     return <LoadingScreen />;
   }
 

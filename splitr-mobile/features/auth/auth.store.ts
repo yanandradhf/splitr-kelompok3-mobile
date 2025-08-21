@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { authAPI } from '../services/api';
+import { authAPI } from '../../services';
 
 interface User {
   userId: string;
@@ -18,6 +18,7 @@ interface AuthState {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -103,5 +104,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       token: null, 
       isAuthenticated: false 
     });
+  },
+
+  updateUser: async (userData: Partial<User>) => {
+    const currentUser = get().user;
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...userData };
+      await SecureStore.setItemAsync('user_data', JSON.stringify(updatedUser));
+      set({ user: updatedUser });
+    }
   },
 }));

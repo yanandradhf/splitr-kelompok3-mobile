@@ -1,192 +1,122 @@
 import { useState, useEffect } from 'react';
-import { useAuthStore } from '../store/auth.store';
-import api from '../services/api';
+import { 
+  useGroupsStore, 
+  useNotificationsStore, 
+  useFriendsStore, 
+  useProfileStore 
+} from '../store';
+import { DEBOUNCE_DELAY } from '../constants/config';
 
-import { API_CONFIG } from '../constants/config';
-
-const BASE_URL = API_CONFIG.BASE_URL;
-
-export const useApi = () => {
-  const { token } = useAuthStore();
-
-  const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-    const url = `${BASE_URL}${endpoint}`;
-    
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    };
-
-    console.log('🚀 API Call:', {
-      url,
-      method: config.method || 'GET',
-      headers: config.headers,
-      hasToken: !!token
-    });
-
-    const response = await fetch(url, config);
-    
-    console.log('📡 API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      url: response.url
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.log('❌ API Error Details:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText,
-        url: response.url
-      });
-      throw new Error(`API Error: ${response.status} - ${errorText}`);
-    }
-    
-    const data = await response.json();
-    console.log('✅ API Success:', { endpoint, dataKeys: Object.keys(data) });
-    return data;
-  };
-
-  const getFriends = async () => {
-    const response = await api.get('/api/mobile/friends');
-    return response.data;
-  };
-
-  const getGroups = async () => {
-    const response = await api.get('/api/mobile/groups');
-    return response.data;
-  };
-
-  const getNotifications = async () => {
-    const response = await api.get('/api/mobile/notifications?limit=20&offset=0');
-    return response.data;
-  };
-
-  const createGroup = async (groupData: { groupName: string; memberIds: string[] }) => {
-    const response = await api.post('/api/mobile/groups', groupData);
-    return response.data;
-  };
-
-  const updateGroup = async (groupId: string, updateData: { groupName?: string }) => {
-    const response = await api.put(`/api/mobile/groups/${groupId}`, updateData);
-    return response.data;
-  };
-
-  const deleteGroup = async (groupId: string) => {
-    const response = await api.delete(`/api/mobile/groups/${groupId}`);
-    return response.data;
-  };
-
-  const getGroupDetail = async (groupId: string) => {
-    const response = await api.get(`/api/mobile/groups/${groupId}`);
-    return response.data;
-  };
-
-  const addGroupMember = async (groupId: string, memberIds: string[]) => {
-    const response = await api.post(`/api/mobile/groups/${groupId}/members`, { memberIds });
-    return response.data;
-  };
-
-  return {
-    getFriends,
-    getGroups,
-    getNotifications,
-    createGroup,
-    updateGroup,
-    deleteGroup,
-    getGroupDetail,
-    addGroupMember,
-  };
-};
+// Debounced hooks that use Zustand stores with axios services
 
 export const useFriends = () => {
-  const [friends, setFriends] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { getFriends } = useApi();
-
-  const fetchFriends = async () => {
-    try {
-      const response = await getFriends();
-      setFriends(response.friends || []);
-    } catch (error) {
-      console.error('Error fetching friends:', error);
-      setFriends([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    friends, 
+    isLoading: loading, 
+    fetchFriends 
+  } = useFriendsStore();
+  const [lastFetch, setLastFetch] = useState(0);
 
   useEffect(() => {
-    fetchFriends();
+    const now = Date.now();
+    if (now - lastFetch > DEBOUNCE_DELAY.API_CALLS) {
+      fetchFriends();
+      setLastFetch(now);
+    }
   }, []);
 
   const refetch = async () => {
-    setLoading(true);
     await fetchFriends();
+    setLastFetch(Date.now());
   };
 
   return { friends, loading, refetch };
 };
 
 export const useGroups = () => {
-  const [groups, setGroups] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { getGroups } = useApi();
-
-  const fetchGroups = async () => {
-    try {
-      const response = await getGroups();
-      setGroups(response.groups?.slice(0, 2) || []);
-    } catch (error) {
-      console.error('Error fetching groups:', error);
-      setGroups([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    groups, 
+    isLoading: loading, 
+    fetchGroups 
+  } = useGroupsStore();
+  const [lastFetch, setLastFetch] = useState(0);
 
   useEffect(() => {
-    fetchGroups();
+    const now = Date.now();
+    if (now - lastFetch > DEBOUNCE_DELAY.API_CALLS) {
+      fetchGroups();
+      setLastFetch(now);
+    }
   }, []);
 
   const refetch = async () => {
-    setLoading(true);
     await fetchGroups();
+    setLastFetch(Date.now());
   };
 
-  return { groups, loading, refetch };
+  // Return only first 2 groups for home display
+  return { 
+    groups: groups.slice(0, 2), 
+    loading, 
+    refetch 
+  };
 };
 
 export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { getNotifications } = useApi();
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await getNotifications();
-      setNotifications(response.notifications || []);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      setNotifications([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    notifications, 
+    unreadCount,
+    isLoading: loading, 
+    fetchNotifications 
+  } = useNotificationsStore();
+  const [lastFetch, setLastFetch] = useState(0);
 
   useEffect(() => {
-    fetchNotifications();
+    const now = Date.now();
+    if (now - lastFetch > DEBOUNCE_DELAY.API_CALLS) {
+      fetchNotifications();
+      setLastFetch(now);
+    }
   }, []);
 
   const refetch = async () => {
-    setLoading(true);
-    await fetchNotifications();
+    await fetchNotifications(true);
+    setLastFetch(Date.now());
   };
 
-  return { notifications, loading, refetch };
+  return { 
+    notifications, 
+    unreadCount,
+    loading, 
+    refetch 
+  };
+};
+
+export const useProfileData = () => {
+  const { 
+    user, 
+    stats,
+    isLoading: loading, 
+    fetchProfile 
+  } = useProfileStore();
+  const [lastFetch, setLastFetch] = useState(0);
+
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastFetch > DEBOUNCE_DELAY.API_CALLS) {
+      fetchProfile();
+      setLastFetch(now);
+    }
+  }, []);
+
+  const refetch = async () => {
+    await fetchProfile();
+    setLastFetch(Date.now());
+  };
+
+  return { 
+    profile: { user, stats },
+    loading, 
+    refetch 
+  };
 };

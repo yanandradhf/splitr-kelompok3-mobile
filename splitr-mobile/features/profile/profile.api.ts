@@ -1,4 +1,5 @@
-import api from './api';
+import api from '../../services/api';
+import { API_CONFIG } from '../../constants/config';
 
 export interface ProfileUser {
   userId: string;
@@ -42,10 +43,22 @@ export interface UpdateProfileResponse {
 
 export const profileAPI = {
   getProfile: (): Promise<{ data: ProfileResponse }> => {
-    return api.get('/api/mobile/profile');
+    console.log('🌐 Making API call to:', API_CONFIG.ENDPOINTS.PROFILE);
+    return api.get(API_CONFIG.ENDPOINTS.PROFILE);
   },
   
   updateProfile: (data: UpdateProfileRequest): Promise<{ data: UpdateProfileResponse }> => {
-    return api.put('/api/mobile/profile', data);
+    console.log('🌐 Making API call to:', API_CONFIG.ENDPOINTS.PROFILE);
+    return api.put(API_CONFIG.ENDPOINTS.PROFILE, data);
+  },
+  
+  changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.ENDPOINTS.CHANGE_PASSWORD);
+    return api.put(API_CONFIG.ENDPOINTS.CHANGE_PASSWORD, data);
+  },
+  
+  changePin: (data: { currentPin: string; newPin: string; confirmPin: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.ENDPOINTS.CHANGE_PIN);
+    return api.put(API_CONFIG.ENDPOINTS.CHANGE_PIN, data);
   },
 };

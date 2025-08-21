@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { FONTS, COLORS as THEME_COLORS } from "../../../constants/theme";
-import { useRegisterStore } from "../../../store/register.store";
+import { useRegisterStore } from "../../../store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain,
@@ -97,8 +97,7 @@ export default function RegisterSetPin() {
 
     try {
       setStep5Data({ pin });
-      await completeRegister();
-      router.replace("/(auth)/register/success");
+      router.push("/(public)/terms");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     }
@@ -197,7 +196,7 @@ export default function RegisterSetPin() {
                     (!isComplete || isLoading) && styles.primaryBtnTextDisabled,
                   ]}
                 >
-                  Daftar
+                  Lanjutkan
                 </Text>
               )}
             </Pressable>

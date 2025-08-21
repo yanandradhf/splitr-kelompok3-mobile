@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { registerAPI } from '../services/register.api';
-import { handleApiError } from '../utils/errorHandler';
+import { registerAPI } from '../../services';
+import { handleApiError } from '../../utils/errorHandler';
 
 interface RegisterData {
   nomorRekening: string;

@@ -1,4 +1,4 @@
-import { useAuthStore } from '../store/auth.store';
+import { useAuthStore } from '../store';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
 

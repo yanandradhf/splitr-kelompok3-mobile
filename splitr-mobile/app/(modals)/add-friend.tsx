@@ -43,6 +43,7 @@ export default function TambahTeman() {
   const [isAddingFriend, setIsAddingFriend] = useState(false);
   const [isDeletingFriend, setIsDeletingFriend] = useState(false);
   const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
+  const [forceLoading, setForceLoading] = useState(true);
   
   const { friends: apiFriends, loading: isLoadingFriends, refetch } = useFriends();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -72,6 +73,10 @@ export default function TambahTeman() {
       setFilteredFriends(filtered);
     }
   }, [friendSearch, addedFriends]);
+
+  useEffect(() => {
+    setTimeout(() => setForceLoading(false), 1700);
+  }, []);
 
 
 
@@ -205,7 +210,11 @@ export default function TambahTeman() {
   };
 
   const handleBack = () => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/home');
+    }
   };
 
   const renderEmptyFriends = () => (
@@ -336,7 +345,7 @@ export default function TambahTeman() {
               style={styles.friendsListScroll}
               showsVerticalScrollIndicator={false}
             >
-              {isLoadingFriends ? (
+              {isLoadingFriends || forceLoading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color={COLORS.teal} />
                   <Text style={styles.loadingText}>Memuat daftar teman...</Text>

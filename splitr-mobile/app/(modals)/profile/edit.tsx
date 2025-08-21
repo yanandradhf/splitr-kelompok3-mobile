@@ -14,31 +14,37 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useProfile } from "../../../hooks/useProfile";
+import { useProfileStore } from "../../../store";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
+import { SkeletonProfile, SkeletonForm } from "../../../components/ui/Skeleton";
 import { COLORS, FONTS } from "../../../constants/theme";
 
 const EditProfileScreen = () => {
-  const { profile, isLoading, isUpdating, updateProfile } = useProfile();
+  const { user, isLoading, isUpdating, updateProfile, fetchProfile } = useProfileStore();
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [originalData, setOriginalData] = useState({ name: "", phone: "", email: "" });
+  const [forceLoading, setForceLoading] = useState(true);
 
-  // Update state when profile data loads
   React.useEffect(() => {
-    if (profile?.user) {
+    if (!user) fetchProfile();
+    setTimeout(() => setForceLoading(false), 1400);
+  }, []);
+
+  React.useEffect(() => {
+    if (user) {
       const data = {
-        name: profile.user.name,
-        phone: profile.user.phone,
-        email: profile.user.email
+        name: user.name,
+        phone: user.phone,
+        email: user.email
       };
       setUsername(data.name);
       setPhoneNumber(data.phone);
       setEmail(data.email);
       setOriginalData(data);
     }
-  }, [profile]);
+  }, [user]);
 
   // Check if data has changed
   const hasChanges = username !== originalData.name || 
@@ -59,8 +65,28 @@ const EditProfileScreen = () => {
     }
   };
 
-  if (isLoading) {
-    return <LoadingScreen />;
+  if (isLoading || forceLoading) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.backgroundSection}>
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Edit Profil</Text>
+              <View style={styles.placeholder} />
+            </View>
+            <SkeletonProfile />
+          </View>
+          <View style={styles.whiteModalContainer}>
+            <View style={styles.scrollContent}>
+              <SkeletonForm />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
   }
 
   return (
@@ -94,8 +120,8 @@ const EditProfileScreen = () => {
                 <Ionicons name="camera" size={16} color={COLORS.teal} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.profileName}>{profile?.user?.name || 'User'}</Text>
-            <Text style={styles.profileUsername}>@{profile?.user?.username || 'username'}</Text>
+            <Text style={styles.profileName}>{user?.name || 'User'}</Text>
+            <Text style={styles.profileUsername}>@{user?.username || 'username'}</Text>
           </View>
         </View>
 

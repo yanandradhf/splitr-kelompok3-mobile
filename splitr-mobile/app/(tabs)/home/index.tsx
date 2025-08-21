@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,15 +7,18 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import Spinner from "../../../components/ui/Spinner";
+import { SkeletonCard, SkeletonStats, SkeletonNotification } from "../../../components/ui/Skeleton";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useAuthStore } from "../../../store/auth.store";
-import { useProfileStore } from "../../../store/profile.store";
+import { router, useFocusEffect } from "expo-router";
+import { useAuthStore } from "../../../store";
+import { useProfileStore } from "../../../store";
 import { useFriends, useGroups, useNotifications } from "../../../hooks/useApi";
-import { useProfile } from "../../../hooks/useProfile";
+import { useGroupsStore } from "../../../store";
+import { useNotificationsStore } from "../../../store";
+
 
 import { COLORS, FONTS } from "../../../constants/theme";
 
@@ -40,12 +43,20 @@ const personImages = [
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
-  const { profile: storeProfile } = useProfileStore();
-  const {
-    profile,
-    isLoading: profileLoading,
-    refetch: refetchProfile,
-  } = useProfile();
+  const { user: storeUser, stats: storeStats } = useProfileStore();
+  const [forceLoading, setForceLoading] = useState(true);
+  
+  const { fetchProfile } = useProfileStore();
+  
+  useEffect(() => {
+    if (!storeUser) {
+      fetchProfile();
+    }
+    // Force skeleton to show for 2 seconds
+    setTimeout(() => setForceLoading(false), 2000);
+  }, []);
+
+
   const {
     friends,
     loading: friendsLoading,
@@ -58,18 +69,26 @@ export default function HomeScreen() {
   } = useGroups();
   const {
     notifications,
+    unreadCount,
     loading: notificationsLoading,
     refetch: refetchNotifications,
   } = useNotifications();
+  
+
+  
+  // Get notification dot visibility
+  const showNotificationDot = unreadCount > 0;
 
   const [refreshing, setRefreshing] = useState(false);
   const [showStats, setShowStats] = useState(true);
+  const [lastNavigationTime, setLastNavigationTime] = useState(0);
+  const [lastGroupNavigation, setLastGroupNavigation] = useState<{[key: string]: number}>({});
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await Promise.all([
-        refetchProfile(),
+        fetchProfile(),
         refetchFriends(),
         refetchGroups(),
         refetchNotifications(),
@@ -79,7 +98,7 @@ export default function HomeScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [refetchProfile, refetchFriends, refetchGroups, refetchNotifications]);
+  }, [fetchProfile, refetchFriends, refetchGroups, refetchNotifications]);
 
   const latestNotification = notifications[0];
 
@@ -111,8 +130,8 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={COLORS.card}
-            colors={[COLORS.card]}
+            tintColor={COLORS.teal}
+            colors={[COLORS.teal]}
           />
         }
       >
@@ -132,10 +151,7 @@ export default function HomeScreen() {
               <View style={styles.welcomeText}>
                 <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
                 <Text style={styles.welcomeName}>
-                  {user?.name ||
-                    profile?.user?.name ||
-                    storeProfile?.user?.name ||
-                    "User"}
+                  {user?.name || storeUser?.name || "User"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -148,7 +164,7 @@ export default function HomeScreen() {
                 size={28}
                 color={COLORS.textPrimary}
               />
-              <View style={styles.notificationDot} />
+              {showNotificationDot && <View style={styles.notificationDot} />}
             </TouchableOpacity>
           </View>
 
@@ -189,10 +205,8 @@ export default function HomeScreen() {
 
             <View style={styles.unifiedCard}>
               {showStats ? (
-                profileLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color={COLORS.teal} />
-                  </View>
+                !storeStats || forceLoading ? (
+                  <SkeletonStats />
                 ) : (
                   <View style={styles.statsContainer}>
                     <View style={styles.statRow}>
@@ -205,7 +219,7 @@ export default function HomeScreen() {
                           />
                         </View>
                         <Text style={styles.statNumber}>
-                          {profile?.stats?.totalBills || 0}
+                          {storeStats?.totalBills || 0}
                         </Text>
                         <Text style={styles.statLabel}>Tagihan</Text>
                       </View>
@@ -218,8 +232,8 @@ export default function HomeScreen() {
                           />
                         </View>
                         <Text style={styles.statNumber}>
-                          {profile?.stats?.totalSpent
-                            ? `${(profile.stats.totalSpent / 1000000).toFixed(
+                          {storeStats?.totalSpent
+                            ? `${(storeStats.totalSpent / 1000000).toFixed(
                                 1
                               )}M`
                             : "0"}
@@ -235,7 +249,7 @@ export default function HomeScreen() {
                           />
                         </View>
                         <Text style={styles.statNumber}>
-                          {profile?.stats?.pendingPayments || 0}
+                          {storeStats?.pendingPayments || 0}
                         </Text>
                         <Text style={styles.statLabel}>Belum Dibayar</Text>
                       </View>
@@ -243,9 +257,7 @@ export default function HomeScreen() {
                   </View>
                 )
               ) : notificationsLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color={COLORS.teal} />
-                </View>
+                <SkeletonNotification />
               ) : latestNotification ? (
                 <View style={styles.notifContainer}>
                   <View style={styles.notificationRow}>
@@ -286,7 +298,13 @@ export default function HomeScreen() {
           {/* GROUPS SECTION */}
           <View style={styles.modalSection}>
             <TouchableOpacity
-              onPress={() => router.push("/(tabs)/groups")}
+              onPress={() => {
+                const now = Date.now();
+                if (now - lastNavigationTime > 1000) {
+                  setLastNavigationTime(now);
+                  router.push("/(modals)/groups");
+                }
+              }}
               activeOpacity={0.7}
               style={styles.sectionHeader}
             >
@@ -297,10 +315,16 @@ export default function HomeScreen() {
                 color={LOCAL_COLORS.textPrimary}
               />
             </TouchableOpacity>
-            {groupsLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={COLORS.teal} />
-              </View>
+            {groupsLoading || forceLoading ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.groupsScroll}
+              >
+                {[1, 2].map((i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </ScrollView>
             ) : groups.length > 0 ? (
               <ScrollView
                 horizontal
@@ -308,9 +332,21 @@ export default function HomeScreen() {
                 style={styles.groupsScroll}
               >
                 {groups.map((group, index) => (
-                  <View
+                  <TouchableOpacity
                     key={group.groupId || index}
                     style={[styles.groupCard, { marginRight: 16 }]}
+                    onPress={() => {
+                      console.log('Clicked group:', group.groupId, group.groupName);
+                      router.replace({
+                        pathname: "/(modals)/groups/detail",
+                        params: { 
+                          groupId: group.groupId,
+                          groupData: JSON.stringify(group),
+                          fromHome: 'true'
+                        },
+                      });
+                    }}
+                    activeOpacity={0.8}
                   >
                     <View style={styles.groupHeader}>
                       <Text style={styles.groupId}>
@@ -357,7 +393,7 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                       </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
             ) : (
@@ -375,7 +411,7 @@ export default function HomeScreen() {
                 </Text>
                 <TouchableOpacity
                   style={styles.emptyActionButton}
-                  onPress={() => router.push("/(tabs)/groups")}
+                  onPress={() => router.push("/(modals)/groups")}
                   activeOpacity={0.8}
                 >
                   <Ionicons name="people" size={16} color={COLORS.white} />
@@ -392,7 +428,13 @@ export default function HomeScreen() {
           <View style={styles.modalSection}>
             <TouchableOpacity
               style={styles.sectionHeader}
-              onPress={() => router.push("/(modals)/add-friend")}
+              onPress={() => {
+                const now = Date.now();
+                if (now - lastNavigationTime > 1000) {
+                  setLastNavigationTime(now);
+                  router.push("/(modals)/add-friend");
+                }
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.sectionTitle}>Lihat Teman</Text>
@@ -402,10 +444,19 @@ export default function HomeScreen() {
                 color={COLORS.textSecondary}
               />
             </TouchableOpacity>
-            {friendsLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={COLORS.teal} />
-              </View>
+            {friendsLoading || forceLoading ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.friendsScroll}
+              >
+                {[1, 2, 3, 4].map((i) => (
+                  <View key={i} style={styles.friendItem}>
+                    <View style={[styles.friendImage, { backgroundColor: '#E1E5E9' }]} />
+                    <View style={[styles.friendName, { backgroundColor: '#E1E5E9', height: 14, borderRadius: 4 }]} />
+                  </View>
+                ))}
+              </ScrollView>
             ) : friends.length > 0 ? (
               <ScrollView
                 horizontal
@@ -597,6 +648,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 8,
   },
 
   // ACTIVITY CARD

@@ -10,7 +10,7 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FONTS } from "../../../constants/theme";
-import { useRegisterStore } from "../../../store/register.store";
+import { useRegisterStore } from "../../../store";
 
 const RegisterSuccessScreen = () => {
   const { data, clearData } = useRegisterStore();
