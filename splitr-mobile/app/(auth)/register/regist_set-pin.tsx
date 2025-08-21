@@ -1,18 +1,21 @@
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { 
-  Keyboard, 
-  Pressable, 
-  SafeAreaView, 
-  StyleSheet, 
-  Text, 
-  View,
-  ScrollView,
-  TouchableWithoutFeedback,
+import {
+  ActivityIndicator,
+  Alert,
+  Keyboard,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { FONTS, COLORS as THEME_COLORS } from "../../../constants/theme";
+import { useRegisterStore } from "../../../store/register.store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain,
@@ -33,7 +36,8 @@ function Stepper({ current }: { current: number }) {
             style={[
               styles.halfLine,
               idx === 0 && styles.invisible,
-              s - 1 < current && idx !== 0 && { backgroundColor: THEME_COLORS.teal },
+              s - 1 < current &&
+                idx !== 0 && { backgroundColor: THEME_COLORS.teal },
             ]}
           />
           <View
@@ -43,10 +47,7 @@ function Stepper({ current }: { current: number }) {
             ]}
           >
             <Text
-              style={[
-                styles.stepLabel,
-                s <= current && { color: "#FFFFFF" },
-              ]}
+              style={[styles.stepLabel, s <= current && { color: "#FFFFFF" }]}
             >
               {s}
             </Text>
@@ -55,7 +56,10 @@ function Stepper({ current }: { current: number }) {
             style={[
               styles.halfLine,
               idx === steps.length - 1 && styles.invisible,
-              s < current && idx !== steps.length - 1 && { backgroundColor: THEME_COLORS.teal },
+              s < current &&
+                idx !== steps.length - 1 && {
+                  backgroundColor: THEME_COLORS.teal,
+                },
             ]}
           />
         </View>
@@ -67,6 +71,8 @@ function Stepper({ current }: { current: number }) {
 export default function RegisterSetPin() {
   const [pin, setPin] = useState<string>("");
   const [error, setError] = useState("");
+
+  const { completeRegister, isLoading, setStep5Data } = useRegisterStore();
 
   useEffect(() => {
     Keyboard.dismiss();
@@ -83,15 +89,27 @@ export default function RegisterSetPin() {
     setError("");
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (pin.length !== 6) {
       setError("Masukkan PIN 6 digit");
       return;
     }
-    router.push("/(auth)/login");
+
+    try {
+      setStep5Data({ pin });
+      await completeRegister();
+      router.replace("/(auth)/register/success");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
   };
 
-  const numbers = [["1","2","3"],["4","5","6"],["7","8","9"],["","0","⌫"]];
+  const numbers = [
+    ["1", "2", "3"],
+    ["4", "5", "6"],
+    ["7", "8", "9"],
+    ["", "0", "⌫"],
+  ];
 
   const isComplete = pin.length === 6;
 
@@ -107,49 +125,81 @@ export default function RegisterSetPin() {
             <Stepper current={5} />
           </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.panel}
             contentContainerStyle={styles.panelContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-        <Text style={styles.headline}>Buat Pin Baru</Text>
+            <Text style={styles.headline}>Buat Pin Baru</Text>
 
-        <View style={styles.pinRow}>
-          {Array.from({ length: 6 }).map((_, i) => {
-            const filled = Boolean(pin[i]);
-            return (
-              <View key={i} style={[styles.pinBox, filled && { borderColor: COLORS.accent }]}>
-                <Text style={styles.pinDot}>{filled ? "•" : " "}</Text>
-              </View>
-            );
-          })}
-        </View>
-
-        <View style={{ marginTop: 10 }}>
-          {numbers.map((row, idx) => (
-            <View key={idx} style={styles.keyRow}>
-              {row.map((n, index) => {
-                if (n === "") return <View key={`empty-${index}`} style={styles.key} />;
-                const isBack = n === "⌫";
+            <View style={styles.pinRow}>
+              {Array.from({ length: 6 }).map((_, i) => {
+                const filled = Boolean(pin[i]);
                 return (
-                  <Pressable key={n} onPress={() => (isBack ? backspace() : pressDigit(n))} style={styles.key}>
-                    <Text style={[styles.keyText, isBack && { color: THEME_COLORS.teal }]}>{n}</Text>
-                  </Pressable>
+                  <View
+                    key={i}
+                    style={[
+                      styles.pinBox,
+                      filled && { borderColor: COLORS.accent },
+                    ]}
+                  >
+                    <Text style={styles.pinDot}>{filled ? "•" : " "}</Text>
+                  </View>
                 );
               })}
             </View>
-          ))}
-        </View>
+
+            <View style={{ marginTop: 10 }}>
+              {numbers.map((row, idx) => (
+                <View key={idx} style={styles.keyRow}>
+                  {row.map((n, index) => {
+                    if (n === "")
+                      return <View key={`empty-${index}`} style={styles.key} />;
+                    const isBack = n === "⌫";
+                    return (
+                      <Pressable
+                        key={n}
+                        onPress={() => (isBack ? backspace() : pressDigit(n))}
+                        style={styles.key}
+                      >
+                        <Text
+                          style={[
+                            styles.keyText,
+                            isBack && { color: THEME_COLORS.teal },
+                          ]}
+                        >
+                          {n}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            <Pressable 
-              onPress={handleRegister} 
-              style={[styles.primaryBtn, !isComplete && styles.primaryBtnDisabled]}
-              disabled={!isComplete}
+            <Pressable
+              onPress={handleRegister}
+              style={[
+                styles.primaryBtn,
+                (!isComplete || isLoading) && styles.primaryBtnDisabled,
+              ]}
+              disabled={!isComplete || isLoading}
             >
-              <Text style={[styles.primaryBtnText, !isComplete && styles.primaryBtnTextDisabled]}>Daftar</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text
+                  style={[
+                    styles.primaryBtnText,
+                    (!isComplete || isLoading) && styles.primaryBtnTextDisabled,
+                  ]}
+                >
+                  Daftar
+                </Text>
+              )}
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -160,7 +210,13 @@ export default function RegisterSetPin() {
 
 const styles = StyleSheet.create({
   header: { paddingTop: 70, paddingHorizontal: 20 },
-  title: { fontSize: 32, fontFamily: FONTS.extraBold, color: "#0F172A", textAlign: "center", marginBottom: 28 },
+  title: {
+    fontSize: 32,
+    fontFamily: FONTS.extraBold,
+    color: "#0F172A",
+    textAlign: "center",
+    marginBottom: 28,
+  },
 
   /** stepper centered + garis */
   stepper: {
@@ -171,15 +227,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   stepSlot: {
-    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   halfLine: {
-    width: 12, height: 4, backgroundColor: COLORS.stepInactive, borderRadius: 2, marginHorizontal: 6,
+    width: 12,
+    height: 4,
+    backgroundColor: COLORS.stepInactive,
+    borderRadius: 2,
+    marginHorizontal: 6,
   },
   invisible: { opacity: 0 },
   stepCircle: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.stepInactive,
-    alignItems: "center", justifyContent: "center",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.stepInactive,
+    alignItems: "center",
+    justifyContent: "center",
   },
   stepLabel: { fontFamily: FONTS.bold, color: "#374151" },
 
@@ -188,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -196,17 +263,56 @@ const styles = StyleSheet.create({
     marginBottom: -50,
   },
   panelContent: {
-    paddingHorizontal: 20, paddingTop: 36, paddingBottom: 200,
+    paddingHorizontal: 20,
+    paddingTop: 36,
+    paddingBottom: 200,
   },
-  headline: { fontSize: 20, fontFamily: FONTS.extraBold, color: "#0F172A", marginBottom: 16, textAlign: "center" },
-  pinRow: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 8, marginBottom: 12 },
+  headline: {
+    fontSize: 20,
+    fontFamily: FONTS.extraBold,
+    color: "#0F172A",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  pinRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
+    marginBottom: 12,
+  },
   pinBox: {
-    width: 44, height: 44, borderRadius: 10, borderWidth: 2, borderColor: "#E5E7EB",
-    alignItems: "center", justifyContent: "center", backgroundColor: COLORS.boxBg,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.boxBg,
   },
-  pinDot: { fontSize: 28, fontFamily: FONTS.extraBold, color: "#111827", textAlign: "center", lineHeight: 40 },
-  keyRow: { flexDirection: "row", justifyContent: "space-between", marginVertical: 8 },
-  key: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 12, marginHorizontal: 8, borderRadius: 50, backgroundColor: "#F3F4F6", height: 60, width: 60 },
+  pinDot: {
+    fontSize: 28,
+    fontFamily: FONTS.extraBold,
+    color: "#111827",
+    textAlign: "center",
+    lineHeight: 40,
+  },
+  keyRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 8,
+  },
+  key: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    marginHorizontal: 8,
+    borderRadius: 50,
+    backgroundColor: "#F3F4F6",
+    height: 60,
+    width: 60,
+  },
   keyText: { fontSize: 24, fontFamily: FONTS.bold, color: "#111827" },
 
   primaryBtn: {
@@ -217,9 +323,17 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   errorText: {
-    fontSize: 14, color: "#EF4444", textAlign: "center", marginTop: 20, fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: "#EF4444",
+    textAlign: "center",
+    marginTop: 20,
+    fontFamily: FONTS.semiBold,
   },
-  primaryBtnText: { fontSize: 18, fontFamily: FONTS.extraBold, color: "#FFFFFF" },
+  primaryBtnText: {
+    fontSize: 18,
+    fontFamily: FONTS.extraBold,
+    color: "#FFFFFF",
+  },
   primaryBtnDisabled: { backgroundColor: "#D1D5DB", opacity: 1 },
   primaryBtnTextDisabled: { color: "#9CA3AF" },
 });

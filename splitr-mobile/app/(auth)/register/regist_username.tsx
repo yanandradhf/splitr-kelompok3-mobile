@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS as THEME_COLORS } from "../../../constants/theme";
+import { useRegisterStore } from "../../../store/register.store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain,
@@ -74,6 +75,8 @@ export default function RegisterUsername() {
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState({ username: "", pwd: "", confirm: "" });
+  
+  const { setStep4Data } = useRegisterStore();
 
   const validateUsername = (value: string) => {
     if (value.length === 0) return "";
@@ -109,6 +112,7 @@ export default function RegisterUsername() {
     setErrors(newErrors);
     
     if (!newErrors.username && !newErrors.pwd && !newErrors.confirm) {
+      setStep4Data({ username, password: pwd });
       router.push("/(auth)/register/regist_set-pin");
     }
   };
