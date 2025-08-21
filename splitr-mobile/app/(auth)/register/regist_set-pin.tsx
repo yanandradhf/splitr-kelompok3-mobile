@@ -141,7 +141,7 @@ export default function RegisterSetPin() {
                     key={i}
                     style={[
                       styles.pinBox,
-                      filled && { borderColor: COLORS.accent },
+                      filled && { borderColor: THEME_COLORS.inputBorder },
                     ]}
                   >
                     <Text style={styles.pinDot}>{filled ? "•" : " "}</Text>
