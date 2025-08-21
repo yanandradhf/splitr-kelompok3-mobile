@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../../constants/theme';
@@ -26,6 +26,7 @@ const ChangePasswordScreen = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleNext = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -97,18 +98,17 @@ const ChangePasswordScreen = () => {
   if (step === 'success') {
     return (
       <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
-          
-          <View style={styles.backgroundSection}>
+        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+        
+        <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
             <View style={styles.header}>
               <View style={styles.placeholder} />
               <Text style={styles.headerTitle}>Password Berhasil Diubah</Text>
               <View style={styles.placeholder} />
             </View>
-          </View>
-        
-        <View style={styles.successContainer}>
+        </View>
+      
+      <View style={styles.successContainer}>
           <Text style={styles.successSubtitle}>Password Anda telah berhasil diubah. Silakan login kembali dengan password baru.</Text>
           
           <View style={styles.successIcon}>
@@ -124,19 +124,17 @@ const ChangePasswordScreen = () => {
             onPress={handleLogoutAfterSuccess}
           >
             <Text style={styles.logoutButtonText}>Login Kembali</Text>
-          </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+        </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
-        
-        <View style={styles.backgroundSection}>
+      <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+      
+      <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
@@ -144,9 +142,9 @@ const ChangePasswordScreen = () => {
             <Text style={styles.headerTitle}>Ubah Password</Text>
             <View style={styles.placeholder} />
           </View>
-        </View>
-      
-      <View style={styles.formContainer}>
+      </View>
+    
+    <View style={styles.formContainer}>
           <Text style={styles.subtitle}>{getSubtitle()}</Text>
           
           <View style={styles.inputContainer}>
@@ -237,10 +235,9 @@ const ChangePasswordScreen = () => {
               {isLoading ? 'Mengubah...' : getButtonText()}
             </Text>
           </TouchableOpacity>
-        </View>
-        
-        {isLoading && <LoadingScreen />}
-      </SafeAreaView>
+      </View>
+      
+      {isLoading && <LoadingScreen />}
     </View>
   );
 };

@@ -6,10 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
+  Platform,
+  StatusBar,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuthStore } from "../../../store/auth.store";
@@ -64,6 +66,7 @@ export default function HomeScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [showStats, setShowStats] = useState(true);
+  const insets = useSafeAreaInsets();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -103,7 +106,12 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar
+        backgroundColor={LOCAL_COLORS.background}
+        barStyle="dark-content"
+        translucent={false}
+      />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -117,7 +125,7 @@ export default function HomeScreen() {
         }
       >
         {/* PURPLE BACKGROUND SECTION */}
-        <View style={styles.purpleSection}>
+        <View style={[styles.purpleSection, { paddingTop: insets.top }]}>
           {/* HEADER SECTION */}
           <View style={styles.header}>
             <TouchableOpacity
@@ -392,7 +400,7 @@ export default function HomeScreen() {
           <View style={{ height: 100 }} />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

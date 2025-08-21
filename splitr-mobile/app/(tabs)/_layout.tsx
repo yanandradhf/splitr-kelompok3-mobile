@@ -2,12 +2,14 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, TouchableOpacity, Text, Image } from 'react-native';
 import { router, usePathname } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../../constants/theme';
 
 function CustomTabBar() {
   const pathname = usePathname();
   const isHome = pathname === '/home' || pathname === '/';
   const isMonitoring = pathname.includes('/monitoring');
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={{
@@ -15,11 +17,12 @@ function CustomTabBar() {
       bottom: 0,
       left: 0,
       right: 0,
-      height: 80,
+      height: 80 + insets.bottom,
       backgroundColor: '#FFFFFF',
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 16,
+      paddingBottom: insets.bottom,
     }}>
       <TouchableOpacity 
         style={{

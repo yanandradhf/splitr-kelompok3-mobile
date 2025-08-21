@@ -5,12 +5,12 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Alert,
   Modal,
   ScrollView,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FONTS } from "../../../constants/theme";
@@ -23,6 +23,7 @@ export default function ProfileScreen() {
   const { profile, isLoading } = useProfile();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const insets = useSafeAreaInsets();
 
 
 
@@ -32,14 +33,13 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar
-          backgroundColor={COLORS.backgroundMain}
-          barStyle="light-content"
-        />
+      <StatusBar
+        backgroundColor={COLORS.backgroundMain}
+        barStyle="light-content"
+      />
 
-        {/* Background Section */}
-        <View style={styles.backgroundSection}>
+      {/* Background Section */}
+      <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -77,10 +77,10 @@ export default function ProfileScreen() {
               @{profile?.user?.username || "username"}
             </Text>
           </View>
-        </View>
+      </View>
 
-        {/* White Modal Container */}
-        <View style={styles.whiteModalContainer}>
+      {/* White Modal Container */}
+      <View style={styles.whiteModalContainer}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
@@ -240,7 +240,6 @@ export default function ProfileScreen() {
             {isLoggingOut && <LoadingScreen />}
           </View>
         </Modal>
-      </SafeAreaView>
     </View>
   );
 

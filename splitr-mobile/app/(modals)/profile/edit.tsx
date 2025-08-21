@@ -6,12 +6,12 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useProfile } from "../../../hooks/useProfile";
@@ -24,6 +24,7 @@ const EditProfileScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [originalData, setOriginalData] = useState({ name: "", phone: "", email: "" });
+  const insets = useSafeAreaInsets();
 
   // Update state when profile data loads
   React.useEffect(() => {
@@ -65,11 +66,10 @@ const EditProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
+      <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
 
-        {/* Background Section */}
-        <View style={styles.backgroundSection}>
+      {/* Background Section */}
+      <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -97,10 +97,10 @@ const EditProfileScreen = () => {
             <Text style={styles.profileName}>{profile?.user?.name || 'User'}</Text>
             <Text style={styles.profileUsername}>@{profile?.user?.username || 'username'}</Text>
           </View>
-        </View>
+      </View>
 
-        {/* White Modal Container */}
-        <View style={styles.whiteModalContainer}>
+      {/* White Modal Container */}
+      <View style={styles.whiteModalContainer}>
           <KeyboardAvoidingView 
             style={{ flex: 1 }} 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -157,9 +157,8 @@ const EditProfileScreen = () => {
         </View>
             </ScrollView>
           </KeyboardAvoidingView>
-        </View>
-        {isUpdating && <LoadingScreen />}
-      </SafeAreaView>
+      </View>
+      {isUpdating && <LoadingScreen />}
     </View>
   );
 };

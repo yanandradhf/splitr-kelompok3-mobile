@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useNotifications } from '../../hooks/useApi';
@@ -23,6 +23,7 @@ const LOCAL_COLORS = {
 
 export default function NotificationsScreen() {
   const { notifications, loading } = useNotifications();
+  const insets = useSafeAreaInsets();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -57,9 +58,8 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Purple Background Section */}
-        <View style={styles.purpleSection}>
+      {/* Purple Background Section */}
+      <View style={[styles.purpleSection, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
@@ -67,10 +67,10 @@ export default function NotificationsScreen() {
             <Text style={styles.headerTitle}>Notifikasi</Text>
             <View style={styles.placeholder} />
           </View>
-        </View>
+      </View>
 
-        {/* White Modal Container */}
-        <View style={styles.whiteModalContainer}>
+      {/* White Modal Container */}
+      <View style={styles.whiteModalContainer}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
@@ -109,9 +109,8 @@ export default function NotificationsScreen() {
               ))
             )}
             <View style={{ height: 50 }} />
-          </ScrollView>
-        </View>
-      </SafeAreaView>
+        </ScrollView>
+      </View>
     </View>
   );
 }

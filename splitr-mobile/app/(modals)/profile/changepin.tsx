@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../../constants/theme';
@@ -64,6 +64,7 @@ const ChangePinScreen = () => {
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const getKeypadNumbers = () => {
     const baseNumbers = [
@@ -204,18 +205,17 @@ const ChangePinScreen = () => {
   if (step === 'success') {
     return (
       <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
-          
-          <View style={styles.backgroundSection}>
+        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+        
+        <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
             <View style={styles.header}>
               <View style={styles.placeholder} />
               <Text style={styles.headerTitle}>PIN Berhasil Diubah</Text>
               <View style={styles.placeholder} />
             </View>
-          </View>
-        
-        <View style={styles.successContainer}>
+        </View>
+      
+      <View style={styles.successContainer}>
           <Text style={styles.successSubtitle}>PIN Anda telah berhasil diubah. Silakan login kembali dengan PIN baru.</Text>
           
           <View style={styles.successIcon}>
@@ -231,19 +231,17 @@ const ChangePinScreen = () => {
             onPress={handleLogoutAfterSuccess}
           >
             <Text style={styles.logoutButtonText}>Login Kembali</Text>
-          </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+        </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
-        
-        <View style={styles.backgroundSection}>
+      <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="light-content" />
+      
+      <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
@@ -252,9 +250,9 @@ const ChangePinScreen = () => {
             <View style={styles.placeholder} />
           </View>
           <Stepper current={getStepNumber()} />
-        </View>
-      
-      <View style={styles.pinContainer}>
+      </View>
+    
+    <View style={styles.pinContainer}>
         <Text style={styles.title}>{getTitle()}</Text>
         <Text style={styles.subtitle}>{getSubtitle()}</Text>
         
@@ -304,10 +302,9 @@ const ChangePinScreen = () => {
             {isLoading ? 'Mengubah...' : getButtonText()}
           </Text>
         </TouchableOpacity>
-        </View>
-        
-        {isLoading && <LoadingScreen />}
-      </SafeAreaView>
+      </View>
+      
+      {isLoading && <LoadingScreen />}
     </View>
   );
 };

@@ -5,11 +5,12 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   Switch,
+  Platform,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useProfile } from "../../../hooks/useProfile";
@@ -19,6 +20,7 @@ import { COLORS, FONTS } from "../../../constants/theme";
 const SettingsScreen = () => {
   const { profile, isLoading } = useProfile();
   const [emailNotifications, setEmailNotifications] = useState(false);
+  const insets = useSafeAreaInsets();
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -26,14 +28,13 @@ const SettingsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar
-          backgroundColor={COLORS.backgroundMain}
-          barStyle="dark-content"
-        />
+      <StatusBar
+        backgroundColor={COLORS.backgroundMain}
+        barStyle="dark-content"
+      />
 
-        {/* Background Section */}
-        <View style={styles.backgroundSection}>
+      {/* Background Section */}
+      <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
@@ -48,10 +49,10 @@ const SettingsScreen = () => {
             <Text style={styles.headerTitle}>Pengaturan</Text>
             <View style={styles.placeholder} />
           </View>
-        </View>
+      </View>
 
-        {/* White Modal Container */}
-        <View style={styles.whiteModalContainer}>
+      {/* White Modal Container */}
+      <View style={styles.whiteModalContainer}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
@@ -113,7 +114,6 @@ const SettingsScreen = () => {
             <View style={styles.bottomSpacing} />
           </ScrollView>
         </View>
-      </SafeAreaView>
     </View>
   );
 };
