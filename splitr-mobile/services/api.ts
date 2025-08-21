@@ -7,6 +7,7 @@ const api = axios.create({
   timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
@@ -31,8 +32,21 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      SecureStore.deleteItemAsync('auth_token');
-      SecureStore.deleteItemAsync('user_data');
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || '';
+      
+      // Only delete tokens for actual authentication failures, not validation errors
+      const isAuthFailure = errorMessage.includes('token') || 
+                           errorMessage.includes('unauthorized') || 
+                           errorMessage.includes('expired') ||
+                           errorMessage === 'Access token required';
+      
+      if (isAuthFailure) {
+        console.log('🚨 Authentication failure - clearing tokens');
+        SecureStore.deleteItemAsync('auth_token');
+        SecureStore.deleteItemAsync('user_data');
+      } else {
+        console.log('⚠️ 401 but not auth failure:', errorMessage);
+      }
     }
     return Promise.reject(error);
   }
@@ -47,6 +61,39 @@ export const authAPI = {
   me: () => api.get(API_CONFIG.ENDPOINTS.ME),
   register: (data: any) => api.post(API_CONFIG.ENDPOINTS.REGISTER, data),
   logout: () => api.post(API_CONFIG.ENDPOINTS.LOGOUT),
+  sendResetOTP: (data: { email: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.SEND_RESET_OTP);
+    return api.post(API_CONFIG.ENDPOINTS.SEND_RESET_OTP, data);
+  },
+  verifyResetOTP: (data: { email: string; otp: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.VERIFY_RESET_OTP);
+    return api.post(API_CONFIG.ENDPOINTS.VERIFY_RESET_OTP, data);
+  },
+  resetPassword: (data: { tempToken: string; newPassword: string; confirmPassword: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.RESET_PASSWORD);
+    return api.post(API_CONFIG.ENDPOINTS.RESET_PASSWORD, data);
+  },
+  getMyAccount: () => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.MY_ACCOUNT);
+    return api.get(API_CONFIG.ENDPOINTS.MY_ACCOUNT);
+  },
+};
+
+export const profileAPI = {
+  getProfile: () => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.PROFILE);
+    return api.get(API_CONFIG.ENDPOINTS.PROFILE);
+  },
+  updateProfile: (data: { name: string; phone: string; email: string }) => {
+    console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.PROFILE);
+    return api.put(API_CONFIG.ENDPOINTS.PROFILE, data);
+  },
+  changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+    return api.put(API_CONFIG.ENDPOINTS.CHANGE_PASSWORD, data);
+  },
+  changePin: (data: { currentPin: string; newPin: string; confirmPin: string }) => {
+    return api.put(API_CONFIG.ENDPOINTS.CHANGE_PIN, data);
+  },
 };
 
 export default api;

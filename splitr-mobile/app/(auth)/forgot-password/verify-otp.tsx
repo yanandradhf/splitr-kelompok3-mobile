@@ -12,14 +12,20 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { COLORS, FONTS } from '../../../constants/theme';
+import { authAPI } from '../../../services/api';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function VerifyOTPScreen() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = React.useRef<(TextInput | null)[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { email } = useLocalSearchParams<{ email: string }>();
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
@@ -49,7 +55,7 @@ export default function VerifyOTPScreen() {
     }
   };
 
-  const handleVerifyOTP = () => {
+  const handleVerifyOTP = async () => {
     const otpString = otp.join('');
     
     if (!otpString || otpString.length !== 6) {
@@ -57,11 +63,51 @@ export default function VerifyOTPScreen() {
       return;
     }
 
-    router.push('/forgot-password/reset-password');
+    if (!email) {
+      Alert.alert('Error', 'Email tidak ditemukan');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authAPI.verifyResetOTP({ 
+        email: email as string, 
+        otp: otpString 
+      });
+      
+      if (response.status === 200) {
+        const { tempToken } = response.data;
+        router.push({
+          pathname: '/forgot-password/reset-password',
+          params: { tempToken }
+        });
+      }
+    } catch (error: any) {
+      console.error('Verify OTP error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Kode OTP tidak valid. Silakan coba lagi.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleResendOTP = () => {
-    Alert.alert('Berhasil', 'Kode OTP baru telah dikirim');
+  const handleResendOTP = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Email tidak ditemukan');
+      return;
+    }
+
+    try {
+      const response = await authAPI.sendResetOTP({ email: email as string });
+      if (response.status === 200) {
+        Alert.alert('Berhasil', 'Kode OTP baru telah dikirim');
+        setOtp(['', '', '', '', '', '']); // Clear current OTP
+      }
+    } catch (error: any) {
+      console.error('Resend OTP error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Gagal mengirim ulang OTP.';
+      Alert.alert('Error', errorMessage);
+    }
   };
 
   return (
@@ -83,48 +129,61 @@ export default function VerifyOTPScreen() {
 
           {/* White Panel */}
           <View style={styles.panel}>
-            <View style={styles.panelContent}>
-              <Text style={styles.subtitle}>Masukkan kode OTP</Text>
-              
-              <Text style={styles.description}>
-                Kami telah mengirimkan kode verifikasi ke email Anda. Masukkan kode tersebut untuk pergantian password.
-              </Text>
-              
-              <View style={styles.otpContainer}>
-                {otp.map((digit, index) => (
-                  <TextInput
-                    key={index}
-                    ref={(ref) => (inputRefs.current[index] = ref)}
-                    style={styles.otpBox}
-                    value={digit}
-                    onChangeText={(text) => handleOtpChange(text, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    keyboardType="numeric"
-                    maxLength={1}
-                    textAlign="center"
-                    autoFocus={index === 0}
-                  />
-                ))}
+            <ScrollView 
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.panelContent}>
+                <Text style={styles.subtitle}>Masukkan kode OTP</Text>
+                
+                <Text style={styles.description}>
+                  Kami telah mengirimkan kode verifikasi ke email Anda. Masukkan kode tersebut untuk pergantian password.
+                </Text>
+                
+                <View style={styles.otpContainer}>
+                  {otp.map((digit, index) => (
+                    <TextInput
+                      key={index}
+                      ref={(ref) => (inputRefs.current[index] = ref)}
+                      style={styles.otpBox}
+                      value={digit}
+                      onChangeText={(text) => handleOtpChange(text, index)}
+                      onKeyPress={(e) => handleKeyPress(e, index)}
+                      keyboardType="numeric"
+                      maxLength={1}
+                      textAlign="center"
+                      autoFocus={index === 0}
+                      returnKeyType="done"
+                      onSubmitEditing={() => Keyboard.dismiss()}
+                    />
+                  ))}
+                </View>
+
+                <TouchableOpacity 
+                  style={[styles.primaryBtn, (otp.join('').length !== 6 || isLoading) && styles.primaryBtnDisabled]}
+                  onPress={handleVerifyOTP}
+                  disabled={otp.join('').length !== 6 || isLoading}
+                >
+                  <Text style={[styles.primaryBtnText, (otp.join('').length !== 6 || isLoading) && styles.primaryBtnTextDisabled]}>
+                    {isLoading ? 'Memverifikasi...' : 'Verifikasi Kode OTP'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.resendButton}
+                  onPress={handleResendOTP}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.resendButtonText}>Kirim Ulang Kode</Text>
+                </TouchableOpacity>
               </View>
-
-              <TouchableOpacity 
-                style={[styles.primaryBtn, otp.join('').length !== 6 && styles.primaryBtnDisabled]}
-                onPress={handleVerifyOTP}
-                disabled={otp.join('').length !== 6}
-              >
-                <Text style={[styles.primaryBtnText, otp.join('').length !== 6 && styles.primaryBtnTextDisabled]}>Verifikasi Kode OTP</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.resendButton}
-                onPress={handleResendOTP}
-              >
-                <Text style={styles.resendButtonText}>Kirim Ulang Kode</Text>
-              </TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+      
+      {isLoading && <LoadingScreen />}
     </SafeAreaView>
   );
 }
@@ -164,11 +223,15 @@ const styles = StyleSheet.create({
     elevation: 5,
     marginBottom: -50,
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 50,
+  },
   panelContent: {
     paddingHorizontal: 20,
     paddingTop: 36,
-    paddingBottom: 200,
     gap: 14,
+    minHeight: 500,
   },
   subtitle: {
     fontSize: 18,
@@ -188,7 +251,7 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 40,
+    marginBottom: 30,
     paddingHorizontal: 10,
   },
   otpBox: {
@@ -222,13 +285,17 @@ const styles = StyleSheet.create({
   },
   resendButton: {
     alignItems: 'center',
-    paddingVertical: 12,
-    marginTop: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: COLORS.teal,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
   },
   resendButtonText: {
     color: COLORS.teal,
     fontSize: 14,
     fontFamily: FONTS.semiBold,
-    textDecorationLine: 'underline',
   },
 });

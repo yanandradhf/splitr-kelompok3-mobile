@@ -11,6 +11,9 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../../constants/theme';
+import { profileAPI, authAPI } from '../../../services/api';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
+import * as SecureStore from 'expo-secure-store';
 
 type PasswordStep = 'current' | 'new' | 'success';
 
@@ -22,8 +25,9 @@ const ChangePasswordScreen = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       alert('Semua field harus diisi');
       return;
@@ -36,7 +40,26 @@ const ChangePasswordScreen = () => {
       alert('Password baru minimal 6 karakter');
       return;
     }
-    setStep('success');
+
+    setIsLoading(true);
+    try {
+      const response = await profileAPI.changePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword
+      });
+      
+      if (response.status === 200) {
+        setStep('success');
+      }
+    } catch (error: any) {
+      console.error('Change password error:', error.response?.data?.error || error.message);
+      
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Gagal mengubah password. Silakan coba lagi.';
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getTitle = () => {
@@ -59,6 +82,18 @@ const ChangePasswordScreen = () => {
     return 'Ubah Password';
   };
 
+  const handleLogoutAfterSuccess = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.log('Logout API error:', error);
+    } finally {
+      await SecureStore.deleteItemAsync('auth_token');
+      await SecureStore.deleteItemAsync('user_data');
+      router.replace('/(auth)/login');
+    }
+  };
+
   if (step === 'success') {
     return (
       <View style={styles.container}>
@@ -67,16 +102,14 @@ const ChangePasswordScreen = () => {
           
           <View style={styles.backgroundSection}>
             <View style={styles.header}>
-              <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Ubah Password</Text>
+              <View style={styles.placeholder} />
+              <Text style={styles.headerTitle}>Password Berhasil Diubah</Text>
               <View style={styles.placeholder} />
             </View>
           </View>
         
         <View style={styles.successContainer}>
-          <Text style={styles.successSubtitle}>Password Berhasil Diubah</Text>
+          <Text style={styles.successSubtitle}>Password Anda telah berhasil diubah. Silakan login kembali dengan password baru.</Text>
           
           <View style={styles.successIcon}>
             <View style={styles.checkmarkOuter}>
@@ -85,6 +118,13 @@ const ChangePasswordScreen = () => {
               </View>
             </View>
           </View>
+          
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogoutAfterSuccess}
+          >
+            <Text style={styles.logoutButtonText}>Login Kembali</Text>
+          </TouchableOpacity>
           </View>
         </SafeAreaView>
       </View>
@@ -191,11 +231,15 @@ const ChangePasswordScreen = () => {
                 ? styles.nextButtonDisabled : null
             ]}
             onPress={handleNext}
-            disabled={!currentPassword || !newPassword || !confirmPassword || newPassword.length < 6}
+            disabled={!currentPassword || !newPassword || !confirmPassword || newPassword.length < 6 || isLoading}
           >
-            <Text style={styles.nextButtonText}>{getButtonText()}</Text>
+            <Text style={styles.nextButtonText}>
+              {isLoading ? 'Mengubah...' : getButtonText()}
+            </Text>
           </TouchableOpacity>
         </View>
+        
+        {isLoading && <LoadingScreen />}
       </SafeAreaView>
     </View>
   );
@@ -340,6 +384,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.teal,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: COLORS.teal,
+    paddingHorizontal: 40,
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  logoutButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontFamily: FONTS.bold,
   },
 });
 

@@ -16,14 +16,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { COLORS, FONTS } from '../../../constants/theme';
+import { authAPI } from '../../../services/api';
+import LoadingScreen from '../../../components/ui/LoadingScreen';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function ResetPasswordScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { tempToken } = useLocalSearchParams<{ tempToken: string }>();
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!newPassword || !confirmPassword) {
       Alert.alert('Error', 'Masukkan password baru dan konfirmasi password');
       return;
@@ -39,7 +44,29 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    router.push('/forgot-password/password-succes');
+    if (!tempToken) {
+      Alert.alert('Error', 'Token tidak valid. Silakan ulangi proses dari awal.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authAPI.resetPassword({
+        tempToken: tempToken as string,
+        newPassword,
+        confirmPassword
+      });
+      
+      if (response.status === 200) {
+        router.push('/forgot-password/password-succes');
+      }
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Gagal mengubah password. Silakan coba lagi.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -119,16 +146,20 @@ export default function ResetPasswordScreen() {
               </View>
 
               <TouchableOpacity 
-                style={[styles.primaryBtn, (!newPassword || !confirmPassword || newPassword.length < 6) && styles.primaryBtnDisabled]}
+                style={[styles.primaryBtn, (!newPassword || !confirmPassword || newPassword.length < 6 || isLoading) && styles.primaryBtnDisabled]}
                 onPress={handleResetPassword}
-                disabled={!newPassword || !confirmPassword || newPassword.length < 6}
+                disabled={!newPassword || !confirmPassword || newPassword.length < 6 || isLoading}
               >
-                <Text style={[styles.primaryBtnText, (!newPassword || !confirmPassword || newPassword.length < 6) && styles.primaryBtnTextDisabled]}>Ubah Password</Text>
+                <Text style={[styles.primaryBtnText, (!newPassword || !confirmPassword || newPassword.length < 6 || isLoading) && styles.primaryBtnTextDisabled]}>
+                  {isLoading ? 'Mengubah...' : 'Ubah Password'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
+      
+      {isLoading && <LoadingScreen />}
     </SafeAreaView>
   );
 }
