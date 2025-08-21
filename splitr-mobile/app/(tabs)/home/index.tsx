@@ -285,7 +285,18 @@ export default function HomeScreen() {
         <View style={styles.whiteModalContainer}>
           {/* GROUPS SECTION */}
           <View style={styles.modalSection}>
-            <Text style={styles.sectionTitle}>Lihat grup</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/home/groups")}
+              activeOpacity={0.7}
+              style={styles.sectionHeader}
+            >
+              <Text style={styles.sectionTitle}>Lihat grup</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={LOCAL_COLORS.textPrimary}
+              />
+            </TouchableOpacity>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -355,16 +366,16 @@ export default function HomeScreen() {
 
           {/* FRIENDS SECTION */}
           <View style={styles.modalSection}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.sectionHeader}
-              onPress={() => router.push('/(modals)/add-friend')}
+              onPress={() => router.push("/(modals)/add-friend")}
               activeOpacity={0.7}
             >
               <Text style={styles.sectionTitle}>Lihat Teman</Text>
-              <Ionicons 
-                name="chevron-forward" 
-                size={20} 
-                color={COLORS.textSecondary} 
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.textSecondary}
               />
             </TouchableOpacity>
             <ScrollView
@@ -391,10 +402,10 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 ))
               )}
-              <TouchableOpacity 
-                style={styles.friendItem} 
+              <TouchableOpacity
+                style={styles.friendItem}
                 activeOpacity={0.7}
-                onPress={() => router.push('/(modals)/add-friend')}
+                onPress={() => router.push("/(modals)/add-friend")}
               >
                 <View style={styles.addFriendCircle}>
                   <Ionicons name="add" size={28} color={COLORS.white} />
@@ -527,18 +538,17 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 24,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingRight: 4,
-  },
+
   sectionTitle: {
     fontSize: 20,
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
-    marginBottom: 0,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
 
   // ACTIVITY CARD
