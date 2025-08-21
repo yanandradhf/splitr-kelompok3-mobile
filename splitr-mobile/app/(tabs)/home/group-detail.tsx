@@ -411,38 +411,48 @@ export default function GroupDetailScreen() {
   );
 }
 
+const LOCAL_COLORS = {
+  background: "#A6D3CE",
+  cardBrown: COLORS.card,
+  cardWhite: COLORS.white,
+  orange: COLORS.orange,
+  textPrimary: COLORS.textPrimary,
+  textSecondary: COLORS.textSecondary,
+  border: COLORS.border,
+  headerBrown: "#00897B",
+  gray: COLORS.gray,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#A6D3CE",
+    backgroundColor: LOCAL_COLORS.background,
   },
   safeArea: {
     flex: 1,
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: getSpacing(24),
-    paddingTop: getSpacing(16),
-    paddingBottom: getSpacing(20),
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: rf(20),
+    fontSize: 20,
     fontFamily: FONTS.bold,
-    color: COLORS.black,
+    color: LOCAL_COLORS.textPrimary,
   },
   whiteModalContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: getBorderRadius(24),
-    borderTopRightRadius: getBorderRadius(24),
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    marginBottom: -hp(6),
   },
   scrollContent: {
     flexGrow: 1,
@@ -450,11 +460,11 @@ const styles = StyleSheet.create({
   },
   groupInfoCard: {
     backgroundColor: "#A6D3CE",
-    marginHorizontal: getSpacing(24),
-    marginTop: getSpacing(20),
-    marginBottom: getSpacing(16),
-    padding: getSpacing(20),
-    borderRadius: getBorderRadius(16),
+    marginHorizontal: 24,
+    marginTop: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
     alignItems: "center",
   },
   groupTitle: {
@@ -470,13 +480,13 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   section: {
-    paddingHorizontal: getSpacing(24),
-    marginBottom: getSpacing(20),
+    paddingHorizontal: 24,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: LOCAL_COLORS.textPrimary,
   },
   membersHeader: {
     flexDirection: "row",

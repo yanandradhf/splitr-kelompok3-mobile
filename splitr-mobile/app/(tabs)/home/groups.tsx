@@ -279,30 +279,41 @@ export default function GroupsScreen() {
   );
 }
 
+const LOCAL_COLORS = {
+  background: "#A6D3CE",
+  cardBrown: COLORS.card,
+  cardWhite: COLORS.white,
+  orange: COLORS.orange,
+  textPrimary: COLORS.textPrimary,
+  textSecondary: COLORS.textSecondary,
+  border: COLORS.border,
+  headerBrown: "#00897B",
+  gray: COLORS.gray,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundMain,
+    backgroundColor: LOCAL_COLORS.background,
   },
   safeArea: {
     flex: 1,
   },
   purpleSection: {
-    backgroundColor: COLORS.backgroundMain,
-    paddingBottom: getSpacing(20),
+    backgroundColor: LOCAL_COLORS.background,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: getSpacing(24),
-    paddingTop: getSpacing(16),
-    paddingBottom: getSpacing(20),
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: rf(20),
+    fontSize: 20,
     fontFamily: FONTS.bold,
-    color: COLORS.black,
+    color: LOCAL_COLORS.textPrimary,
   },
   searchContainer: {
     flexDirection: "row",

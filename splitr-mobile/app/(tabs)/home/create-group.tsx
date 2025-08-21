@@ -350,50 +350,60 @@ export default function CreateGroupScreen() {
   );
 }
 
+const LOCAL_COLORS = {
+  background: "#A6D3CE",
+  cardBrown: COLORS.card,
+  cardWhite: COLORS.white,
+  orange: COLORS.orange,
+  textPrimary: COLORS.textPrimary,
+  textSecondary: COLORS.textSecondary,
+  border: COLORS.border,
+  headerBrown: "#00897B",
+  gray: COLORS.gray,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#A6D3CE",
+    backgroundColor: LOCAL_COLORS.background,
   },
   safeArea: {
     flex: 1,
   },
   purpleSection: {
-    backgroundColor: "#A6D3CE",
-    paddingBottom: getSpacing(20),
+    backgroundColor: LOCAL_COLORS.background,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: getSpacing(24),
-    paddingTop: getSpacing(16),
-    paddingBottom: getSpacing(20),
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   headerTitle: {
-    fontSize: rf(20),
+    fontSize: 20,
     fontFamily: FONTS.bold,
-    color: COLORS.black,
+    color: LOCAL_COLORS.textPrimary,
   },
   whiteModalContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: getBorderRadius(24),
-    borderTopRightRadius: getBorderRadius(24),
+    backgroundColor: LOCAL_COLORS.cardWhite,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    marginBottom: -hp(6),
   },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: hp(6),
   },
   formSection: {
-    paddingHorizontal: getSpacing(24),
-    paddingTop: getSpacing(40),
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   inputGroup: {
     marginBottom: getSpacing(20),
