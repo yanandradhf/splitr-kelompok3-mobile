@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://9180e66ae20a.ngrok-free.app",
+  BASE_URL: "https://fe1ee772c33e.ngrok-free.app",
   ENDPOINTS: {
     // Auth
     LOGIN: "/api/mobile/auth/login",
@@ -13,20 +13,20 @@ export const API_CONFIG = {
     VERIFY_RESET_OTP: "/api/mobile/auth/verify-reset-otp",
     RESET_PASSWORD: "/api/mobile/auth/reset-password",
     MY_ACCOUNT: "/api/mobile/auth/my-account",
-    
+
     // Profile
     PROFILE: "/api/mobile/profile",
     CHANGE_PASSWORD: "/api/mobile/profile/change-password",
     CHANGE_PIN: "/api/mobile/profile/change-pin",
-    
+
     // Friends
     FRIENDS: "/api/mobile/friends",
     ADD_FRIEND: "/api/mobile/friends/add",
-    
+
     // Groups
     GROUPS: "/api/mobile/groups",
     CREATE_GROUP: "/api/mobile/groups/create",
-    
+
     // Notifications
     NOTIFICATIONS: "/api/mobile/notifications",
     NOTIFICATION_ACTION: "/api/mobile/notifications/group-action",
