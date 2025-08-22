@@ -9,7 +9,7 @@ import { useAuthStore } from "../../features/auth/auth.store";
 import { COLORS, FONTS } from '../../constants/theme';
 
 export default function SplitBill() {
-  const { draft, assignShare, markPaidUpfront, finalize } = useBillStore();
+  const { draft, assignShare, clearAssignmentsForItem, markPaidUpfront, finalize } = useBillStore();
   const { friends } = useFriends();
   const { groups } = useGroups(false);
   const [assignments, setAssignments] = useState({});
@@ -84,22 +84,35 @@ export default function SplitBill() {
   };
 
   const handleConfirm = () => {
-    // Save assignments to store
+    // Clear all existing assignments first
+    draft.items.forEach(item => {
+      clearAssignmentsForItem(item.id);
+    });
+    
+    // Save new assignments to store
     Object.entries(assignments).forEach(([itemId, memberShares]) => {
       const item = draft.items.find(i => i.id === itemId);
       if (item?.isSharing) {
         // For sharing items, calculate equal division
         const participants = Object.entries(memberShares).filter(([_, val]) => val > 0);
-        const sharePerPerson = item.price / participants.length;
-        
-        participants.forEach(([memberId]) => {
-          assignShare({ 
-            itemId, 
-            memberId, 
-            shareQty: sharePerPerson, 
-            isPaidUpfront: paidUpfront[itemId] === memberId 
+        if (participants.length > 0) {
+          const sharePerPerson = item.price / participants.length;
+          
+          console.log(`🍽️ Sharing item: ${item.name}`);
+          console.log(`💰 Total price: ${item.price}`);
+          console.log(`👥 Participants: ${participants.length}`);
+          console.log(`💵 Share per person: ${sharePerPerson}`);
+          
+          participants.forEach(([memberId]) => {
+            console.log(`➡️ Assigning ${sharePerPerson} to ${memberId}`);
+            assignShare({ 
+              itemId, 
+              memberId, 
+              shareQty: sharePerPerson, 
+              isPaidUpfront: paidUpfront[itemId] === memberId 
+            });
           });
-        });
+        }
       } else {
         // For normal items, use the assigned quantities
         Object.entries(memberShares).forEach(([memberId, shareQty]) => {
