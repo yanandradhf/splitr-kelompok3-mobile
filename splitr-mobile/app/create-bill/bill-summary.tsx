@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -7,6 +7,7 @@ import { useBillStore } from "@/store/billStore";
 import { useFriends, useGroups } from "@/hooks/useApi";
 import { useAuthStore } from "../../features/auth/auth.store";
 import { formatRp } from "@/lib/currency";
+import { getCategories, Category } from "@/services/categoryApi";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function BillSummary() {
@@ -15,21 +16,40 @@ export default function BillSummary() {
   const { groups } = useGroups(false);
   const { user } = useAuthStore();
   const currentUserId = user?.userId;
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categoriesData = await getCategories();
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Create a map of all users (friends + group members) by userId
   const userMap = new Map();
   
+  // Add current user to map
+  if (currentUserId) {
+    userMap.set('host', { userId: currentUserId, id: currentUserId, name: user?.name || 'You' });
+  }
+  
   // Add friends to map
   friends.forEach(f => {
     if (f.friend?.userId) {
-      userMap.set(f.friend.userId, { id: f.friend.userId, name: f.friend.name });
+      userMap.set(f.friend.userId, { userId: f.friend.userId, id: f.friend.userId, name: f.friend.name });
     }
   });
   
   // Add group members to map
   groups.forEach(group => {
     group.members?.forEach(member => {
-      userMap.set(member.userId, { id: member.userId, name: member.name });
+      userMap.set(member.userId, { userId: member.userId, id: member.userId, name: member.name });
     });
   });
   
@@ -92,41 +112,7 @@ export default function BillSummary() {
   });
 
   const handleSendBill = () => {
-    console.log('Sending bill...');
-    
-    // Create member names mapping
-    const memberNames: {[id: string]: string} = {};
-    Object.keys(memberSummary).forEach(memberId => {
-      memberNames[memberId] = memberSummary[memberId].name;
-    });
-    
-    console.log('Member names:', memberNames);
-    
-    // Save bill data before finalize (since finalize resets the draft)
-    const allMemberNames = Object.values(memberNames);
-    // Ensure 'You' is first and no duplicates
-    const uniqueNames = ['You', ...allMemberNames.filter(name => name !== 'You')];
-    
-    const billData = {
-      name: draft.name,
-      total: draft.totals.grandTotal,
-      memberNames: uniqueNames
-    };
-    
-    // Finalize and send to backend
-    finalize(memberNames);
-    
-    console.log('Navigating to success page...');
-    
-    // Navigate to success page with data
-    router.push({
-      pathname: "/create-bill/success",
-      params: {
-        billName: billData.name,
-        totalAmount: billData.total.toString(),
-        memberNames: JSON.stringify(billData.memberNames)
-      }
-    });
+    router.push('/create-bill/pin-verification');
   };
 
   return (
@@ -145,7 +131,7 @@ export default function BillSummary() {
         <View style={styles.billInfo}>
           <Text style={styles.billTitle}>{draft.name}</Text>
           <Text style={styles.paymentMethod}>
-            {draft.paymentMethod === 'PAY_NOW' ? 'Bayar Sekarang' : 'Bayar Nanti'}
+            {draft.paymentMethod === 'PAY_NOW' ? 'Bayar Sekarang (24 jam)' : 'Bayar Nanti'}
             {draft.paymentMethod === 'PAY_LATER' && draft.dueDate && ` • ${draft.dueDate}`}
           </Text>
           <Text style={styles.totalAmount}>{formatRp(draft.totals.grandTotal)}</Text>
@@ -232,8 +218,11 @@ export default function BillSummary() {
           </View>
         </View>
 
-            <Pressable onPress={handleSendBill} style={styles.sendButton}>
-              <Text style={styles.sendButtonText}>Kirim Tagihan</Text>
+            <Pressable 
+              onPress={handleSendBill} 
+              style={styles.sendButton}
+            >
+              <Text style={styles.sendButtonText}>Lanjut ke Verifikasi</Text>
             </Pressable>
           </ScrollView>
         </View>
@@ -505,5 +494,13 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.bold,
+  },
+  sendButtonDisabled: {
+    backgroundColor: COLORS.disabled,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
 });

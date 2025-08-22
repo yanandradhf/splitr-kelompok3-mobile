@@ -38,7 +38,7 @@ interface BillState {
   markPaidUpfront: (itemId: string, memberId: string | null) => void;
   setPaymentMethod: (p: "PAY_NOW" | "PAY_LATER") => void;
   setDueDate: (iso: string) => void;
-  finalize: (memberNames: {[id: string]: string}) => void;
+  finalize: (memberNames: {[id: string]: string}, categoryId: string, userMap?: Map<string, any>, currentUser?: any) => void;
 }
 
 export const useBillStore = create<BillState>((set, get) => ({
@@ -102,17 +102,29 @@ export const useBillStore = create<BillState>((set, get) => ({
     })),
   setPaymentMethod: (p) => set((s) => ({ draft: { ...s.draft, paymentMethod: p } })),
   setDueDate: (iso) => set((s) => ({ draft: { ...s.draft, dueDate: iso } })),
-  finalize: (memberNames: {[id: string]: string}) => {
-    // TODO: Send to API
+  finalize: async (memberNames: {[id: string]: string}, categoryId: string, userMap?: Map<string, any>, currentUser?: any) => {
     const { draft } = get();
     console.log('Finalizing bill:', draft);
     
-    // Save to created bills store
-    const { addCreatedBill } = require('@/store/createdBillsStore').useCreatedBillsStore.getState();
-    addCreatedBill(draft, memberNames);
-    
-    // Reset after successful submission
-    set({ draft: newDraft() });
+    try {
+      // Create bill via API
+      const { createBill } = require('@/services/billApi');
+      const billResponse = await createBill(draft, categoryId, userMap, currentUser);
+      
+      console.log('Bill created:', billResponse);
+      
+      // Save to created bills store
+      const { addCreatedBill } = require('@/store/createdBillsStore').useCreatedBillsStore.getState();
+      addCreatedBill(draft, memberNames);
+      
+      // Reset after successful submission
+      set({ draft: newDraft() });
+      
+      return billResponse;
+    } catch (error) {
+      console.error('Failed to create bill:', error);
+      throw error;
+    }
   },
 }));
 

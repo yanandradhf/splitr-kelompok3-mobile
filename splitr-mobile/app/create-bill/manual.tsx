@@ -5,21 +5,48 @@ import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, FONTS } from '../../constants/theme';
 import { useBillStore } from '../../store/billStore';
-
-const categories = [
-  "Makanan dan Minuman",
-  "Hiburan", 
-  "Belanja",
-  "Lainnya",
-];
+import { getCategories, Category } from '../../services/categoryApi';
 
 export default function ManualScreen() {
-  const { draft, setHeader, addItem, updateItem, removeItem, setFees, recalcTotals } = useBillStore();
+  const { draft, setHeader, addItem, updateItem, removeItem, setFees, recalcTotals, reset } = useBillStore();
   const [name, setName] = useState(draft.name);
-  const [category, setCategory] = useState(draft.category);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Only reset store on first entry to manual bill creation
+  useEffect(() => {
+    // Only reset if coming from outside the create-bill flow
+    if (!draft.name && !draft.items.length) {
+      reset();
+    }
+  }, []);
 
   useEffect(() => { recalcTotals(); }, [draft.items, draft.fees]);
+  
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        // Fallback to default categories
+        setCategories([
+          { categoryId: '1', categoryName: 'Food and Beverage', categoryIcon: '🍽️', createdAt: '' },
+          { categoryId: '2', categoryName: 'Entertainment', categoryIcon: '🎬', createdAt: '' },
+          { categoryId: '3', categoryName: 'Shopping', categoryIcon: '🛍️', createdAt: '' },
+          { categoryId: '4', categoryName: 'Transport', categoryIcon: '🚗', createdAt: '' },
+          { categoryId: '5', categoryName: 'Other', categoryIcon: '📦', createdAt: '' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
 
   const canConfirm = useMemo(() => name.trim().length > 0 && !!category && draft.items.length > 0, [name, category, draft.items.length]);
 
@@ -34,7 +61,7 @@ export default function ManualScreen() {
   };
 
   const handleConfirm = () => {
-    setHeader(name.trim(), category);
+    setHeader(name.trim(), category?.categoryName || null);
     router.push('/create-bill/bill-detail');
   };
 
@@ -46,7 +73,7 @@ export default function ManualScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => { reset(); router.back(); }} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Buat Tagihan Manual</Text>
@@ -72,10 +99,14 @@ export default function ManualScreen() {
                 style={styles.dropdown}
                 onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
                 activeOpacity={0.7}
+                disabled={loading}
               >
-                <Text style={[styles.dropdownText, !category && styles.placeholderText]}>
-                  {category || 'Pilih kategori'}
-                </Text>
+                <View style={styles.dropdownContent}>
+                  {category && <Text style={styles.categoryIcon}>{category.categoryIcon}</Text>}
+                  <Text style={[styles.dropdownText, !category && styles.placeholderText]}>
+                    {category ? category.categoryName : (loading ? 'Loading...' : 'Pilih kategori')}
+                  </Text>
+                </View>
                 <Ionicons 
                   name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
                   size={20} 
@@ -87,7 +118,7 @@ export default function ManualScreen() {
                 <View style={styles.dropdownList}>
                   {categories.map((cat) => (
                     <TouchableOpacity
-                      key={cat}
+                      key={cat.categoryId}
                       style={styles.dropdownItem}
                       onPress={() => {
                         setCategory(cat);
@@ -95,7 +126,8 @@ export default function ManualScreen() {
                       }}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.dropdownItemText}>{cat}</Text>
+                      <Text style={styles.categoryIcon}>{cat.categoryIcon}</Text>
+                      <Text style={styles.dropdownItemText}>{cat.categoryName}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -232,10 +264,21 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.inputBorder,
+    gap: 12,
+  },
+  dropdownContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  categoryIcon: {
+    fontSize: 18,
   },
   dropdownItemText: {
     fontSize: 16,
