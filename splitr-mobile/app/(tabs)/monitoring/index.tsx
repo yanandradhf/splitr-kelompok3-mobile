@@ -850,6 +850,7 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: UI_STATE_PAYLOAD.theme.colors.backgroundMain,
+    paddingTop: 16,
   },
   header: {
     backgroundColor: "#00897B",

@@ -485,6 +485,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    paddingTop: 16,
   },
   purpleSection: {
     backgroundColor: COLORS.backgroundMain,

@@ -513,6 +513,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: LOCAL_COLORS.background,
+    paddingTop: 16,
   },
   purpleSection: {
     backgroundColor: LOCAL_COLORS.background,
