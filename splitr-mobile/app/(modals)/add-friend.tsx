@@ -1,4 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Modal, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Modal, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +35,7 @@ interface SearchResult {
 }
 
 export default function TambahTeman() {
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState('');
   const [friendSearch, setFriendSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
@@ -227,8 +229,7 @@ export default function TambahTeman() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.purpleSection}>
+        <View style={[styles.purpleSection, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
@@ -473,7 +474,6 @@ export default function TambahTeman() {
             </View>
           </View>
         </Modal>
-      </SafeAreaView>
     </View>
   );
 }

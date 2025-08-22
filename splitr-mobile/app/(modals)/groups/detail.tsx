@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  SafeAreaView,
   ScrollView,
   FlatList,
   Modal,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -409,6 +409,8 @@ export default function GroupDetailScreen() {
            (displayGroup?.isCreator && member.isCreator);
   };
 
+  const insets = useSafeAreaInsets();
+
   const renderMember = ({ item }: { item: any }) => (
     <View style={styles.memberItem}>
       <Image source={item.avatar} style={styles.memberAvatar} />
@@ -460,9 +462,8 @@ export default function GroupDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <TouchableOpacity onPress={() => {
             clearCurrentGroup();
             if (router.canGoBack()) {
@@ -975,7 +976,6 @@ export default function GroupDetailScreen() {
             </View>
           </BlurView>
         </Modal>
-      </SafeAreaView>
     </View>
   );
 }

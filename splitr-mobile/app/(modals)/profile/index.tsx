@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { SkeletonProfile } from "../../../components/ui/Skeleton";
 import { COLORS, FONTS } from "../../../constants/theme";
@@ -21,6 +21,7 @@ import { authAPI } from "../../../services/api";
 import { useProfileStore } from "../../../store";
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const { user, stats, isLoading, fetchProfile } = useProfileStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -47,7 +48,7 @@ export default function ProfileScreen() {
                   color={COLORS.textPrimary}
                 />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Profil</Text>
+              <Text style={styles.headerTitle}>Profile</Text>
               <View style={styles.placeholder} />
             </View>
             <SkeletonProfile />
@@ -104,7 +105,7 @@ export default function ProfileScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profil</Text>
+          <Text style={styles.headerTitle}>Profile</Text>
           <View style={styles.placeholder} />
         </View>
 

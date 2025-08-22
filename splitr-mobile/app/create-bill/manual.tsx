@@ -61,7 +61,7 @@ export default function ManualScreen() {
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
-                placeholder="Warung Cak Ilhem"
+                placeholder="Masukkan Nama Tagihan"
                 placeholderTextColor={COLORS.placeholder}
               />
             </View>

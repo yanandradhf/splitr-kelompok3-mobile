@@ -13,12 +13,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { SkeletonForm, SkeletonProfile } from "../../../components/ui/Skeleton";
 import { COLORS, FONTS } from "../../../constants/theme";
 import { useProfileStore } from "../../../store";
 
 const EditProfileScreen = () => {
+  const insets = useSafeAreaInsets();
   const { user, isLoading, isUpdating, updateProfile, fetchProfile } =
     useProfileStore();
   const [username, setUsername] = useState("");
@@ -59,14 +61,15 @@ const EditProfileScreen = () => {
   const handleUpdateProfile = async () => {
     if (!hasChanges) return;
 
-    const success = await updateProfile({
-      name: username,
-      phone: phoneNumber,
-      email: email,
-    });
-
-    if (success) {
+    try {
+      await updateProfile({
+        name: username,
+        phone: phoneNumber,
+        email: email,
+      });
       router.back();
+    } catch (error) {
+      console.error('Update profile error:', error);
     }
   };
 
@@ -86,7 +89,7 @@ const EditProfileScreen = () => {
                   color={COLORS.textPrimary}
                 />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Edit Profil</Text>
+              <Text style={styles.headerTitle}>Edit Profile</Text>
               <View style={styles.placeholder} />
             </View>
             <SkeletonProfile />
@@ -117,7 +120,7 @@ const EditProfileScreen = () => {
           >
             <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profil</Text>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -154,7 +157,7 @@ const EditProfileScreen = () => {
             {/* Form Fields */}
             <View style={styles.formContainer}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nama</Text>
+                <Text style={styles.inputLabel}>Account Name</Text>
                 <TextInput
                   style={styles.textInput}
                   value={username}
@@ -164,7 +167,7 @@ const EditProfileScreen = () => {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nomor HP</Text>
+                <Text style={styles.inputLabel}>Phone Number</Text>
                 <TextInput
                   style={styles.textInput}
                   value={phoneNumber}

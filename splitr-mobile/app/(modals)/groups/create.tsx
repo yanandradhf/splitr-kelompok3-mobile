@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  SafeAreaView,
   ScrollView,
   Animated,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
@@ -37,6 +37,7 @@ const personImages = [
 
 
 export default function CreateGroupScreen() {
+  const insets = useSafeAreaInsets();
   const [namaGrup, setNamaGrup] = useState("");
   const [deskripsiGrup, setDeskripsiGrup] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,9 +127,8 @@ export default function CreateGroupScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <SafeAreaView style={styles.safeArea}>
         {/* Purple Background Section */}
-        <View style={styles.purpleSection}>
+        <View style={[styles.purpleSection, { paddingTop: insets.top }]}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => {
@@ -417,7 +417,6 @@ export default function CreateGroupScreen() {
           }}
           groupName={namaGrup}
         />
-      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

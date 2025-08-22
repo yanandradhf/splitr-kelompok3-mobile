@@ -1,28 +1,26 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Image,
-  SafeAreaView,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
-import { useApi } from "../../../hooks/useApi";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Image,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { COLORS, FONTS, FONT_SIZES } from "../../../constants/theme";
 import { useGroupsStore } from "../../../store";
 import {
-  wp,
-  hp,
-  rf,
-  getSpacing,
   getBorderRadius,
   getIconSize,
+  getSpacing,
+  hp,
+  rf,
+  wp,
 } from "../../../utils/responsive";
 
 const personImages = [
@@ -33,14 +31,11 @@ const personImages = [
 ];
 
 export default function GroupsScreen() {
+  const insets = useSafeAreaInsets();
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [forceLoading, setForceLoading] = useState(true);
-  const { 
-    groups, 
-    isLoading: loading, 
-    fetchGroups 
-  } = useGroupsStore();
+  const { groups, isLoading: loading, fetchGroups } = useGroupsStore();
 
   const [lastFetchTime, setLastFetchTime] = useState(0);
 
@@ -74,183 +69,220 @@ export default function GroupsScreen() {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Purple Background Section */}
-        <View style={styles.purpleSection}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => {
+      {/* Purple Background Section */}
+      <View style={[styles.purpleSection, { paddingTop: insets.top }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => {
               if (router.canGoBack()) {
                 router.back();
               } else {
-                router.replace('/(tabs)/home');
+                router.replace("/(tabs)/home");
               }
-            }}>
-              <Ionicons
-                name="arrow-back"
-                size={getIconSize(24)}
-                color={COLORS.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Grup</Text>
-            <TouchableOpacity
-              style={styles.headerCreateButton}
-              onPress={() => router.push("/(modals)/groups/create")}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="add"
-                size={getIconSize(20)}
-                color={COLORS.white}
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
+            }}
+          >
             <Ionicons
-              name="search"
-              size={getIconSize(20)}
-              color={COLORS.textSecondary}
+              name="arrow-back"
+              size={getIconSize(24)}
+              color={COLORS.textPrimary}
             />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search Group"
-              value={searchText}
-              onChangeText={setSearchText}
-              placeholderTextColor={COLORS.textSecondary}
-            />
-          </View>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Grup</Text>
+          <TouchableOpacity
+            style={styles.headerCreateButton}
+            onPress={() => router.push("/(modals)/groups/create")}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add" size={getIconSize(20)} color={COLORS.white} />
+          </TouchableOpacity>
         </View>
 
-        {/* White Modal Container */}
-        <View style={styles.whiteModalContainer}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={COLORS.teal}
-                colors={[COLORS.teal]}
-              />
-            }
-          >
-            {/* Groups List */}
-            <View style={styles.listContainer}>
-              {loading || forceLoading ? (
-                <View>
-                  {[1, 2, 3].map((i) => (
-                    <View key={i} style={styles.groupCard}>
-                      <View style={styles.groupHeader}>
-                        <View style={{ width: 80, height: 14, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4 }} />
-                        <View style={{ width: 100, height: 14, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4 }} />
-                      </View>
-                      <View style={styles.groupContent}>
-                        <View style={styles.groupAvatars}>
-                          {[1, 2, 3, 4].map((j) => (
-                            <View key={j} style={[styles.avatar, { backgroundColor: '#E1E5E9' }, j > 1 && styles.avatarOverlap]} />
-                          ))}
-                        </View>
-                        <View style={styles.groupInfo}>
-                          <View style={{ width: 120, height: 18, backgroundColor: '#E1E5E9', borderRadius: 4, marginBottom: 4 }} />
-                          <View style={{ width: 80, height: 14, backgroundColor: '#E1E5E9', borderRadius: 4 }} />
-                        </View>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              ) : filteredGroups.length > 0 ? (
-                filteredGroups.map((group, index) => (
-                  <TouchableOpacity
-                    key={group.groupId || index}
-                    style={styles.groupCard}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/(modals)/groups/detail",
-                        params: { groupData: JSON.stringify(group) },
-                      })
-                    }
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.groupHeader}>
-                      <Text style={styles.groupId}>
-                        ID {group.groupId?.slice(0, 8) || "N/A"}
-                      </Text>
-                      <Text style={styles.groupHost}>
-                        Host :{" "}
-                        {group.isCreator
-                          ? "You"
-                          : group.creatorName || "Unknown"}
-                      </Text>
-                    </View>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={getIconSize(20)}
+            color={COLORS.textSecondary}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search Group"
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholderTextColor={COLORS.textSecondary}
+          />
+        </View>
+      </View>
 
+      {/* White Modal Container */}
+      <View style={styles.whiteModalContainer}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.teal}
+              colors={[COLORS.teal]}
+            />
+          }
+        >
+          {/* Groups List */}
+          <View style={styles.listContainer}>
+            {loading || forceLoading ? (
+              <View>
+                {[1, 2, 3].map((i) => (
+                  <View key={i} style={styles.groupCard}>
+                    <View style={styles.groupHeader}>
+                      <View
+                        style={{
+                          width: 80,
+                          height: 14,
+                          backgroundColor: "rgba(255,255,255,0.3)",
+                          borderRadius: 4,
+                        }}
+                      />
+                      <View
+                        style={{
+                          width: 100,
+                          height: 14,
+                          backgroundColor: "rgba(255,255,255,0.3)",
+                          borderRadius: 4,
+                        }}
+                      />
+                    </View>
                     <View style={styles.groupContent}>
                       <View style={styles.groupAvatars}>
-                        {(() => {
-                          const allMembers = group.members || [];
-                          const displayMembers = allMembers.slice(0, 4);
-                          
-                          if (displayMembers.length === 0 && group.memberCount > 0) {
-                            return Array.from({ length: Math.min(group.memberCount, 4) }, (_, index) => (
-                              <Image
-                                key={`placeholder-${index}`}
-                                source={personImages[index % 4]}
-                                style={[
-                                  styles.avatar,
-                                  index > 0 && styles.avatarOverlap,
-                                ]}
-                              />
-                            ));
-                          }
-                          
-                          return displayMembers.map((member, index) => {
-                            const avatarSource = member.avatar || member.profilePicture || personImages[index % 4];
-                            return (
-                              <Image
-                                key={member.id || member.userId || index}
-                                source={typeof avatarSource === 'string' ? { uri: avatarSource } : avatarSource}
-                                style={[
-                                  styles.avatar,
-                                  index > 0 && styles.avatarOverlap,
-                                ]}
-                              />
-                            );
-                          });
-                        })()}
+                        {[1, 2, 3, 4].map((j) => (
+                          <View
+                            key={j}
+                            style={[
+                              styles.avatar,
+                              { backgroundColor: "#E1E5E9" },
+                              j > 1 && styles.avatarOverlap,
+                            ]}
+                          />
+                        ))}
                       </View>
-
                       <View style={styles.groupInfo}>
-                        <Text style={styles.groupName}>
-                          {group.groupName || "Unnamed Group"}
-                        </Text>
-                        <Text style={styles.groupMembers}>
-                          {group.members?.length || group.memberCount || 0} orang dalam grup ini
-                        </Text>
+                        <View
+                          style={{
+                            width: 120,
+                            height: 18,
+                            backgroundColor: "#E1E5E9",
+                            borderRadius: 4,
+                            marginBottom: 4,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: 80,
+                            height: 14,
+                            backgroundColor: "#E1E5E9",
+                            borderRadius: 4,
+                          }}
+                        />
                       </View>
                     </View>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <View style={styles.emptyState}>
-                  <Ionicons
-                    name="people-outline"
-                    size={getIconSize(48)}
-                    color={COLORS.textSecondary}
-                  />
-                  <Text style={styles.emptyText}>Tidak ada grup ditemukan</Text>
-                  <Text style={styles.emptySubtext}>
-                    Buat grup baru atau coba kata kunci lain
-                  </Text>
-                </View>
-              )}
-            </View>
+                  </View>
+                ))}
+              </View>
+            ) : filteredGroups.length > 0 ? (
+              filteredGroups.map((group, index) => (
+                <TouchableOpacity
+                  key={group.groupId || index}
+                  style={styles.groupCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(modals)/groups/detail",
+                      params: { groupData: JSON.stringify(group) },
+                    })
+                  }
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.groupHeader}>
+                    <Text style={styles.groupId}>
+                      ID {group.groupId?.slice(0, 8) || "N/A"}
+                    </Text>
+                    <Text style={styles.groupHost}>
+                      Host :{" "}
+                      {group.isCreator ? "You" : group.creatorName || "Unknown"}
+                    </Text>
+                  </View>
 
+                  <View style={styles.groupContent}>
+                    <View style={styles.groupAvatars}>
+                      {(() => {
+                        const totalMembers = group.memberCount || 0;
+                        const displayCount = Math.min(totalMembers, 2);
+                        const remainingCount = totalMembers - 2;
 
-          </ScrollView>
-        </View>
-      </SafeAreaView>
+                        const avatars = [];
+                        
+                        // Show first 2 avatars
+                        for (let i = 0; i < displayCount; i++) {
+                          avatars.push(
+                            <Image
+                              key={i}
+                              source={personImages[i % 4]}
+                              style={[
+                                styles.avatar,
+                                i > 0 && styles.avatarOverlap,
+                              ]}
+                            />
+                          );
+                        }
+                        
+                        // Show +count if more than 2 members
+                        if (remainingCount > 0) {
+                          avatars.push(
+                            <View
+                              key="more"
+                              style={[
+                                styles.avatar,
+                                styles.moreAvatar,
+                                styles.avatarOverlap,
+                              ]}
+                            >
+                              <Text style={styles.moreText}>+{remainingCount}</Text>
+                            </View>
+                          );
+                        }
+                        
+                        return avatars;
+                      })()}
+                    </View>
+
+                    <View style={styles.groupInfo}>
+                      <Text style={styles.groupName}>
+                        {group.groupName || "Unnamed Group"}
+                      </Text>
+                      <Text style={styles.groupMembers}>
+                        {group.members?.length || group.memberCount || 0} orang
+                        dalam grup ini
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons
+                  name="people-outline"
+                  size={getIconSize(48)}
+                  color={COLORS.textSecondary}
+                />
+                <Text style={styles.emptyText}>Tidak ada grup ditemukan</Text>
+                <Text style={styles.emptySubtext}>
+                  Buat grup baru atau coba kata kunci lain
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -363,37 +395,50 @@ const styles = StyleSheet.create({
   groupContent: {
     backgroundColor: COLORS.white,
     flexDirection: "row",
-    padding: getSpacing(16),
+    paddingVertical: getSpacing(16),
+    paddingHorizontal: getSpacing(16),
     alignItems: "center",
   },
   groupAvatars: {
     flexDirection: "row",
-    marginRight: getSpacing(16),
+    width: 90,
   },
   avatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    borderWidth: 2,
+    width: wp(8),
+    height: wp(8),
+    borderRadius: wp(4),
+    borderWidth: 1,
     borderColor: COLORS.white,
   },
   avatarOverlap: {
-    marginLeft: -getSpacing(10),
+    marginLeft: -getSpacing(6),
+  },
+  moreAvatar: {
+    backgroundColor: COLORS.teal,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  moreText: {
+    fontSize: rf(10),
+    fontFamily: FONTS.bold,
+    color: COLORS.white,
   },
   groupInfo: {
     flex: 1,
+    justifyContent: "center",
+    marginLeft: getSpacing(8),
   },
   groupName: {
     fontSize: rf(FONT_SIZES.lg),
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: getSpacing(4),
+    textAlign: "left",
   },
   groupMembers: {
     fontSize: rf(14),
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
-    marginBottom: getSpacing(8),
+    textAlign: "left",
   },
   headerCreateButton: {
     backgroundColor: COLORS.teal,

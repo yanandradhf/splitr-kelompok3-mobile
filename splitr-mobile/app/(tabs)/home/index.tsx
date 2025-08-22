@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   SkeletonCard,
   SkeletonNotification,
@@ -42,6 +43,7 @@ const personImages = [
 ];
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { user: storeUser, stats: storeStats } = useProfileStore();
   const [forceLoading, setForceLoading] = useState(true);
@@ -380,11 +382,10 @@ export default function HomeScreen() {
                         })}
                       </View>
                       <View style={styles.groupInfo}>
-                        <Text style={styles.groupName}>{group.groupName}</Text>
+                        <Text style={styles.groupName} numberOfLines={1} ellipsizeMode="tail">{group.groupName}</Text>
                         <Text style={styles.groupMembers}>
                           {group.memberCount} orang dalam grup ini
                         </Text>
-
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -925,12 +926,15 @@ const styles = StyleSheet.create({
   },
   groupInfo: {
     flex: 1,
+    justifyContent: "center",
   },
   groupName: {
     fontSize: 16,
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
     marginBottom: 2,
+    textAlign: "left",
+    numberOfLines: 1,
   },
   groupMembers: {
     fontSize: 12,

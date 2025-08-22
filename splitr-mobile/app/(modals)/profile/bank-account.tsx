@@ -156,7 +156,7 @@ export default function BankAccountScreen() {
             </View>
             
             <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Nama Pemegang</Text>
+              <Text style={styles.detailLabel}>Nama Rekening</Text>
               <Text style={styles.detailValue}>
                 {accountData?.accountName || "-"}
               </Text>

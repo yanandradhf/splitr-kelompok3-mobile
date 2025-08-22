@@ -10,11 +10,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { COLORS, FONTS } from "../../../constants/theme";
 import { useProfileStore } from "../../../store";
 
 const SettingsScreen = () => {
+  const insets = useSafeAreaInsets();
   const { user, isLoading, fetchProfile } = useProfileStore();
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [forceLoading, setForceLoading] = useState(true);

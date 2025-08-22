@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SkeletonList } from "../../components/ui/Skeleton";
 import { COLORS, FONTS } from "../../constants/theme";
 import { useNotifications } from "../../hooks/useApi";
@@ -22,6 +23,7 @@ const LOCAL_COLORS = {
 };
 
 export default function NotificationsScreen() {
+  const insets = useSafeAreaInsets();
   const { notifications, loading } = useNotifications();
   const { handleNotificationAction, markAsRead } = useNotificationsStore();
   const [forceLoading, setForceLoading] = useState(true);
