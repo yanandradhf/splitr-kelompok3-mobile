@@ -10,8 +10,9 @@ function CustomTabBar() {
   const isMonitoring = pathname.includes("/monitoring");
   const isPayment = pathname.includes("/pembayaran");
   const isPilihTanggal = pathname.includes("/bayarNanti/pilih-tanggal");
+  const isBill = pathname.includes("/bill");
 
-  if (isPayment || isPilihTanggal) {
+  if (isPayment || isPilihTanggal || isBill) {
     return null;
   }
 
@@ -86,6 +87,7 @@ function CustomTabBar() {
             shadowOpacity: 0.15,
             shadowRadius: 3,
           }}
+          onPress={() => router.push("/(tabs)/bill")}
           activeOpacity={0.7}
           onPress={() => router.push("/create-bill")}
         >
@@ -146,11 +148,12 @@ function CustomTabBar() {
 export default function TabsLayout() {
   const pathname = usePathname();
 
-  // Hide tab bar on group-related pages
+  // Hide tab bar on group-related pages and bill pages
   const hideTabBar =
     pathname.includes("/groups") ||
     pathname.includes("/group-detail") ||
-    pathname.includes("/create-group");
+    pathname.includes("/create-group") ||
+    pathname.includes("/bill");
 
   return (
     <>
@@ -186,6 +189,13 @@ export default function TabsLayout() {
             href: null,
           }}
         />
+        <Tabs.Screen
+          name="bill"
+          options={{
+            href: null,
+          }}
+        />
+
       </Tabs>
       {!hideTabBar && <CustomTabBar />}
     </>
