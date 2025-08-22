@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { COLORS, FONTS, SPACING } from '../../../../../constants/theme';
 
 
 const { width, height } = Dimensions.get('window');
@@ -76,7 +77,7 @@ const TransferScreen: React.FC<TransferScreenProps> = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+          <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail transfer</Text>
         <View style={styles.placeholder} />
@@ -164,30 +165,28 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingTop: 15,
-    paddingBottom: 16,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORS.border,
   },
   backButton: {
-    padding: 4,
+    padding: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
   placeholder: {
-    width: 32,
+    width: 40,
   },
   content: {
     flex: 1,
-    paddingHorizontal: width * 0.04,
-    paddingTop: 20,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
   },
   recipientContainer: {
     flexDirection: 'row',
@@ -338,7 +337,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#00897B',
+    backgroundColor: COLORS.teal,
     paddingVertical: height * 0.02,
     borderRadius: 20,
     minHeight: 48,

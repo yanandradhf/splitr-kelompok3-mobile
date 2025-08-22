@@ -217,6 +217,60 @@ export default function MonitoringIndex() {
     }
   }, [isInitialized]);
 
+  // Calculate dynamic summary values
+  const calculateSummary = () => {
+    // Pembayaran Tertunda = akumulasi dari tagihan yang harus dibayar
+    const pendingPayments = runningTransactions.reduce((sum, transaction) => {
+      return sum + transaction.amount.amount;
+    }, 0);
+
+    // Total Tagihan Saya = akumulasi dari tagihan yang saya buat
+    const myBillsTotal = MOCK_DATA.running.myBills.items.reduce((sum, bill) => {
+      return sum + bill.total.amount;
+    }, 0);
+
+    return {
+      pendingPayments: {
+        amount: pendingPayments,
+        formatted: `Rp ${pendingPayments.toLocaleString("id-ID")}`,
+      },
+      myBills: {
+        amount: myBillsTotal,
+        formatted: `Rp ${myBillsTotal.toLocaleString("id-ID")}`,
+      },
+    };
+  };
+
+  // Calculate completed summary for completed tab
+  const calculateCompletedSummary = () => {
+    // Total Pembayaran Selesai = akumulasi dari completed payments
+    const completedPaymentsTotal = completedPayments.reduce((sum, payment) => {
+      return sum + payment.amount.amount;
+    }, 0);
+
+    // Total Tagihan Selesai = akumulasi dari host bills yang selesai
+    const completedHostBillsTotal = MOCK_DATA.completed.hostBills.reduce(
+      (sum, bill) => {
+        return sum + bill.total.amount;
+      },
+      0
+    );
+
+    return {
+      completedPayments: {
+        amount: completedPaymentsTotal,
+        formatted: `Rp ${completedPaymentsTotal.toLocaleString("id-ID")}`,
+      },
+      completedHostBills: {
+        amount: completedHostBillsTotal,
+        formatted: `Rp ${completedHostBillsTotal.toLocaleString("id-ID")}`,
+      },
+    };
+  };
+
+  const summaryData = calculateSummary();
+  const completedSummaryData = calculateCompletedSummary();
+
   useFocusEffect(
     React.useCallback(() => {
       // Refresh data when screen comes into focus
@@ -301,25 +355,23 @@ export default function MonitoringIndex() {
           <>
             {/* Summary Cards */}
             <View style={styles.summaryRow}>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>Pembayaran Tertunda</Text>
-                <Text style={styles.summaryAmount}>
-                  {pendingFromFriends.formatted}
-                </Text>
-              </View>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>Total Tagihan Saya</Text>
-                <Text style={styles.summaryAmount}>
-                  {iMustPayTotal.formatted}
-                </Text>
-              </View>
+              {MOCK_DATA.running.summary.map((card, index) => (
+                <View key={index} style={styles.summaryCard}>
+                  <Text style={styles.summaryTitle}>{card.title}</Text>
+                  <Text style={styles.summaryAmount}>
+                    {card.value.formatted}
+                  </Text>
+                </View>
+              ))}
             </View>
 
             {/* Tagihan yang Aku Buat */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tagihan yang Aku Buat</Text>
-              {createdBills.map((bill) => (
-                <View key={bill.id} style={styles.completedCard}>
+              <Text style={styles.sectionTitle}>
+                {MOCK_DATA.running.myBills.title}
+              </Text>
+              {MOCK_DATA.running.myBills.items.map((bill) => (
+                <View key={bill.id} style={styles.billCard}>
                   <View style={styles.billHeader}>
                     <View style={styles.billInfo}>
                       <Text style={styles.billTitle}>{bill.title}</Text>
@@ -433,7 +485,10 @@ export default function MonitoringIndex() {
                 Tagihan yang Harus Dibayar
               </Text>
               {runningTransactions.map((bill) => (
-                <View key={bill.id} style={styles.paymentCard}>
+                <View
+                  key={bill.id}
+                  style={[styles.paymentCard, styles.payableCard]}
+                >
                   <View style={styles.paymentInfo}>
                     <View style={styles.paymentHeader}>
                       <Text style={styles.billTitle}>{bill.title}</Text>
@@ -556,6 +611,27 @@ export default function MonitoringIndex() {
         ) : (
           /* Tagihan Selesai */
           <>
+            {/* Summary Cards for Completed */}
+            <View style={styles.summaryRow}>
+              <View style={[styles.summaryCard, styles.completedBillsCard]}>
+                <Text style={styles.summaryTitle}>Total Tagihan Selesai</Text>
+                <Text
+                  style={[styles.summaryAmount, styles.completedBillsAmount]}
+                >
+                  {completedSummaryData.completedHostBills.formatted}
+                </Text>
+              </View>
+              <View style={[styles.summaryCard, styles.completedPaymentCard]}>
+                <Text style={styles.summaryTitle}>
+                  Total Pembayaran Selesai
+                </Text>
+                <Text
+                  style={[styles.summaryAmount, styles.completedPaymentAmount]}
+                >
+                  {completedSummaryData.completedPayments.formatted}
+                </Text>
+              </View>
+            </View>
             {/* Host Bills - Tagihan yang Aku Buat (100% terbayar) */}
             {MOCK_DATA.completed.hostBills.length > 0 && (
               <View style={styles.section}>
@@ -563,7 +639,10 @@ export default function MonitoringIndex() {
                   Tagihan yang Aku Buat (Selesai)
                 </Text>
                 {MOCK_DATA.completed.hostBills.map((bill) => (
-                  <View key={bill.id} style={styles.completedCard}>
+                  <View
+                    key={bill.id}
+                    style={[styles.completedCard, styles.completedMyBillCard]}
+                  >
                     <View style={styles.billHeader}>
                       <View style={styles.billInfo}>
                         <Text style={styles.billTitle}>{bill.title}</Text>
@@ -659,9 +738,22 @@ export default function MonitoringIndex() {
 
             {/* Payment History - Pembayaran Selesai */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pembayaran Selesai</Text>
+              <View style={styles.sectionHeader}>
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={20}
+                  color="#9CA3AF"
+                />
+                <Text style={styles.sectionTitle}>Pembayaran Selesai</Text>
+              </View>
               {completedPayments.map((payment) => (
-                <View key={payment.id} style={styles.paymentHistoryCard}>
+                <View
+                  key={payment.id}
+                  style={[
+                    styles.paymentHistoryCard,
+                    styles.completedPayableCard,
+                  ]}
+                >
                   <View style={styles.paymentHistoryHeader}>
                     <View style={styles.avatarContainer}>
                       <View style={styles.avatar}>
@@ -836,8 +928,46 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#00897B",
   },
+  pendingPaymentCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#FF8736",
+    backgroundColor: "#FFF7ED",
+  },
+  pendingPaymentAmount: {
+    color: "#FF8736",
+  },
+  myBillsCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#00897B",
+    backgroundColor: "#F0FDFA",
+  },
+  myBillsAmount: {
+    color: "#00897B",
+  },
+  completedPaymentCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#9CA3AF",
+    backgroundColor: "#F9FAFB",
+  },
+  completedPaymentAmount: {
+    color: "#9CA3AF",
+  },
+  completedBillsCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#16A34A",
+    backgroundColor: "#F0FDF4",
+  },
+  completedBillsAmount: {
+    color: "#16A34A",
+  },
   section: {
     marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -855,6 +985,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  myBillCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#00897B",
+    backgroundColor: "#F0FDFA",
+  },
+  payableCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#FF8736",
+    backgroundColor: "#FFF7ED",
   },
   billHeader: {
     flexDirection: "row",
@@ -1098,6 +1238,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  completedMyBillCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#16A34A",
+    backgroundColor: "#F0FDF4",
+  },
+  completedPayableCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#9CA3AF",
+    backgroundColor: "#F9FAFB",
   },
   paymentHistoryHeader: {
     flexDirection: "row",
