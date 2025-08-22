@@ -7,6 +7,11 @@ export default function RootLayout() {
         headerShown: false,
       }}
     >
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="create-bill" />
       <Stack.Screen name="(modals)" />
