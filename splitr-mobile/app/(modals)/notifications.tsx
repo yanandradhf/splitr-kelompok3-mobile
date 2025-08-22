@@ -33,7 +33,33 @@ export default function NotificationsScreen() {
   }, []);
 
   const handleNotificationPress = async (notification: any) => {
+    console.log('🔔 Notification pressed:', JSON.stringify(notification, null, 2));
+    
     try {
+      // Get identifier from billId or billCode
+      const identifier = notification.billId || notification.metadata?.billCode;
+      
+      console.log('🔍 Checking notification data:');
+      console.log('  - Type:', notification.type);
+      console.log('  - BillId:', notification.billId);
+      console.log('  - BillCode:', notification.metadata?.billCode);
+      console.log('  - Identifier:', identifier);
+      
+      // Handle bill-related notifications
+      const isBillRelated = 
+        notification.type === 'bill_assignment' ||
+        notification.type === 'payment_reminder' ||
+        notification.type === 'payment_received' ||
+        notification.billId ||
+        notification.metadata?.billCode;
+      
+      if (isBillRelated && identifier) {
+        console.log('💰 Bill notification detected with identifier:', identifier);
+        await markAsRead(notification.notificationId);
+        router.push(`/bill-notification/${identifier}`);
+        return;
+      }
+      
       // Only group_invitation needs API call to navigate to group detail
       if (notification.type === 'group_invitation') {
         try {
