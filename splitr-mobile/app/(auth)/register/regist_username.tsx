@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, COLORS as THEME_COLORS } from "../../../constants/theme";
-import { useRegisterStore } from "../../../store/register.store";
+import { useRegisterStore } from "../../../store";
 
 const COLORS = {
   primary: THEME_COLORS.backgroundMain,

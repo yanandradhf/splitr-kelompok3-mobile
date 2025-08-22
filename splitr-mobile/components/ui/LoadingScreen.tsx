@@ -11,7 +11,7 @@ export default function LoadingScreen({
 }: LoadingScreenProps) {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={COLORS.backgroundMain} />
+      <ActivityIndicator size="large" color={COLORS.teal} />
     </View>
   );
 }

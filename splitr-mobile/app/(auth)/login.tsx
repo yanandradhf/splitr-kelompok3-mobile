@@ -131,9 +131,9 @@ export default function LoginScreen() {
             <View style={styles.linksContainer}>
               <View style={styles.registerLink}>
                 <Text style={styles.linkText}>Belum memiliki akun? </Text>
-                <Link href="/(auth)/register">
+                <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
                   <Text style={styles.blueLink}>Registrasi</Text>
-                </Link>
+                </TouchableOpacity>
               </View>
               <TouchableOpacity onPress={() => router.push('/forgot-password/forgot-password')}>
                 <Text style={styles.blueLink}>Lupa password?</Text>

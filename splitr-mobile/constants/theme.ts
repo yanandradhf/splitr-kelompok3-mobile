@@ -19,6 +19,9 @@ export const COLORS = {
   textSecondary: '#666666',
   placeholder: '#9CA3AF',
   
+  // Background Colors
+  backgroundLight: '#F3F4F6',
+  
   // Legacy support
   tosca: '#00897B',        // Alias for teal
   background: '#B2DBD7',   // Alias for backgroundMain
@@ -26,6 +29,12 @@ export const COLORS = {
   inputBorder: '#B3B3B3',
   textLight: '#9CA3AF',
   surface: '#F9FAFB',
+  
+  // Additional colors for monitoring
+  text: '#000000',         // Alias for textPrimary
+  shadow: '#000000',       // Shadow color
+  success: '#10B981',      // Success green
+  disabled: '#9CA3AF',     // Disabled state
 };
 
 export const FONTS = {

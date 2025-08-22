@@ -1,28 +1,30 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  StatusBar,
   ScrollView,
+  StatusBar,
+  StyleSheet,
   Switch,
-  Platform,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Link, router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { useProfile } from "../../../hooks/useProfile";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { COLORS, FONTS } from "../../../constants/theme";
+import { useProfileStore } from "../../../store";
 
 const SettingsScreen = () => {
-  const { profile, isLoading } = useProfile();
+  const { user, isLoading, fetchProfile } = useProfileStore();
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const insets = useSafeAreaInsets();
+  const [forceLoading, setForceLoading] = useState(true);
 
-  if (isLoading) {
+  React.useEffect(() => {
+    if (!user) fetchProfile();
+    setTimeout(() => setForceLoading(false), 1200);
+  }, []);
+
+  if (isLoading || forceLoading) {
     return <LoadingScreen />;
   }
 
@@ -35,85 +37,76 @@ const SettingsScreen = () => {
 
       {/* Background Section */}
       <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={24}
-                color={COLORS.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Pengaturan</Text>
-            <View style={styles.placeholder} />
-          </View>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Pengaturan</Text>
+          <View style={styles.placeholder} />
+        </View>
       </View>
 
       {/* White Modal Container */}
       <View style={styles.whiteModalContainer}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Security Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Keamanan</Text>
 
-            {/* Security Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Keamanan</Text>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => router.push("/(modals)/profile/changepassword")}
-              >
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name="lock-closed" size={20} color={COLORS.teal} />
-                </View>
-                <Text style={styles.menuText}>Ubah Password</Text>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => router.push("/(modals)/profile/changepin")}
-              >
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name="keypad" size={20} color={COLORS.teal} />
-                </View>
-                <Text style={styles.menuText}>Ubah PIN</Text>
-                <Ionicons name="chevron-forward" size={20} color="#999" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Notifications Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                Notifikasi & Preferensi Tampilan
-              </Text>
-
-              <View style={styles.menuItem}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons
-                    name="notifications"
-                    size={20}
-                    color={COLORS.teal}
-                  />
-                </View>
-                <Text style={styles.menuText}>Aktifkan Notifikasi Email</Text>
-                <Switch
-                  trackColor={{ false: "#E0E0E0", true: COLORS.teal }}
-                  thumbColor={emailNotifications ? COLORS.white : COLORS.white}
-                  ios_backgroundColor="#E0E0E0"
-                  onValueChange={setEmailNotifications}
-                  value={emailNotifications}
-                  style={styles.switch}
-                />
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/changepassword")}
+            >
+              <View style={styles.menuIconContainer}>
+                <Ionicons name="lock-closed" size={20} color={COLORS.teal} />
               </View>
-            </View>
+              <Text style={styles.menuText}>Ubah Password</Text>
+              <Ionicons name="chevron-forward" size={20} color="#999" />
+            </TouchableOpacity>
 
-            <View style={styles.bottomSpacing} />
-          </ScrollView>
-        </View>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/changepin")}
+            >
+              <View style={styles.menuIconContainer}>
+                <Ionicons name="keypad" size={20} color={COLORS.teal} />
+              </View>
+              <Text style={styles.menuText}>Ubah PIN</Text>
+              <Ionicons name="chevron-forward" size={20} color="#999" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Notifications Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              Notifikasi & Preferensi Tampilan
+            </Text>
+
+            <View style={styles.menuItem}>
+              <View style={styles.menuIconContainer}>
+                <Ionicons name="notifications" size={20} color={COLORS.teal} />
+              </View>
+              <Text style={styles.menuText}>Aktifkan Notifikasi Email</Text>
+              <Switch
+                trackColor={{ false: "#E0E0E0", true: COLORS.teal }}
+                thumbColor={emailNotifications ? COLORS.white : COLORS.white}
+                ios_backgroundColor="#E0E0E0"
+                onValueChange={setEmailNotifications}
+                value={emailNotifications}
+                style={styles.switch}
+              />
+            </View>
+          </View>
+
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      </View>
     </View>
   );
 };
@@ -152,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,

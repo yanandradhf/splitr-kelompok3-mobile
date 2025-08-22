@@ -1,34 +1,91 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  StatusBar,
   Alert,
+  Image,
   Modal,
   ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Link, router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { COLORS, FONTS } from "../../../constants/theme";
-import { useProfile } from "../../../hooks/useProfile";
+import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
+import { SkeletonProfile } from "../../../components/ui/Skeleton";
+import { COLORS, FONTS } from "../../../constants/theme";
 import { authAPI } from "../../../services/api";
-import * as SecureStore from "expo-secure-store";
+import { useProfileStore } from "../../../store";
 
 export default function ProfileScreen() {
-  const { profile, isLoading } = useProfile();
+  const { user, stats, isLoading, fetchProfile } = useProfileStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const insets = useSafeAreaInsets();
+  const [forceLoading, setForceLoading] = useState(true);
 
+  React.useEffect(() => {
+    if (!user) fetchProfile();
+    setTimeout(() => setForceLoading(false), 1600);
+  }, []);
 
-
-  if (isLoading) {
-    return <LoadingScreen />;
+  if (isLoading || forceLoading) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.backgroundSection}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Ionicons
+                  name="arrow-back"
+                  size={24}
+                  color={COLORS.textPrimary}
+                />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Profil</Text>
+              <View style={styles.placeholder} />
+            </View>
+            <SkeletonProfile />
+          </View>
+          <View style={styles.whiteModalContainer}>
+            <View style={styles.scrollContent}>
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.menuItem}>
+                  <View
+                    style={[
+                      styles.menuIconContainer,
+                      { backgroundColor: "#E1E5E9" },
+                    ]}
+                  />
+                  <View
+                    style={{
+                      flex: 1,
+                      height: 16,
+                      backgroundColor: "#E1E5E9",
+                      borderRadius: 4,
+                      marginRight: 12,
+                    }}
+                  />
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      backgroundColor: "#E1E5E9",
+                      borderRadius: 4,
+                    }}
+                  />
+                </View>
+              ))}
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
   }
 
   return (
@@ -40,206 +97,192 @@ export default function ProfileScreen() {
 
       {/* Background Section */}
       <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={24}
-                color={COLORS.textPrimary}
-              />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Profil</Text>
-            <View style={styles.placeholder} />
-          </View>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Profil</Text>
+          <View style={styles.placeholder} />
+        </View>
 
-          {/* Profile Info */}
-          <View style={styles.profileSection}>
-            <View style={styles.profileImageContainer}>
-              <Image
-                source={{
-                  uri: "https://picsum.photos/id/64/120/120",
-                }}
-                style={styles.profileImage}
-              />
-              {profile?.user?.isVerified && (
-                <View style={styles.verifiedBadge}>
-                  <Ionicons name="checkmark" size={16} color={COLORS.white} />
-                </View>
-              )}
-            </View>
-            <Text style={styles.profileName}>
-              {profile?.user?.name || "User"}
-            </Text>
-            <Text style={styles.profileUsername}>
-              @{profile?.user?.username || "username"}
-            </Text>
+        {/* Profile Info */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileImageContainer}>
+            <Image
+              source={{
+                uri: "https://picsum.photos/id/64/120/120",
+              }}
+              style={styles.profileImage}
+            />
+            {user?.isVerified && (
+              <View style={styles.verifiedBadge}>
+                <Ionicons name="checkmark" size={16} color={COLORS.white} />
+              </View>
+            )}
           </View>
+          <Text style={styles.profileName}>{user?.name || "User"}</Text>
+          <Text style={styles.profileUsername}>
+            @{user?.username || "username"}
+          </Text>
+        </View>
       </View>
 
       {/* White Modal Container */}
       <View style={styles.whiteModalContainer}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {/* Bank Account Card */}
-            <View style={styles.bankSection}>
-              <Text style={styles.sectionTitle}>Rekening Bank</Text>
-              <TouchableOpacity 
-                style={styles.bankCard}
-                onPress={() => router.push("/(modals)/profile/bank-account")}
-              >
-                <View style={styles.bankHeader}>
-                  <View style={styles.bankTitleRow}>
-                    <Ionicons
-                      name="card-outline"
-                      size={24}
-                      color={COLORS.white}
-                    />
-                    <Text style={styles.bankTitle}> BNI</Text>
-                  </View>
-                  <View style={styles.defaultBadge}>
-                    <Text style={styles.defaultText}>Splitr</Text>
-                  </View>
-                </View>
-                <Text style={styles.bankNumber}>
-                  {profile?.user?.bniAccountNumber || "-"}
-                </Text>
-                <View style={styles.bankFooter}>
-                  <Text style={styles.accountHolderName}>
-                    {profile?.user?.name || "Nama Pemegang Rekening"}
-                  </Text>
-                  <Text style={styles.bankBranch}>
-                    Cabang {profile?.user?.bniBranchCode || "-"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Menu List */}
-            <View style={styles.menuSection}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => router.push("/(modals)/profile/edit")}
-              >
-                <View style={styles.menuLeft}>
-                  <Ionicons
-                    name="person-outline"
-                    size={22}
-                    color={COLORS.teal}
-                  />
-                  <Text style={styles.menuText}>Edit Profile</Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={COLORS.textSecondary}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => router.push("/(modals)/profile/settings")}
-              >
-                <View style={styles.menuLeft}>
-                  <Ionicons
-                    name="settings-outline"
-                    size={22}
-                    color={COLORS.teal}
-                  />
-                  <Text style={styles.menuText}>Pengaturan</Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={COLORS.textSecondary}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => router.push("/(modals)/profile/help")}
-              >
-                <View style={styles.menuLeft}>
-                  <Ionicons
-                    name="help-circle-outline"
-                    size={22}
-                    color={COLORS.teal}
-                  />
-                  <Text style={styles.menuText}>Bantuan</Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={COLORS.textSecondary}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.menuItem, styles.lastMenuItem]}
-                onPress={() => setShowLogoutModal(true)}
-              >
-                <View style={styles.menuLeft}>
-                  <Ionicons
-                    name="log-out-outline"
-                    size={22}
-                    color={COLORS.red}
-                  />
-                  <Text style={[styles.menuText, { color: COLORS.red }]}>
-                    Keluar
-                  </Text>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={COLORS.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-
-        {/* Logout Confirmation Modal */}
-        <Modal
-          visible={showLogoutModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowLogoutModal(false)}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Konfirmasi Keluar</Text>
-              <Text style={styles.modalMessage}>
-                Apakah Anda yakin ingin keluar dari aplikasi?
-              </Text>
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setShowLogoutModal(false)}
-                  disabled={isLoggingOut}
-                >
-                  <Text style={styles.cancelButtonText}>Batal</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.confirmButton}
-                  onPress={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  <Text style={styles.confirmButtonText}>
-                    {isLoggingOut ? "Keluar..." : "Ya, Keluar"}
-                  </Text>
-                </TouchableOpacity>
+          {/* Bank Account Card */}
+          <View style={styles.bankSection}>
+            <Text style={styles.sectionTitle}>Rekening Bank</Text>
+            <TouchableOpacity
+              style={styles.bankCard}
+              onPress={() => router.push("/(modals)/profile/bank-account")}
+            >
+              <View style={styles.bankHeader}>
+                <View style={styles.bankTitleRow}>
+                  <Ionicons
+                    name="card-outline"
+                    size={24}
+                    color={COLORS.white}
+                  />
+                  <Text style={styles.bankTitle}> BNI</Text>
+                </View>
+                <View style={styles.defaultBadge}>
+                  <Text style={styles.defaultText}>Splitr</Text>
+                </View>
               </View>
-            </View>
-
-            {isLoggingOut && <LoadingScreen />}
+              <Text style={styles.bankNumber}>
+                {user?.bniAccountNumber || "-"}
+              </Text>
+              <View style={styles.bankFooter}>
+                <Text style={styles.accountHolderName}>
+                  {user?.name || "Nama Pemegang Rekening"}
+                </Text>
+                <Text style={styles.bankBranch}>
+                  Cabang {user?.bniBranchCode || "-"}
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
-        </Modal>
+
+          {/* Menu List */}
+          <View style={styles.menuSection}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/edit")}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons name="person-outline" size={22} color={COLORS.teal} />
+                <Text style={styles.menuText}>Edit Profile</Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/settings")}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons
+                  name="settings-outline"
+                  size={22}
+                  color={COLORS.teal}
+                />
+                <Text style={styles.menuText}>Pengaturan</Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/(modals)/profile/help")}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons
+                  name="help-circle-outline"
+                  size={22}
+                  color={COLORS.teal}
+                />
+                <Text style={styles.menuText}>Bantuan</Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.menuItem, styles.lastMenuItem]}
+              onPress={() => setShowLogoutModal(true)}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons name="log-out-outline" size={22} color={COLORS.red} />
+                <Text style={[styles.menuText, { color: COLORS.red }]}>
+                  Keluar
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Konfirmasi Keluar</Text>
+            <Text style={styles.modalMessage}>
+              Apakah Anda yakin ingin keluar dari aplikasi?
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
+              >
+                <Text style={styles.cancelButtonText}>Batal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleLogout}
+                disabled={isLoggingOut}
+              >
+                <Text style={styles.confirmButtonText}>
+                  {isLoggingOut ? "Keluar..." : "Ya, Keluar"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {isLoggingOut && <LoadingScreen />}
+        </View>
+      </Modal>
     </View>
   );
 

@@ -1,162 +1,211 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   Image,
-  TextInput,
-  TouchableOpacity,
-  StatusBar,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { useProfile } from "../../../hooks/useProfile";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
+import { SkeletonForm, SkeletonProfile } from "../../../components/ui/Skeleton";
 import { COLORS, FONTS } from "../../../constants/theme";
+import { useProfileStore } from "../../../store";
 
 const EditProfileScreen = () => {
-  const { profile, isLoading, isUpdating, updateProfile } = useProfile();
+  const { user, isLoading, isUpdating, updateProfile, fetchProfile } =
+    useProfileStore();
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [originalData, setOriginalData] = useState({ name: "", phone: "", email: "" });
-  const insets = useSafeAreaInsets();
+  const [originalData, setOriginalData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  });
+  const [forceLoading, setForceLoading] = useState(true);
 
-  // Update state when profile data loads
   React.useEffect(() => {
-    if (profile?.user) {
+    if (!user) fetchProfile();
+    setTimeout(() => setForceLoading(false), 1400);
+  }, []);
+
+  React.useEffect(() => {
+    if (user) {
       const data = {
-        name: profile.user.name,
-        phone: profile.user.phone,
-        email: profile.user.email
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
       };
       setUsername(data.name);
       setPhoneNumber(data.phone);
       setEmail(data.email);
       setOriginalData(data);
     }
-  }, [profile]);
+  }, [user]);
 
   // Check if data has changed
-  const hasChanges = username !== originalData.name || 
-                    phoneNumber !== originalData.phone || 
-                    email !== originalData.email;
+  const hasChanges =
+    username !== originalData.name ||
+    phoneNumber !== originalData.phone ||
+    email !== originalData.email;
 
   const handleUpdateProfile = async () => {
     if (!hasChanges) return;
-    
+
     const success = await updateProfile({
       name: username,
       phone: phoneNumber,
-      email: email
+      email: email,
     });
-    
+
     if (success) {
       router.back();
     }
   };
 
-  if (isLoading) {
-    return <LoadingScreen />;
+  if (isLoading || forceLoading) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.backgroundSection}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Ionicons
+                  name="arrow-back"
+                  size={24}
+                  color={COLORS.textPrimary}
+                />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Edit Profil</Text>
+              <View style={styles.placeholder} />
+            </View>
+            <SkeletonProfile />
+          </View>
+          <View style={styles.whiteModalContainer}>
+            <View style={styles.scrollContent}>
+              <SkeletonForm />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={COLORS.backgroundMain} barStyle="dark-content" />
+      <StatusBar
+        backgroundColor={COLORS.backgroundMain}
+        barStyle="dark-content"
+      />
 
       {/* Background Section */}
       <View style={[styles.backgroundSection, { paddingTop: insets.top }]}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Edit Profil</Text>
-            <View style={styles.placeholder} />
-          </View>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit Profil</Text>
+          <View style={styles.placeholder} />
+        </View>
 
-          {/* Profile Image */}
-          <View style={styles.profileSection}>
-            <View style={styles.profileImageContainer}>
-              <Image
-                source={{
-                  uri: "https://picsum.photos/id/64/120/120",
-                }}
-                style={styles.profileImage}
-              />
-              <TouchableOpacity style={styles.editIconContainer}>
-                <Ionicons name="camera" size={16} color={COLORS.teal} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.profileName}>{profile?.user?.name || 'User'}</Text>
-            <Text style={styles.profileUsername}>@{profile?.user?.username || 'username'}</Text>
+        {/* Profile Image */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileImageContainer}>
+            <Image
+              source={{
+                uri: "https://picsum.photos/id/64/120/120",
+              }}
+              style={styles.profileImage}
+            />
+            <TouchableOpacity style={styles.editIconContainer}>
+              <Ionicons name="camera" size={16} color={COLORS.teal} />
+            </TouchableOpacity>
           </View>
+          <Text style={styles.profileName}>{user?.name || "User"}</Text>
+          <Text style={styles.profileUsername}>
+            @{user?.username || "username"}
+          </Text>
+        </View>
       </View>
 
       {/* White Modal Container */}
       <View style={styles.whiteModalContainer}>
-          <KeyboardAvoidingView 
-            style={{ flex: 1 }} 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-            >
+            {/* Form Fields */}
+            <View style={styles.formContainer}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nama</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Masukkan username"
+                />
+              </View>
 
-        {/* Form Fields */}
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Nama</Text>
-            <TextInput
-              style={styles.textInput}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Masukkan username"
-            />
-          </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nomor HP</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  placeholder="Masukkan nomor HP"
+                  keyboardType="phone-pad"
+                />
+              </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Nomor HP</Text>
-            <TextInput
-              style={styles.textInput}
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              placeholder="Masukkan nomor HP"
-              keyboardType="phone-pad"
-            />
-          </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email Address</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Masukkan email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput
-              style={styles.textInput}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Masukkan email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.updateButton, !hasChanges && styles.updateButtonDisabled]}
-            onPress={handleUpdateProfile}
-            disabled={!hasChanges || isUpdating}
-          >
-            <Text style={[styles.updateButtonText, !hasChanges && styles.updateButtonTextDisabled]}>
-              {isUpdating ? 'Updating...' : 'Update Profile'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
+              <TouchableOpacity
+                style={[
+                  styles.updateButton,
+                  !hasChanges && styles.updateButtonDisabled,
+                ]}
+                onPress={handleUpdateProfile}
+                disabled={!hasChanges || isUpdating}
+              >
+                <Text
+                  style={[
+                    styles.updateButtonText,
+                    !hasChanges && styles.updateButtonTextDisabled,
+                  ]}
+                >
+                  {isUpdating ? "Updating..." : "Update Profile"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
       {isUpdating && <LoadingScreen />}
     </View>
@@ -199,7 +248,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   profileImageContainer: {
-    position: 'relative',
+    position: "relative",
   },
   profileImage: {
     width: 100,
@@ -210,15 +259,15 @@ const styles = StyleSheet.create({
     borderColor: COLORS.white,
   },
   editIconContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 5,
     right: 5,
     backgroundColor: COLORS.white,
     borderRadius: 15,
     width: 30,
     height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 3,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
@@ -241,7 +290,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,

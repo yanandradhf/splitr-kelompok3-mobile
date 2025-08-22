@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import CustomSplashScreen from './(public)/splash';
 import LoadingScreen from '../components/ui/LoadingScreen';
-import { useAuthStore } from '../store/auth.store';
+import { useAuthStore } from '../store';
 
 export default function Index() {
   const [showSplash, setShowSplash] = useState(true);

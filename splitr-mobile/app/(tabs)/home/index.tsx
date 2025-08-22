@@ -1,23 +1,24 @@
-import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-  StatusBar,
-} from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useAuthStore } from "../../../store/auth.store";
-import { useProfileStore } from "../../../store/profile.store";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Image,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  SkeletonCard,
+  SkeletonNotification,
+  SkeletonStats,
+} from "../../../components/ui/Skeleton";
+import { useAuthStore, useProfileStore } from "../../../store";
+
 import { useFriends, useGroups, useNotifications } from "../../../hooks/useApi";
-import { useProfile } from "../../../hooks/useProfile";
 
 import { COLORS, FONTS } from "../../../constants/theme";
 
@@ -42,12 +43,19 @@ const personImages = [
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
-  const { profile: storeProfile } = useProfileStore();
-  const {
-    profile,
-    isLoading: profileLoading,
-    refetch: refetchProfile,
-  } = useProfile();
+  const { user: storeUser, stats: storeStats } = useProfileStore();
+  const [forceLoading, setForceLoading] = useState(true);
+
+  const { fetchProfile } = useProfileStore();
+
+  useEffect(() => {
+    if (!storeUser) {
+      fetchProfile();
+    }
+    // Force skeleton to show for 2 seconds
+    setTimeout(() => setForceLoading(false), 2000);
+  }, []);
+
   const {
     friends,
     loading: friendsLoading,
@@ -60,19 +68,26 @@ export default function HomeScreen() {
   } = useGroups();
   const {
     notifications,
+    unreadCount,
     loading: notificationsLoading,
     refetch: refetchNotifications,
   } = useNotifications();
 
+  // Get notification dot visibility
+  const showNotificationDot = unreadCount > 0;
+
   const [refreshing, setRefreshing] = useState(false);
   const [showStats, setShowStats] = useState(true);
-  const insets = useSafeAreaInsets();
+  const [lastNavigationTime, setLastNavigationTime] = useState(0);
+  const [lastGroupNavigation, setLastGroupNavigation] = useState<{
+    [key: string]: number;
+  }>({});
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await Promise.all([
-        refetchProfile(),
+        fetchProfile(),
         refetchFriends(),
         refetchGroups(),
         refetchNotifications(),
@@ -82,7 +97,7 @@ export default function HomeScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [refetchProfile, refetchFriends, refetchGroups, refetchNotifications]);
+  }, [fetchProfile, refetchFriends, refetchGroups, refetchNotifications]);
 
   const latestNotification = notifications[0];
 
@@ -119,8 +134,8 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={COLORS.card}
-            colors={[COLORS.card]}
+            tintColor={COLORS.teal}
+            colors={[COLORS.teal]}
           />
         }
       >
@@ -140,10 +155,7 @@ export default function HomeScreen() {
               <View style={styles.welcomeText}>
                 <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
                 <Text style={styles.welcomeName}>
-                  {user?.name ||
-                    profile?.user?.name ||
-                    storeProfile?.user?.name ||
-                    "User"}
+                  {user?.name || storeUser?.name || "User"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -156,7 +168,7 @@ export default function HomeScreen() {
                 size={28}
                 color={COLORS.textPrimary}
               />
-              <View style={styles.notificationDot} />
+              {showNotificationDot && <View style={styles.notificationDot} />}
             </TouchableOpacity>
           </View>
 
@@ -197,10 +209,8 @@ export default function HomeScreen() {
 
             <View style={styles.unifiedCard}>
               {showStats ? (
-                profileLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color={COLORS.teal} />
-                  </View>
+                !storeStats || forceLoading ? (
+                  <SkeletonStats />
                 ) : (
                   <View style={styles.statsContainer}>
                     <View style={styles.statRow}>
@@ -213,7 +223,7 @@ export default function HomeScreen() {
                           />
                         </View>
                         <Text style={styles.statNumber}>
-                          {profile?.stats?.totalBills || 0}
+                          {storeStats?.totalBills || 0}
                         </Text>
                         <Text style={styles.statLabel}>Tagihan</Text>
                       </View>
@@ -226,10 +236,8 @@ export default function HomeScreen() {
                           />
                         </View>
                         <Text style={styles.statNumber}>
-                          {profile?.stats?.totalSpent
-                            ? `${(profile.stats.totalSpent / 1000000).toFixed(
-                                1
-                              )}M`
+                          {storeStats?.totalSpent
+                            ? `${(storeStats.totalSpent / 1000000).toFixed(1)}M`
                             : "0"}
                         </Text>
                         <Text style={styles.statLabel}>Terbayar</Text>
@@ -243,7 +251,7 @@ export default function HomeScreen() {
                           />
                         </View>
                         <Text style={styles.statNumber}>
-                          {profile?.stats?.pendingPayments || 0}
+                          {storeStats?.pendingPayments || 0}
                         </Text>
                         <Text style={styles.statLabel}>Belum Dibayar</Text>
                       </View>
@@ -251,9 +259,7 @@ export default function HomeScreen() {
                   </View>
                 )
               ) : notificationsLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color={COLORS.teal} />
-                </View>
+                <SkeletonNotification />
               ) : latestNotification ? (
                 <View style={styles.notifContainer}>
                   <View style={styles.notificationRow}>
@@ -293,19 +299,60 @@ export default function HomeScreen() {
         <View style={styles.whiteModalContainer}>
           {/* GROUPS SECTION */}
           <View style={styles.modalSection}>
-            <Text style={styles.sectionTitle}>Lihat grup</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.groupsScroll}
+            <TouchableOpacity
+              onPress={() => {
+                const now = Date.now();
+                if (now - lastNavigationTime > 1000) {
+                  setLastNavigationTime(now);
+                  router.push("/(modals)/groups");
+                }
+              }}
+              activeOpacity={0.7}
+              style={styles.sectionHeader}
             >
-              {groupsLoading ? (
-                <ActivityIndicator size="small" color={COLORS.card} />
-              ) : (
-                groups.map((group, index) => (
-                  <View
+              <Text style={styles.sectionTitle}>Lihat Grup</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={LOCAL_COLORS.textPrimary}
+              />
+            </TouchableOpacity>
+            {groupsLoading || forceLoading ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.groupsScroll}
+              >
+                {[1, 2].map((i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </ScrollView>
+            ) : groups.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.groupsScroll}
+              >
+                {groups.map((group, index) => (
+                  <TouchableOpacity
                     key={group.groupId || index}
                     style={[styles.groupCard, { marginRight: 16 }]}
+                    onPress={() => {
+                      console.log(
+                        "Clicked group:",
+                        group.groupId,
+                        group.groupName
+                      );
+                      router.replace({
+                        pathname: "/(modals)/groups/detail",
+                        params: {
+                          groupId: group.groupId,
+                          groupData: JSON.stringify(group),
+                          fromHome: "true",
+                        },
+                      });
+                    }}
+                    activeOpacity={0.8}
                   >
                     <View style={styles.groupHeader}>
                       <Text style={styles.groupId}>
@@ -352,10 +399,32 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                       </View>
                     </View>
-                  </View>
-                ))
-              )}
-            </ScrollView>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyGroupState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons
+                    name="people-outline"
+                    size={24}
+                    color={COLORS.teal}
+                  />
+                </View>
+                <Text style={styles.emptyTitle}>Belum ada grup</Text>
+                <Text style={styles.emptySubtitle}>
+                  Buat grup pertama untuk mulai berbagi tagihan
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyActionButton}
+                  onPress={() => router.push("/(modals)/groups")}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="people" size={16} color={COLORS.white} />
+                  <Text style={styles.emptyActionText}>Buat Grup</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* SEPARATOR */}
@@ -363,16 +432,58 @@ export default function HomeScreen() {
 
           {/* FRIENDS SECTION */}
           <View style={styles.modalSection}>
-            <Text style={styles.sectionTitle}>Lihat Teman</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.friendsScroll}
+            <TouchableOpacity
+              style={styles.sectionHeader}
+              onPress={() => {
+                const now = Date.now();
+                if (now - lastNavigationTime > 1000) {
+                  setLastNavigationTime(now);
+                  router.push("/(modals)/add-friend");
+                }
+              }}
+              activeOpacity={0.7}
             >
-              {friendsLoading ? (
-                <ActivityIndicator size="small" color={COLORS.card} />
-              ) : (
-                friends.slice(0, 4).map((friendData, index) => (
+              <Text style={styles.sectionTitle}>Lihat Teman</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+            {friendsLoading || forceLoading ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.friendsScroll}
+              >
+                {[1, 2, 3, 4].map((i) => (
+                  <View key={i} style={styles.friendItem}>
+                    <View
+                      style={[
+                        styles.friendImage,
+                        { backgroundColor: "#E1E5E9" },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.friendName,
+                        {
+                          backgroundColor: "#E1E5E9",
+                          height: 14,
+                          borderRadius: 4,
+                        },
+                      ]}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            ) : friends.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.friendsScroll}
+              >
+                {friends.slice(0, 4).map((friendData, index) => (
                   <TouchableOpacity
                     key={friendData.friend.userId || index}
                     style={styles.friendItem}
@@ -386,15 +497,41 @@ export default function HomeScreen() {
                       {friendData.friend.name}
                     </Text>
                   </TouchableOpacity>
-                ))
-              )}
-              <TouchableOpacity style={styles.friendItem} activeOpacity={0.7}>
-                <View style={styles.addFriendCircle}>
-                  <Ionicons name="add" size={28} color={COLORS.white} />
+                ))}
+                <TouchableOpacity
+                  style={styles.friendItem}
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/(modals)/add-friend")}
+                >
+                  <View style={styles.addFriendCircle}>
+                    <Ionicons name="add" size={28} color={COLORS.white} />
+                  </View>
+                  <Text style={styles.friendName}>Tambah teman</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyFriendState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons
+                    name="person-add-outline"
+                    size={32}
+                    color={COLORS.teal}
+                  />
                 </View>
-                <Text style={styles.friendName}>Tambah teman</Text>
-              </TouchableOpacity>
-            </ScrollView>
+                <Text style={styles.emptyTitle}>Belum ada teman</Text>
+                <Text style={styles.emptySubtitle}>
+                  Tambahkan teman untuk mulai berbagi tagihan
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyActionButton}
+                  onPress={() => router.push("/(modals)/add-friend")}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="person-add" size={16} color={COLORS.white} />
+                  <Text style={styles.emptyActionText}>Tambah Teman</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <View style={{ height: 100 }} />
@@ -520,11 +657,20 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 24,
   },
+
   sectionTitle: {
     fontSize: 20,
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 8,
   },
 
   // ACTIVITY CARD
@@ -863,5 +1009,74 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
+  },
+
+  // EMPTY STATES
+  emptyGroupState: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginHorizontal: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyFriendState: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginHorizontal: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  emptyActionButton: {
+    backgroundColor: COLORS.teal,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: COLORS.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  emptyActionText: {
+    fontSize: 13,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
+    marginLeft: 6,
   },
 });
