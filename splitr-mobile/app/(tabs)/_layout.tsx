@@ -87,6 +87,7 @@ function CustomTabBar() {
             shadowRadius: 3,
           }}
           activeOpacity={0.7}
+          onPress={() => router.push("/create-bill")}
         >
           <Ionicons name="add-circle-outline" size={32} color="#000000" />
         </TouchableOpacity>
