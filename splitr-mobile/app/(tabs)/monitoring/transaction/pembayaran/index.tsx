@@ -75,13 +75,15 @@ const TransferScreen: React.FC<TransferScreenProps> = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail transfer</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Detail transfer</Text>
+          <View style={styles.placeholder} />
+        </View>
+      </SafeAreaView>
 
       <View style={styles.content}>
         {/* Recipient Info */}
@@ -163,6 +165,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
+  safeArea: {
+    backgroundColor: '#ffffff',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -171,6 +176,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.border,
+    backgroundColor: '#ffffff',
   },
   backButton: {
     padding: 8,
