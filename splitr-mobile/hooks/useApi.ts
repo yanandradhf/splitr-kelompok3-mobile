@@ -33,7 +33,7 @@ export const useFriends = () => {
   return { friends, loading, refetch };
 };
 
-export const useGroups = () => {
+export const useGroups = (limitForHome = true) => {
   const { 
     groups, 
     isLoading: loading, 
@@ -54,9 +54,9 @@ export const useGroups = () => {
     setLastFetch(Date.now());
   };
 
-  // Return only first 2 groups for home display
+  // Return limited groups for home, all groups for other screens
   return { 
-    groups: groups.slice(0, 2), 
+    groups: limitForHome ? groups.slice(0, 2) : groups, 
     loading, 
     refetch 
   };

@@ -34,6 +34,9 @@ export const COLORS = {
   text: '#000000',         // Alias for textPrimary
   shadow: '#000000',       // Shadow color
   success: '#10B981',      // Success green
+  successLight: '#DCFCE7', // Success light background
+  warning: '#D97706',      // Warning orange
+  warningLight: '#FEF3C7', // Warning light background
   disabled: '#9CA3AF',     // Disabled state
 };
 
@@ -56,6 +59,7 @@ export const FONT_SIZES = {
   '4xl': 36,
   '5xl': 48,
   '6xl': 64,
+  xxl: 24,  // Alias for 2xl
 };
 
 export const SPACING = {

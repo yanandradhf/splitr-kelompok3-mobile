@@ -95,7 +95,7 @@ export default function PilihTanggalScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pilih Tanggal Pembayaran</Text>
           <View style={styles.placeholder} />
@@ -189,19 +189,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 16,
     backgroundColor: COLORS.backgroundMain,
-    marginTop: 10,
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
-    fontSize: 19,
+    fontSize: 20,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    flex: 1,
-    textAlign: 'center',
   },
   placeholder: {
     width: 40,

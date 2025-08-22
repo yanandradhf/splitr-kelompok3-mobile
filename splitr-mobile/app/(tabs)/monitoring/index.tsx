@@ -1,38 +1,74 @@
 // app/(tabs)/monitoring/index.tsx
-import React, { useState, useEffect } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import { COLORS } from '../../../constants/theme';
-import { BUTTON_RULES, UI_STATE_PAYLOAD } from '../../../constants/config';
-import { useTransactionStore } from '../../../store';
+import React, { useState, useEffect } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
+import { COLORS } from "../../../constants/theme";
+import { BUTTON_RULES, UI_STATE_PAYLOAD } from "../../../constants/config";
+import { useTransactionStore } from "../../../store/transaction.store";
+import { useCreatedBillsStore } from "../../../store/createdBillsStore";
 
-const DonutChart = ({ progress }: { progress: { percent: number; label?: string } }) => {
+const DonutChart = ({
+  progress,
+}: {
+  progress: { percent: number; label?: string };
+}) => {
   const size = 50;
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{
-        width: size - 4, height: size - 4, borderRadius: (size - 4) / 2,
-        borderWidth: 3, borderColor: UI_STATE_PAYLOAD.theme.colors.muted, position: 'absolute'
-      }} />
-      <View style={{
-        width: size - 4, height: size - 4, borderRadius: (size - 4) / 2,
-        borderWidth: 3, borderColor: 'transparent',
-        borderTopColor: progress.percent > 0 ? UI_STATE_PAYLOAD.theme.colors.accent : 'transparent',
-        borderRightColor: progress.percent > 25 ? UI_STATE_PAYLOAD.theme.colors.accent : 'transparent',
-        borderBottomColor: progress.percent > 50 ? UI_STATE_PAYLOAD.theme.colors.accent : 'transparent',
-        borderLeftColor: progress.percent > 75 ? UI_STATE_PAYLOAD.theme.colors.accent : 'transparent',
-        transform: [{ rotate: '-90deg' }], position: 'absolute'
-      }} />
-      <Text style={{ fontSize: 10, fontWeight: '600', color: UI_STATE_PAYLOAD.theme.colors.textPrimary }}>
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <View
+        style={{
+          width: size - 4,
+          height: size - 4,
+          borderRadius: (size - 4) / 2,
+          borderWidth: 3,
+          borderColor: UI_STATE_PAYLOAD.theme.colors.muted,
+          position: "absolute",
+        }}
+      />
+      <View
+        style={{
+          width: size - 4,
+          height: size - 4,
+          borderRadius: (size - 4) / 2,
+          borderWidth: 3,
+          borderColor: "transparent",
+          borderTopColor:
+            progress.percent > 0
+              ? UI_STATE_PAYLOAD.theme.colors.accent
+              : "transparent",
+          borderRightColor:
+            progress.percent > 25
+              ? UI_STATE_PAYLOAD.theme.colors.accent
+              : "transparent",
+          borderBottomColor:
+            progress.percent > 50
+              ? UI_STATE_PAYLOAD.theme.colors.accent
+              : "transparent",
+          borderLeftColor:
+            progress.percent > 75
+              ? UI_STATE_PAYLOAD.theme.colors.accent
+              : "transparent",
+          transform: [{ rotate: "-90deg" }],
+          position: "absolute",
+        }}
+      />
+      <Text
+        style={{
+          fontSize: 10,
+          fontWeight: "600",
+          color: UI_STATE_PAYLOAD.theme.colors.textPrimary,
+        }}
+      >
         {progress.percent}%
       </Text>
     </View>
@@ -41,13 +77,13 @@ const DonutChart = ({ progress }: { progress: { percent: number; label?: string 
 
 type Money = {
   amount: number;
-  currency: 'IDR';
+  currency: "IDR";
   formatted: string;
 };
 
 type PersonOwed = {
   name: string;
-  status: 'lunas' | 'tertunda';
+  status: "lunas" | "tertunda";
   subtotal: Money;
 };
 
@@ -67,7 +103,7 @@ type BillCardHost = {
   receiptUrl?: string;
 };
 
-type PayStatus = 'pengingat' | 'permintaan' | 'terlambat';
+type PayStatus = "pengingat" | "permintaan" | "terlambat";
 
 type NotificationCard = {
   id: string;
@@ -82,9 +118,9 @@ type CompletedBill = {
   id: string;
   title: string;
   date: string;
-  role: 'host' | 'payer';
+  role: "host" | "payer";
   total: Money;
-  status: 'selesai';
+  status: "selesai";
 };
 
 type SummaryCard = {
@@ -94,16 +130,85 @@ type SummaryCard = {
 
 const formatMoney = (amount: number): Money => ({
   amount,
-  currency: 'IDR',
-  formatted: `Rp ${amount.toLocaleString('id-ID')}`
+  currency: "IDR",
+  formatted: `Rp ${amount.toLocaleString("id-ID")}`,
 });
 
 const MOCK_DATA = UI_STATE_PAYLOAD.screens;
 
+// Dynamic calculation functions
+const idr = (n: number): Money => ({
+  amount: n,
+  currency: "IDR",
+  formatted: `Rp ${n.toLocaleString("id-ID")}`,
+});
+
+const clamp0 = (n: number) => (n < 0 ? 0 : n);
+
+const calcPembayaranTertunda = (myBills: any[]): Money => {
+  const totalOutstanding = myBills.reduce((acc, bill) => {
+    const outstandingPerBill = bill.people.reduce((s: number, p: any) => {
+      // For 'tertunda' status: calculate remaining amount after partial payment
+      // For 'lunas' status: no outstanding amount
+      if (p.status === "lunas") return s;
+
+      const outstanding =
+        p.paidAmount != null
+          ? clamp0(p.subtotal.amount - p.paidAmount)
+          : p.subtotal.amount;
+      return s + outstanding;
+    }, 0);
+    return acc + outstandingPerBill;
+  }, 0);
+  return idr(totalOutstanding);
+};
+
+const calcTotalTagihanSaya = (payables: any[]): Money => {
+  const totalIHaventPaid = payables.reduce((acc, n) => {
+    if (n.status === "lunas" || n.status === "dibatalkan") return acc;
+    const outstanding =
+      n.paidAmount != null
+        ? clamp0(n.amount.amount - n.paidAmount)
+        : n.amount.amount;
+    return acc + outstanding;
+  }, 0);
+  return idr(totalIHaventPaid);
+};
+
+const deriveBillProgress = (bill: any): DonutProgress => {
+  const total =
+    bill.total.amount ||
+    bill.people.reduce((sum: number, p: any) => sum + p.subtotal.amount, 0);
+
+  // Calculate total paid amount including partial payments
+  const paidSum = bill.people.reduce((sum: number, p: any) => {
+    if (p.status === "lunas") {
+      return sum + p.subtotal.amount;
+    } else if (p.status === "tertunda" && p.paidAmount != null) {
+      return sum + p.paidAmount;
+    }
+    return sum;
+  }, 0);
+
+  const percent =
+    total <= 0
+      ? 0
+      : Math.min(100, Math.max(0, Math.round((paidSum / total) * 100)));
+  return { percent, label: `${percent}% terbayar` };
+};
+
 export default function MonitoringIndex() {
-  const [activeTab, setActiveTab] = useState<'running' | 'completed'>('running');
+  const [activeTab, setActiveTab] = useState<"running" | "completed">(
+    "running"
+  );
   const [expandedBills, setExpandedBills] = useState<Set<string>>(new Set());
-  const { runningTransactions, completedPayments, isInitialized, initializeTransactions } = useTransactionStore();
+  const {
+    runningTransactions,
+    completedPayments,
+    isInitialized,
+    initializeTransactions,
+  } = useTransactionStore();
+  const { createdBills } = useCreatedBillsStore();
 
   useEffect(() => {
     // Only initialize if store hasn't been initialized yet
@@ -112,14 +217,74 @@ export default function MonitoringIndex() {
     }
   }, [isInitialized]);
 
+  // Calculate dynamic summary values
+  const calculateSummary = () => {
+    // Pembayaran Tertunda = akumulasi dari tagihan yang harus dibayar
+    const pendingPayments = runningTransactions.reduce((sum, transaction) => {
+      return sum + transaction.amount.amount;
+    }, 0);
+
+    // Total Tagihan Saya = akumulasi dari tagihan yang saya buat
+    const myBillsTotal = MOCK_DATA.running.myBills.items.reduce((sum, bill) => {
+      return sum + bill.total.amount;
+    }, 0);
+
+    return {
+      pendingPayments: {
+        amount: pendingPayments,
+        formatted: `Rp ${pendingPayments.toLocaleString("id-ID")}`,
+      },
+      myBills: {
+        amount: myBillsTotal,
+        formatted: `Rp ${myBillsTotal.toLocaleString("id-ID")}`,
+      },
+    };
+  };
+
+  // Calculate completed summary for completed tab
+  const calculateCompletedSummary = () => {
+    // Total Pembayaran Selesai = akumulasi dari completed payments
+    const completedPaymentsTotal = completedPayments.reduce((sum, payment) => {
+      return sum + payment.amount.amount;
+    }, 0);
+
+    // Total Tagihan Selesai = akumulasi dari host bills yang selesai
+    const completedHostBillsTotal = MOCK_DATA.completed.hostBills.reduce(
+      (sum, bill) => {
+        return sum + bill.total.amount;
+      },
+      0
+    );
+
+    return {
+      completedPayments: {
+        amount: completedPaymentsTotal,
+        formatted: `Rp ${completedPaymentsTotal.toLocaleString("id-ID")}`,
+      },
+      completedHostBills: {
+        amount: completedHostBillsTotal,
+        formatted: `Rp ${completedHostBillsTotal.toLocaleString("id-ID")}`,
+      },
+    };
+  };
+
+  const summaryData = calculateSummary();
+  const completedSummaryData = calculateCompletedSummary();
+
   useFocusEffect(
     React.useCallback(() => {
       // Refresh data when screen comes into focus
-      console.log('=== MONITORING SCREEN FOCUSED ===');
-      console.log('Running transactions:', runningTransactions.length);
-      console.log('Completed payments:', completedPayments.length);
-      console.log('Running transaction titles:', runningTransactions.map(t => t.title));
-      console.log('Completed payment titles:', completedPayments.map(p => p.title));
+      console.log("=== MONITORING SCREEN FOCUSED ===");
+      console.log("Running transactions:", runningTransactions.length);
+      console.log("Completed payments:", completedPayments.length);
+      console.log(
+        "Running transaction titles:",
+        runningTransactions.map((t) => t.title)
+      );
+      console.log(
+        "Completed payment titles:",
+        completedPayments.map((p) => p.title)
+      );
     }, [runningTransactions, completedPayments])
   );
 
@@ -133,8 +298,14 @@ export default function MonitoringIndex() {
     setExpandedBills(newExpanded);
   };
 
+  // Calculate dynamic summary values
+  const pendingFromFriends = calcPembayaranTertunda(
+    MOCK_DATA.running.myBills.items
+  );
+  const iMustPayTotal = calcTotalTagihanSaya(MOCK_DATA.running.payables.items);
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       {/* <View style={styles.header}>
         <Text style={styles.headerTitle}>Activity Tab - Bill Management</Text>
       </View> */}
@@ -142,98 +313,165 @@ export default function MonitoringIndex() {
       {/* Segmented Control */}
       <View style={styles.segmentedControl}>
         <Pressable
-          style={[styles.segment, activeTab === 'running' && styles.activeSegment]}
-          onPress={() => setActiveTab('running')}
+          style={[
+            styles.segment,
+            activeTab === "running" && styles.activeSegment,
+          ]}
+          onPress={() => setActiveTab("running")}
         >
-          <Text style={[styles.segmentText, activeTab === 'running' && styles.activeSegmentText]}>
+          <Text
+            style={[
+              styles.segmentText,
+              activeTab === "running" && styles.activeSegmentText,
+            ]}
+          >
             Tagihan Berjalan
           </Text>
         </Pressable>
         <Pressable
-          style={[styles.segment, activeTab === 'completed' && styles.activeSegment]}
-          onPress={() => setActiveTab('completed')}
+          style={[
+            styles.segment,
+            activeTab === "completed" && styles.activeSegment,
+          ]}
+          onPress={() => setActiveTab("completed")}
         >
-          <Text style={[styles.segmentText, activeTab === 'completed' && styles.activeSegmentText]}>
+          <Text
+            style={[
+              styles.segmentText,
+              activeTab === "completed" && styles.activeSegmentText,
+            ]}
+          >
             Tagihan Selesai
           </Text>
         </Pressable>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {activeTab === 'running' ? (
+        {activeTab === "running" ? (
           <>
             {/* Summary Cards */}
             <View style={styles.summaryRow}>
               {MOCK_DATA.running.summary.map((card, index) => (
                 <View key={index} style={styles.summaryCard}>
                   <Text style={styles.summaryTitle}>{card.title}</Text>
-                  <Text style={styles.summaryAmount}>{card.value.formatted}</Text>
+                  <Text style={styles.summaryAmount}>
+                    {card.value.formatted}
+                  </Text>
                 </View>
               ))}
             </View>
 
             {/* Tagihan yang Aku Buat */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{MOCK_DATA.running.myBills.title}</Text>
+              <Text style={styles.sectionTitle}>
+                {MOCK_DATA.running.myBills.title}
+              </Text>
               {MOCK_DATA.running.myBills.items.map((bill) => (
                 <View key={bill.id} style={styles.billCard}>
                   <View style={styles.billHeader}>
                     <View style={styles.billInfo}>
                       <Text style={styles.billTitle}>{bill.title}</Text>
+                      <Text style={styles.paymentMethodText}>
+                        {bill.paymentMethod === "PAY_NOW"
+                          ? "Bayar Sekarang"
+                          : "Bayar Nanti"}
+                        {bill.paymentMethod === "PAY_LATER" &&
+                          bill.dueDate &&
+                          ` • ${bill.dueDate}`}
+                      </Text>
                       <Text style={styles.billDate}>{bill.date}</Text>
-                      <Text style={styles.billAmount}>{bill.total.formatted}</Text>
+                      <Text style={styles.billAmount}>
+                        {bill.total.formatted}
+                      </Text>
                     </View>
                     <View style={styles.billActions}>
                       <DonutChart progress={bill.progress} />
                       <Pressable onPress={() => toggleExpanded(bill.id)}>
-                        <Ionicons 
-                          name={expandedBills.has(bill.id) ? 'chevron-up' : 'chevron-down'} 
-                          size={20} 
-                          color={COLORS.textSecondary} 
+                        <Ionicons
+                          name={
+                            expandedBills.has(bill.id)
+                              ? "chevron-up"
+                              : "chevron-down"
+                          }
+                          size={20}
+                          color={COLORS.textSecondary}
                         />
                       </Pressable>
                     </View>
                   </View>
-                  
+
                   {expandedBills.has(bill.id) && (
                     <View style={styles.expandedContent}>
                       {bill.people.map((person, index) => (
-                        <View key={index} style={styles.friendRow}>
-                          <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                              <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
+                        <View key={index} style={styles.personSection}>
+                          <View style={styles.personHeader}>
+                            <View style={styles.avatarContainer}>
+                              <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>
+                                  {person.name.charAt(0)}
+                                </Text>
+                              </View>
+                              <Text style={styles.friendName}>
+                                {person.name}
+                              </Text>
                             </View>
-                            <View style={styles.friendInfo}>
-                              <Text style={styles.friendName}>{person.name}</Text>
-                              {person.orderItems && (
-                                <View style={styles.orderItems}>
-                                  {person.orderItems.map((item, idx) => (
-                                    <Text key={idx} style={styles.orderItem}>
-                                      {item.qty}x {item.name} - {item.price.formatted}
+                            <View style={styles.friendRight}>
+                              <Text style={styles.friendAmount}>
+                                {person.subtotal.formatted}
+                              </Text>
+                              <View
+                                style={[
+                                  styles.statusBadge,
+                                  person.status === "lunas"
+                                    ? styles.statusLunas
+                                    : styles.statusTertunda,
+                                ]}
+                              >
+                                <Text
+                                  style={[
+                                    styles.statusText,
+                                    person.status === "lunas"
+                                      ? styles.statusTextLunas
+                                      : styles.statusTextTertunda,
+                                  ]}
+                                >
+                                  {person.status === "lunas"
+                                    ? "Lunas"
+                                    : "Tertunda"}
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                          {person.orderItems && (
+                            <View style={styles.itemsTable}>
+                              {person.orderItems.map((item, idx) => {
+                                const itemTotal = item.qty * item.price;
+                                return (
+                                  <View key={idx} style={styles.itemRow}>
+                                    <Text style={styles.itemName}>
+                                      {item.name}
                                     </Text>
-                                  ))}
-                                </View>
-                              )}
+                                    <Text style={styles.itemQty}>
+                                      {item.qty}x
+                                    </Text>
+                                    <Text style={styles.itemPrice}>
+                                      Rp {itemTotal.toLocaleString("id-ID")}
+                                    </Text>
+                                  </View>
+                                );
+                              })}
                             </View>
-                          </View>
-                          <View style={styles.friendRight}>
-                            <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
-                            <View style={[styles.statusBadge, 
-                              person.status === 'lunas' ? styles.statusLunas : styles.statusTertunda
-                            ]}>
-                              <Text style={[styles.statusText,
-                                person.status === 'lunas' ? styles.statusTextLunas : styles.statusTextTertunda
-                              ]}>{person.status === 'lunas' ? 'Lunas' : 'Tertunda'}</Text>
-                            </View>
-                          </View>
+                          )}
                         </View>
                       ))}
                       <Pressable style={styles.receiptButton}>
-                        <Text style={styles.receiptButtonText}>Lihat Struk</Text>
+                        <Text style={styles.receiptButtonText}>
+                          Lihat Struk
+                        </Text>
                       </Pressable>
                     </View>
                   )}
@@ -243,81 +481,128 @@ export default function MonitoringIndex() {
 
             {/* Tagihan yang Harus Dibayar */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tagihan yang Harus Dibayar</Text>
+              <Text style={styles.sectionTitle}>
+                Tagihan yang Harus Dibayar
+              </Text>
               {runningTransactions.map((bill) => (
-                <View key={bill.id} style={styles.paymentCard}>
+                <View
+                  key={bill.id}
+                  style={[styles.paymentCard, styles.payableCard]}
+                >
                   <View style={styles.paymentInfo}>
                     <View style={styles.paymentHeader}>
                       <Text style={styles.billTitle}>{bill.title}</Text>
-                      <View style={[styles.statusIndicator, 
-                        bill.status === 'pengingat' && styles.statusPengingat,
-                        bill.status === 'permintaan' && styles.statusPermintaan,
-                        bill.status === 'terlambat' && styles.statusTerlambat
-                      ]}>
-                        <Text style={[styles.statusIndicatorText,
-                          bill.status === 'pengingat' && styles.statusTextPengingat,
-                          bill.status === 'permintaan' && styles.statusTextPermintaan,
-                          bill.status === 'terlambat' && styles.statusTextTerlambat
-                        ]}>{bill.status.toUpperCase()}</Text>
+                      <View
+                        style={[
+                          styles.statusIndicator,
+                          bill.status === "pengingat" && styles.statusPengingat,
+                          bill.status === "permintaan" &&
+                            styles.statusPermintaan,
+                          bill.status === "terlambat" && styles.statusTerlambat,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusIndicatorText,
+                            bill.status === "pengingat" &&
+                              styles.statusTextPengingat,
+                            bill.status === "permintaan" &&
+                              styles.statusTextPermintaan,
+                            bill.status === "terlambat" &&
+                              styles.statusTextTerlambat,
+                          ]}
+                        >
+                          {bill.status.toUpperCase()}
+                        </Text>
                       </View>
                     </View>
-                    <Text style={styles.payerName}>Dibayar oleh: {bill.from}</Text>
-                    <Text style={styles.dueDate}>Jatuh tempo: {bill.dueDate}</Text>
-                    <Text style={styles.billAmount}>{bill.amount.formatted}</Text>
+                    <Text style={styles.payerName}>
+                      Dibayar oleh: {bill.from}
+                    </Text>
+                    <Text style={styles.dueDate}>
+                      Jatuh tempo: {bill.dueDate}
+                    </Text>
+                    <Text style={styles.billAmount}>
+                      {bill.amount.formatted}
+                    </Text>
                   </View>
                   <View style={styles.paymentActions}>
                     {(() => {
-                      const rule = BUTTON_RULES.buttonRules.find(r => r.when.status === bill.status);
-                      const actions = rule?.setActions || { payNow: false, payLater: false, overdue: false };
+                      const rule = BUTTON_RULES.buttonRules.find(
+                        (r) => r.when.status === bill.status
+                      );
+                      const actions = rule?.setActions || {
+                        payNow: false,
+                        payLater: false,
+                        overdue: false,
+                      };
                       return (
                         <>
                           {actions.payNow && (
-                            <Pressable 
+                            <Pressable
                               style={styles.payNowButton}
                               onPress={() => {
-                                console.log('Paying for transaction:', bill.id, bill.title, bill.amount.formatted);
+                                console.log(
+                                  "Paying for transaction:",
+                                  bill.id,
+                                  bill.title,
+                                  bill.amount.formatted
+                                );
                                 router.push({
-                                  pathname: '/monitoring/transaction/pembayaran',
+                                  pathname:
+                                    "/monitoring/transaction/pembayaran",
                                   params: {
                                     transactionId: bill.id,
                                     title: bill.title,
                                     from: bill.from,
                                     amount: bill.amount.formatted,
-                                    paymentMethod: 'sekarang'
-                                  }
+                                    paymentMethod: "sekarang",
+                                  },
                                 });
                               }}
                             >
-                              <Text style={styles.payNowText}>Bayar Sekarang</Text>
+                              <Text style={styles.payNowText}>
+                                Bayar Sekarang
+                              </Text>
                             </Pressable>
                           )}
                           {actions.payLater && (
-                            <Pressable 
+                            <Pressable
                               style={styles.payLaterButton}
                               onPress={() => {
-                                console.log('Bayar Nanti for transaction:', bill.id, bill.title, bill.amount.formatted);
+                                console.log(
+                                  "Bayar Nanti for transaction:",
+                                  bill.id,
+                                  bill.title,
+                                  bill.amount.formatted
+                                );
                                 router.push({
-                                  pathname: '/monitoring/transaction/pembayaran',
+                                  pathname:
+                                    "/monitoring/transaction/pembayaran",
                                   params: {
                                     transactionId: bill.id,
                                     title: bill.title,
                                     from: bill.from,
-                                    amount: bill.amount.formatted
-                                  }
+                                    amount: bill.amount.formatted,
+                                  },
                                 });
                               }}
                             >
-                              <Text style={styles.payLaterText}>Bayar Nanti</Text>
+                              <Text style={styles.payLaterText}>
+                                Bayar Nanti
+                              </Text>
                             </Pressable>
                           )}
                           {actions.overdue && (
                             <Pressable style={styles.overdueButton} disabled>
-                              <Text style={styles.overdueText}>Jatuh Tempo</Text>
+                              <Text style={styles.overdueText}>
+                                Jatuh Tempo
+                              </Text>
                             </Pressable>
                           )}
                         </>
                       );
-                    })()} 
+                    })()}
                   </View>
                 </View>
               ))}
@@ -326,65 +611,122 @@ export default function MonitoringIndex() {
         ) : (
           /* Tagihan Selesai */
           <>
+            {/* Summary Cards for Completed */}
+            <View style={styles.summaryRow}>
+              <View style={[styles.summaryCard, styles.completedBillsCard]}>
+                <Text style={styles.summaryTitle}>Total Tagihan Selesai</Text>
+                <Text
+                  style={[styles.summaryAmount, styles.completedBillsAmount]}
+                >
+                  {completedSummaryData.completedHostBills.formatted}
+                </Text>
+              </View>
+              <View style={[styles.summaryCard, styles.completedPaymentCard]}>
+                <Text style={styles.summaryTitle}>
+                  Total Pembayaran Selesai
+                </Text>
+                <Text
+                  style={[styles.summaryAmount, styles.completedPaymentAmount]}
+                >
+                  {completedSummaryData.completedPayments.formatted}
+                </Text>
+              </View>
+            </View>
             {/* Host Bills - Tagihan yang Aku Buat (100% terbayar) */}
             {MOCK_DATA.completed.hostBills.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Tagihan yang Aku Buat (Selesai)</Text>
+                <Text style={styles.sectionTitle}>
+                  Tagihan yang Aku Buat (Selesai)
+                </Text>
                 {MOCK_DATA.completed.hostBills.map((bill) => (
-                  <View key={bill.id} style={styles.completedCard}>
+                  <View
+                    key={bill.id}
+                    style={[styles.completedCard, styles.completedMyBillCard]}
+                  >
                     <View style={styles.billHeader}>
                       <View style={styles.billInfo}>
                         <Text style={styles.billTitle}>{bill.title}</Text>
-                        <Text style={styles.billDate}>Selesai: {bill.dateDone}</Text>
-                        <Text style={styles.billAmount}>{bill.total.formatted}</Text>
+                        <Text style={styles.billDate}>
+                          Selesai: {bill.dateDone}
+                        </Text>
+                        <Text style={styles.billAmount}>
+                          {bill.total.formatted}
+                        </Text>
                       </View>
                       <View style={styles.billActions}>
                         <DonutChart progress={bill.progress} />
                         <Pressable onPress={() => toggleExpanded(bill.id)}>
-                          <Ionicons 
-                            name={expandedBills.has(bill.id) ? 'chevron-up' : 'chevron-down'} 
-                            size={20} 
-                            color={COLORS.textSecondary} 
+                          <Ionicons
+                            name={
+                              expandedBills.has(bill.id)
+                                ? "chevron-up"
+                                : "chevron-down"
+                            }
+                            size={20}
+                            color={COLORS.textSecondary}
                           />
                         </Pressable>
                       </View>
                     </View>
-                    
+
                     {expandedBills.has(bill.id) && bill.people && (
                       <View style={styles.expandedContent}>
                         {bill.people.map((person, index) => (
-                          <View key={index} style={styles.friendRow}>
-                            <View style={styles.avatarContainer}>
-                              <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>{person.name.charAt(0)}</Text>
+                          <View key={index} style={styles.personSection}>
+                            <View style={styles.personHeader}>
+                              <View style={styles.avatarContainer}>
+                                <View style={styles.avatar}>
+                                  <Text style={styles.avatarText}>
+                                    {person.name.charAt(0)}
+                                  </Text>
+                                </View>
+                                <View style={styles.friendInfo}>
+                                  <Text style={styles.friendName}>
+                                    {person.name}
+                                  </Text>
+                                  <Text style={styles.paymentMethod}>
+                                    {person.method === "bayar-sekarang"
+                                      ? "Bayar Sekarang"
+                                      : "Auto-Transfer"}{" "}
+                                    : {person.paidAt}
+                                  </Text>
+                                </View>
                               </View>
-                              <View style={styles.friendInfo}>
-                                <Text style={styles.friendName}>{person.name}</Text>
-                                <Text style={styles.paymentMethod}>
-                                  {person.method === 'bayar-sekarang' ? 'Bayar Sekarang' : 'Auto-Transfer'} : {person.paidAt}
+                              <View style={styles.friendRight}>
+                                <Text style={styles.friendAmount}>
+                                  {person.subtotal.formatted}
                                 </Text>
-                                {person.orderItems && (
-                                  <View style={styles.orderItems}>
-                                    {person.orderItems.map((item, idx) => (
-                                      <Text key={idx} style={styles.orderItem}>
-                                        {item.qty}x {item.name} - {item.price.formatted}
-                                      </Text>
-                                    ))}
+                                <View style={styles.statusBadgeSuccess}>
+                                  <Text style={styles.statusTextSuccess}>
+                                    Lunas
+                                  </Text>
+                                </View>
+                              </View>
+                            </View>
+                            {person.orderItems && (
+                              <View style={styles.itemsTable}>
+                                {person.orderItems.map((item, idx) => (
+                                  <View key={idx} style={styles.itemRow}>
+                                    <Text style={styles.itemName}>
+                                      {item.name}
+                                    </Text>
+                                    <Text style={styles.itemQty}>
+                                      {item.qty}x
+                                    </Text>
+                                    <Text style={styles.itemPrice}>
+                                      {item.price.formatted}
+                                    </Text>
                                   </View>
-                                )}
+                                ))}
                               </View>
-                            </View>
-                            <View style={styles.friendRight}>
-                              <Text style={styles.friendAmount}>{person.subtotal.formatted}</Text>
-                              <View style={styles.statusBadgeSuccess}>
-                                <Text style={styles.statusTextSuccess}>Lunas</Text>
-                              </View>
-                            </View>
+                            )}
                           </View>
                         ))}
                         {bill.receiptUrl && (
                           <Pressable style={styles.receiptButton}>
-                            <Text style={styles.receiptButtonText}>Lihat Struk</Text>
+                            <Text style={styles.receiptButtonText}>
+                              Lihat Struk
+                            </Text>
                           </Pressable>
                         )}
                       </View>
@@ -396,32 +738,58 @@ export default function MonitoringIndex() {
 
             {/* Payment History - Pembayaran Selesai */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pembayaran Selesai</Text>
+              <View style={styles.sectionHeader}>
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={20}
+                  color="#9CA3AF"
+                />
+                <Text style={styles.sectionTitle}>Pembayaran Selesai</Text>
+              </View>
               {completedPayments.map((payment) => (
-                <View key={payment.id} style={styles.paymentHistoryCard}>
+                <View
+                  key={payment.id}
+                  style={[
+                    styles.paymentHistoryCard,
+                    styles.completedPayableCard,
+                  ]}
+                >
                   <View style={styles.paymentHistoryHeader}>
                     <View style={styles.avatarContainer}>
                       <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{payment.hostName.charAt(0)}</Text>
+                        <Text style={styles.avatarText}>
+                          {payment.hostName.charAt(0)}
+                        </Text>
                       </View>
                       <View style={styles.paymentMainInfo}>
-                        <Text style={styles.paymentLabel}>Pembayaran Selesai untuk {payment.hostName}</Text>
+                        <Text style={styles.paymentLabel}>
+                          Pembayaran Selesai untuk {payment.hostName}
+                        </Text>
                         <Text style={styles.paymentTitle}>{payment.title}</Text>
                         <Text style={styles.paymentMethod}>
-                          {payment.method === 'bayar-sekarang' ? 'Bayar Sekarang' : 'Auto-Transfer'} : {payment.methodDate}
+                          {payment.method === "bayar-sekarang"
+                            ? "Bayar Sekarang"
+                            : "Auto-Transfer"}{" "}
+                          : {payment.methodDate}
                         </Text>
                       </View>
                     </View>
                     <View style={styles.paymentRight}>
-                      <Text style={styles.paymentAmount}>{payment.amount.formatted}</Text>
+                      <Text style={styles.paymentAmount}>
+                        {payment.amount.formatted}
+                      </Text>
                       <View style={styles.statusBadgeSuccess}>
                         <Text style={styles.statusTextSuccess}>Lunas</Text>
                       </View>
                       <Pressable onPress={() => toggleExpanded(payment.id)}>
-                        <Ionicons 
-                          name={expandedBills.has(payment.id) ? 'chevron-up' : 'chevron-down'} 
-                          size={20} 
-                          color={COLORS.textSecondary} 
+                        <Ionicons
+                          name={
+                            expandedBills.has(payment.id)
+                              ? "chevron-up"
+                              : "chevron-down"
+                          }
+                          size={20}
+                          color={COLORS.textSecondary}
                         />
                       </Pressable>
                     </View>
@@ -430,29 +798,39 @@ export default function MonitoringIndex() {
                   {expandedBills.has(payment.id) && payment.items && (
                     <View style={styles.paymentExpandedContent}>
                       <Text style={styles.expandedTitle}>{payment.title}</Text>
-                      <Text style={styles.expandedStatus}>Done : {payment.methodDate}</Text>
+                      <Text style={styles.expandedStatus}>
+                        Done : {payment.methodDate}
+                      </Text>
                       <View style={styles.expandedAmountRow}>
                         <View style={styles.statusBadgeSuccess}>
                           <Text style={styles.statusTextSuccess}>Lunas</Text>
                         </View>
-                        <Text style={styles.expandedAmount}>{payment.amount.formatted}</Text>
+                        <Text style={styles.expandedAmount}>
+                          {payment.amount.formatted}
+                        </Text>
                       </View>
-                      
+
                       <View style={styles.dividerToolbar}>
-                        <Text style={styles.dividerText}>Rincian Pesanan Kamu</Text>
+                        <Text style={styles.dividerText}>
+                          Rincian Pesanan Kamu
+                        </Text>
                         {payment.receiptUrl && (
                           <Pressable style={styles.receiptButtonSmall}>
-                            <Text style={styles.receiptButtonSmallText}>Lihat Struk</Text>
+                            <Text style={styles.receiptButtonSmallText}>
+                              Lihat Struk
+                            </Text>
                           </Pressable>
                         )}
                       </View>
-                      
+
                       <View style={styles.itemsTable}>
                         {payment.items.map((item, index) => (
                           <View key={index} style={styles.itemRow}>
                             <Text style={styles.itemName}>{item.name}</Text>
                             <Text style={styles.itemQty}>{item.qty}x</Text>
-                            <Text style={styles.itemPrice}>{item.price.formatted}</Text>
+                            <Text style={styles.itemPrice}>
+                              {item.price.formatted}
+                            </Text>
                           </View>
                         ))}
                       </View>
@@ -474,9 +852,9 @@ const styles = StyleSheet.create({
     backgroundColor: UI_STATE_PAYLOAD.theme.colors.backgroundMain,
   },
   header: {
-    backgroundColor: '#00897B',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    backgroundColor: "#00897B",
+    alignItems: "center",
+    justifyContent: "flex-end",
     paddingTop: 12,
     paddingBottom: 16,
     borderBottomLeftRadius: 28,
@@ -485,10 +863,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: COLORS.white,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   segmentedControl: {
-    flexDirection: 'row',
+    flexDirection: "row",
     margin: 16,
     backgroundColor: COLORS.white,
     borderRadius: 12,
@@ -502,15 +880,15 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 8,
   },
   activeSegment: {
-    backgroundColor: '#00897B',
+    backgroundColor: "#00897B",
   },
   segmentText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.textSecondary,
   },
   activeSegmentText: {
@@ -525,7 +903,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   summaryRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 24,
   },
@@ -547,15 +925,53 @@ const styles = StyleSheet.create({
   },
   summaryAmount: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#00897B',
+    fontWeight: "700",
+    color: "#00897B",
+  },
+  pendingPaymentCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#FF8736",
+    backgroundColor: "#FFF7ED",
+  },
+  pendingPaymentAmount: {
+    color: "#FF8736",
+  },
+  myBillsCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#00897B",
+    backgroundColor: "#F0FDFA",
+  },
+  myBillsAmount: {
+    color: "#00897B",
+  },
+  completedPaymentCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#9CA3AF",
+    backgroundColor: "#F9FAFB",
+  },
+  completedPaymentAmount: {
+    color: "#9CA3AF",
+  },
+  completedBillsCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#16A34A",
+    backgroundColor: "#F0FDF4",
+  },
+  completedBillsAmount: {
+    color: "#16A34A",
   },
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text,
     marginBottom: 12,
   },
@@ -570,19 +986,35 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  myBillCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#00897B",
+    backgroundColor: "#F0FDFA",
+  },
+  payableCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#FF8736",
+    backgroundColor: "#FFF7ED",
+  },
   billHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   billInfo: {
     flex: 1,
   },
   billTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
     flex: 1,
+  },
+  paymentMethodText: {
+    fontSize: 12,
+    color: "#00897B",
+    fontWeight: "600",
+    marginBottom: 2,
   },
   billDate: {
     fontSize: 12,
@@ -591,11 +1023,11 @@ const styles = StyleSheet.create({
   },
   billAmount: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#00897B',
+    fontWeight: "600",
+    color: "#00897B",
   },
   billActions: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     gap: 8,
   },
 
@@ -606,19 +1038,31 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.border,
   },
   friendRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+  },
+  personSection: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  personHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
   },
   friendInfo: {
     flex: 1,
   },
   friendName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
     marginBottom: 4,
   },
@@ -631,12 +1075,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   friendRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     gap: 8,
   },
   friendAmount: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
   },
   statusBadge: {
@@ -646,34 +1090,34 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.success,
   },
   statusLunas: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: "#DCFCE7",
   },
   statusTertunda: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: "#FEF3C7",
   },
   statusText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.white,
   },
   statusTextLunas: {
-    color: '#16A34A',
+    color: "#16A34A",
   },
   statusTextTertunda: {
-    color: '#D97706',
+    color: "#D97706",
   },
   receiptButton: {
     marginTop: 12,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#E0F2F1',
+    backgroundColor: "#E0F2F1",
     borderRadius: 8,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   receiptButtonText: {
     fontSize: 12,
-    color: '#00897B',
-    fontWeight: '600',
+    color: "#00897B",
+    fontWeight: "600",
   },
   paymentCard: {
     backgroundColor: COLORS.white,
@@ -690,38 +1134,38 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   paymentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   statusIndicator: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   statusPengingat: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: "#E3F2FD",
   },
   statusPermintaan: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: "#FFF8E1",
   },
   statusTerlambat: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: "#FFEBEE",
   },
   statusIndicatorText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   statusTextPengingat: {
-    color: '#1976D2',
+    color: "#1976D2",
   },
   statusTextPermintaan: {
-    color: '#F57C00',
+    color: "#F57C00",
   },
   statusTextTerlambat: {
-    color: '#D32F2F',
+    color: "#D32F2F",
   },
   payerName: {
     fontSize: 12,
@@ -734,44 +1178,44 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   paymentActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   payNowButton: {
     flex: 1,
-    backgroundColor: '#00897B',
+    backgroundColor: "#00897B",
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   payNowText: {
     color: COLORS.white,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   payLaterButton: {
     flex: 1,
     backgroundColor: COLORS.border,
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   payLaterText: {
     color: COLORS.textSecondary,
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   overdueButton: {
     flex: 1,
     backgroundColor: COLORS.disabled,
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   overdueText: {
     color: COLORS.white,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   completedCard: {
     backgroundColor: COLORS.white,
@@ -795,28 +1239,38 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  completedMyBillCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#16A34A",
+    backgroundColor: "#F0FDF4",
+  },
+  completedPayableCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#9CA3AF",
+    backgroundColor: "#F9FAFB",
+  },
   paymentHistoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   avatarContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     flex: 1,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   avatarText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.textSecondary,
   },
   paymentMainInfo: {
@@ -829,7 +1283,7 @@ const styles = StyleSheet.create({
   },
   paymentTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
     marginBottom: 4,
   },
@@ -838,24 +1292,24 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   paymentRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     gap: 8,
   },
   paymentAmount: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#00897B',
+    fontWeight: "600",
+    color: "#00897B",
   },
   statusBadgeSuccess: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: "#DCFCE7",
   },
   statusTextSuccess: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#16A34A',
+    fontWeight: "600",
+    color: "#16A34A",
   },
   paymentExpandedContent: {
     marginTop: 16,
@@ -864,8 +1318,8 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.border,
   },
   expandedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   expandedHeaderText: {
@@ -875,7 +1329,7 @@ const styles = StyleSheet.create({
   },
   expandedTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text,
     marginBottom: 8,
   },
@@ -885,20 +1339,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   expandedAmountRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   expandedAmount: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#00897B',
+    fontWeight: "600",
+    color: "#00897B",
   },
   dividerToolbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
@@ -907,26 +1361,26 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
   },
   receiptButtonSmall: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    backgroundColor: '#E0F2F1',
+    backgroundColor: "#E0F2F1",
     borderRadius: 6,
   },
   receiptButtonSmallText: {
     fontSize: 10,
-    color: '#00897B',
-    fontWeight: '600',
+    color: "#00897B",
+    fontWeight: "600",
   },
   itemsTable: {
     gap: 8,
   },
   itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 4,
   },
   itemName: {
@@ -939,13 +1393,13 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginRight: 16,
     minWidth: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   itemPrice: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
-    textAlign: 'right',
+    textAlign: "right",
     minWidth: 80,
   },
 });
