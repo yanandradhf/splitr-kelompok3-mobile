@@ -1,873 +1,537 @@
-// app/(tabs)/monitoring/index.tsx
+// app/(tabs)/monitoring/index-final.tsx
 import React, { useState, useEffect } from "react";
-import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { COLORS } from "../../../constants/theme";
-import { BUTTON_RULES, UI_STATE_PAYLOAD } from "../../../constants/config";
+import { UI_STATE_PAYLOAD } from "../../../constants/config";
 import { useTransactionStore } from "../../../store/transaction.store";
-import { useCreatedBillsStore } from "../../../store/createdBillsStore";
 
-const DonutChart = ({
-  progress,
-}: {
-  progress: { percent: number; label?: string };
-}) => {
-  const size = 50;
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <View
-        style={{
-          width: size - 4,
-          height: size - 4,
-          borderRadius: (size - 4) / 2,
-          borderWidth: 3,
-          borderColor: UI_STATE_PAYLOAD.theme.colors.muted,
-          position: "absolute",
-        }}
-      />
-      <View
-        style={{
-          width: size - 4,
-          height: size - 4,
-          borderRadius: (size - 4) / 2,
-          borderWidth: 3,
-          borderColor: "transparent",
-          borderTopColor:
-            progress.percent > 0
-              ? UI_STATE_PAYLOAD.theme.colors.accent
-              : "transparent",
-          borderRightColor:
-            progress.percent > 25
-              ? UI_STATE_PAYLOAD.theme.colors.accent
-              : "transparent",
-          borderBottomColor:
-            progress.percent > 50
-              ? UI_STATE_PAYLOAD.theme.colors.accent
-              : "transparent",
-          borderLeftColor:
-            progress.percent > 75
-              ? UI_STATE_PAYLOAD.theme.colors.accent
-              : "transparent",
-          transform: [{ rotate: "-90deg" }],
-          position: "absolute",
-        }}
-      />
-      <Text
-        style={{
-          fontSize: 10,
-          fontWeight: "600",
-          color: UI_STATE_PAYLOAD.theme.colors.textPrimary,
-        }}
-      >
-        {progress.percent}%
-      </Text>
-    </View>
-  );
-};
+type TransactionType = "income" | "expense";
+type TransactionStatus = "completed" | "pending";
 
-type Money = {
-  amount: number;
-  currency: "IDR";
-  formatted: string;
-};
-
-type PersonOwed = {
-  name: string;
-  status: "lunas" | "tertunda";
-  subtotal: Money;
-};
-
-type DonutProgress = {
-  percent: number;
-  label?: string;
-};
-
-type BillCardHost = {
+type SimpleTransaction = {
   id: string;
   title: string;
+  amount: string;
+  type: TransactionType;
+  status: TransactionStatus;
+  from?: string;
+  method?: string;
   date: string;
-  total: Money;
-  people: PersonOwed[];
-  progress: DonutProgress;
-  isExpanded?: boolean;
-  receiptUrl?: string;
 };
 
-type PayStatus = "pengingat" | "permintaan" | "terlambat";
-
-type NotificationCard = {
-  id: string;
-  status: PayStatus;
-  title: string;
-  from: string;
-  dueDate: string;
-  amount: Money;
-};
-
-type CompletedBill = {
-  id: string;
-  title: string;
-  date: string;
-  role: "host" | "payer";
-  total: Money;
-  status: "selesai";
-};
-
-type SummaryCard = {
-  title: string;
-  value: Money;
-};
-
-const formatMoney = (amount: number): Money => ({
-  amount,
-  currency: "IDR",
-  formatted: `Rp ${amount.toLocaleString("id-ID")}`,
-});
-
-const MOCK_DATA = UI_STATE_PAYLOAD.screens;
-
-// Dynamic calculation functions
-const idr = (n: number): Money => ({
-  amount: n,
-  currency: "IDR",
-  formatted: `Rp ${n.toLocaleString("id-ID")}`,
-});
-
-const clamp0 = (n: number) => (n < 0 ? 0 : n);
-
-const calcPembayaranTertunda = (myBills: any[]): Money => {
-  const totalOutstanding = myBills.reduce((acc, bill) => {
-    const outstandingPerBill = bill.people.reduce((s: number, p: any) => {
-      // For 'tertunda' status: calculate remaining amount after partial payment
-      // For 'lunas' status: no outstanding amount
-      if (p.status === "lunas") return s;
-
-      const outstanding =
-        p.paidAmount != null
-          ? clamp0(p.subtotal.amount - p.paidAmount)
-          : p.subtotal.amount;
-      return s + outstanding;
-    }, 0);
-    return acc + outstandingPerBill;
-  }, 0);
-  return idr(totalOutstanding);
-};
-
-const calcTotalTagihanSaya = (payables: any[]): Money => {
-  const totalIHaventPaid = payables.reduce((acc, n) => {
-    if (n.status === "lunas" || n.status === "dibatalkan") return acc;
-    const outstanding =
-      n.paidAmount != null
-        ? clamp0(n.amount.amount - n.paidAmount)
-        : n.amount.amount;
-    return acc + outstanding;
-  }, 0);
-  return idr(totalIHaventPaid);
-};
-
-const deriveBillProgress = (bill: any): DonutProgress => {
-  const total =
-    bill.total.amount ||
-    bill.people.reduce((sum: number, p: any) => sum + p.subtotal.amount, 0);
-
-  // Calculate total paid amount including partial payments
-  const paidSum = bill.people.reduce((sum: number, p: any) => {
-    if (p.status === "lunas") {
-      return sum + p.subtotal.amount;
-    } else if (p.status === "tertunda" && p.paidAmount != null) {
-      return sum + p.paidAmount;
-    }
-    return sum;
-  }, 0);
-
-  const percent =
-    total <= 0
-      ? 0
-      : Math.min(100, Math.max(0, Math.round((paidSum / total) * 100)));
-  return { percent, label: `${percent}% terbayar` };
-};
+type SortOption = "date-newest" | "date-oldest" | "amount-highest" | "amount-lowest";
+type CategoryFilter = "semua" | "dibuat" | "tagihan";
 
 export default function MonitoringIndex() {
-  const [activeTab, setActiveTab] = useState<"running" | "completed">(
-    "running"
-  );
-  const [expandedBills, setExpandedBills] = useState<Set<string>>(new Set());
-  const {
-    runningTransactions,
-    completedPayments,
-    isInitialized,
-    initializeTransactions,
-  } = useTransactionStore();
-  const { createdBills } = useCreatedBillsStore();
+  const [activeTab, setActiveTab] = useState<"tagihan" | "riwayat">("tagihan");
+  const [sortBy, setSortBy] = useState<SortOption>("date-newest");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("semua");
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<{[key: string]: Set<string>}>({
+    tagihan: new Set(),
+    riwayat: new Set()
+  });
+  const { runningTransactions, completedPayments, initializeTransactions, isInitialized } = useTransactionStore();
 
   useEffect(() => {
-    // Only initialize if store hasn't been initialized yet
     if (!isInitialized) {
       initializeTransactions();
     }
-  }, [isInitialized]);
+  }, [isInitialized, initializeTransactions]);
 
-  // Calculate dynamic summary values
-  const calculateSummary = () => {
-    // Pembayaran Tertunda = akumulasi dari tagihan yang harus dibayar
-    const pendingPayments = runningTransactions.reduce((sum, transaction) => {
-      return sum + transaction.amount.amount;
-    }, 0);
-
-    // Total Tagihan Saya = akumulasi dari tagihan yang saya buat
-    const myBillsTotal = MOCK_DATA.running.myBills.items.reduce((sum, bill) => {
-      return sum + bill.total.amount;
-    }, 0);
-
-    return {
-      pendingPayments: {
-        amount: pendingPayments,
-        formatted: `Rp ${pendingPayments.toLocaleString("id-ID")}`,
-      },
-      myBills: {
-        amount: myBillsTotal,
-        formatted: `Rp ${myBillsTotal.toLocaleString("id-ID")}`,
-      },
-    };
-  };
-
-  // Calculate completed summary for completed tab
-  const calculateCompletedSummary = () => {
-    // Total Pembayaran Selesai = akumulasi dari completed payments
-    const completedPaymentsTotal = completedPayments.reduce((sum, payment) => {
-      return sum + payment.amount.amount;
-    }, 0);
-
-    // Total Tagihan Selesai = akumulasi dari host bills yang selesai
-    const completedHostBillsTotal = MOCK_DATA.completed.hostBills.reduce(
-      (sum, bill) => {
-        return sum + bill.total.amount;
-      },
-      0
-    );
-
-    return {
-      completedPayments: {
-        amount: completedPaymentsTotal,
-        formatted: `Rp ${completedPaymentsTotal.toLocaleString("id-ID")}`,
-      },
-      completedHostBills: {
-        amount: completedHostBillsTotal,
-        formatted: `Rp ${completedHostBillsTotal.toLocaleString("id-ID")}`,
-      },
-    };
-  };
-
-  const summaryData = calculateSummary();
-  const completedSummaryData = calculateCompletedSummary();
-
-  useFocusEffect(
-    React.useCallback(() => {
-      // Refresh data when screen comes into focus
-      console.log("=== MONITORING SCREEN FOCUSED ===");
-      console.log("Running transactions:", runningTransactions.length);
-      console.log("Completed payments:", completedPayments.length);
-      console.log(
-        "Running transaction titles:",
-        runningTransactions.map((t) => t.title)
-      );
-      console.log(
-        "Completed payment titles:",
-        completedPayments.map((p) => p.title)
-      );
-    }, [runningTransactions, completedPayments])
-  );
-
-  const toggleExpanded = (billId: string) => {
-    const newExpanded = new Set(expandedBills);
-    if (newExpanded.has(billId)) {
-      newExpanded.delete(billId);
+  const toggleExpanded = (id: string) => {
+    const currentTabExpanded = new Set(expandedItems[activeTab]);
+    if (currentTabExpanded.has(id)) {
+      currentTabExpanded.delete(id);
     } else {
-      newExpanded.add(billId);
+      currentTabExpanded.add(id);
     }
-    setExpandedBills(newExpanded);
+    setExpandedItems({
+      ...expandedItems,
+      [activeTab]: currentTabExpanded
+    });
   };
 
-  // Calculate dynamic summary values
-  const pendingFromFriends = calcPembayaranTertunda(
-    MOCK_DATA.running.myBills.items
-  );
-  const iMustPayTotal = calcTotalTagihanSaya(MOCK_DATA.running.payables.items);
+  // Process data into simple format
+  const processTransactions = (): SimpleTransaction[] => {
+    // Pending transactions (tagihan yang harus dibayar)
+    const pending: SimpleTransaction[] = runningTransactions.map(t => ({
+      id: t.id,
+      title: t.title,
+      amount: t.amount.formatted,
+      type: "expense",
+      status: "pending",
+      from: t.from,
+      method: `${t.status.charAt(0).toUpperCase() + t.status.slice(1)}`,
+      date: t.dueDate
+    }));
+
+    // Completed transactions (pembayaran selesai)
+    const completed: SimpleTransaction[] = completedPayments.map(p => ({
+      id: p.id,
+      title: p.title,
+      amount: p.amount.formatted,
+      type: "expense",
+      status: "completed",
+      from: p.hostName,
+      method: p.method === "bayar-sekarang" ? "Bayar Sekarang" : "Auto-Transfer",
+      date: p.methodDate || new Date().toLocaleDateString("id-ID")
+    }));
+
+    // Created bills (tagihan yang dibuat) from mock data
+    const createdBills: SimpleTransaction[] = UI_STATE_PAYLOAD.screens.running.myBills.items.map(bill => ({
+      id: bill.id,
+      title: bill.title,
+      amount: bill.total.formatted,
+      type: "income",
+      status: bill.progress.percent === 100 ? "completed" : "pending",
+      method: bill.progress.label,
+      date: bill.date
+    }));
+
+    return [...createdBills, ...pending, ...completed];
+  };
+
+  const allTransactions = processTransactions();
+  
+  // Filter and sort transactions
+  const getFilteredAndSortedTransactions = () => {
+    let filtered = allTransactions;
+    
+    // Filter by tab
+    switch (activeTab) {
+      case "tagihan":
+        // Show created bills (income) and pending payments (expense + pending)
+        filtered = allTransactions.filter(t => 
+          t.type === "income" || (t.type === "expense" && t.status === "pending")
+        );
+        break;
+      case "riwayat":
+        // Show only completed transactions
+        filtered = allTransactions.filter(t => t.status === "completed");
+        break;
+    }
+    
+    // Apply category filter (only for tagihan tab)
+    if (activeTab === "tagihan" && categoryFilter !== "semua") {
+      switch (categoryFilter) {
+        case "dibuat":
+          filtered = filtered.filter(t => t.type === "income");
+          break;
+        case "tagihan":
+          filtered = filtered.filter(t => t.type === "expense" && t.status === "pending");
+          break;
+      }
+    }
+    
+    // Sort transactions
+    return filtered.sort((a, b) => {
+      // For tagihan tab with default sorting, prioritize by due date (closest first)
+      if (activeTab === "tagihan" && sortBy === "date-newest") {
+        // Pending payments (with due dates) should come first, sorted by due date
+        if (a.status === "pending" && b.status === "pending") {
+          return new Date(a.date).getTime() - new Date(b.date).getTime(); // Closest due date first
+        }
+        if (a.status === "pending" && b.status !== "pending") return -1;
+        if (a.status !== "pending" && b.status === "pending") return 1;
+        // For created bills, sort by creation date (newest first)
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+      
+      // Regular sorting for other cases
+      switch (sortBy) {
+        case "date-newest":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "date-oldest":
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case "amount-highest":
+          return parseInt(b.amount.replace(/[^\d]/g, '')) - parseInt(a.amount.replace(/[^\d]/g, ''));
+        case "amount-lowest":
+          return parseInt(a.amount.replace(/[^\d]/g, '')) - parseInt(b.amount.replace(/[^\d]/g, ''));
+        default:
+          return 0;
+      }
+    });
+  };
+
+  // Helper functions for styling
+  const getIconBgColor = (transaction: SimpleTransaction) => {
+    // Tagihan dibuat (created bills) - yellow/orange
+    if (transaction.type === "income") {
+      return "#FEF3C7"; // Always yellow for created bills
+    }
+    // Pembayaran selesai (completed payments) - green
+    if (transaction.status === "completed") {
+      return "#DCFCE7"; // Green for completed payments
+    }
+    // Pending payments - red
+    return "#FFEBEE";
+  };
+
+  const getIconColor = (transaction: SimpleTransaction) => {
+    // Tagihan dibuat (created bills) - orange
+    if (transaction.type === "income") {
+      return COLORS.orange; // Always orange for created bills
+    }
+    // Pembayaran selesai (completed payments) - green
+    if (transaction.status === "completed") {
+      return COLORS.success; // Green for completed payments
+    }
+    // Pending payments - red
+    return COLORS.red;
+  };
+
+  const getTransactionIcon = (transaction: SimpleTransaction) => {
+    // Tagihan dibuat (created bills) - restaurant icon
+    if (transaction.type === "income") {
+      return "restaurant-outline"; // Always restaurant icon for created bills
+    }
+    // Pembayaran selesai (completed payments) - checkmark
+    if (transaction.status === "completed") {
+      return "checkmark-circle"; // Checkmark for completed payments
+    }
+    // Pending payments - card icon
+    return "card-outline";
+  };
+
+  const getAmountColor = (transaction: SimpleTransaction) => {
+    // Match amount color with card/icon color
+    if (transaction.type === "income") {
+      return COLORS.orange; // Orange for created bills
+    }
+    if (transaction.status === "completed") {
+      return COLORS.success; // Green for completed payments
+    }
+    return COLORS.red; // Red for pending payments
+  };
+
+  const handleTransactionPress = (transaction: SimpleTransaction) => {
+    if (transaction.status === "pending") {
+      router.push({
+        pathname: "/monitoring/transaction/pembayaran",
+        params: {
+          transactionId: transaction.id,
+          title: transaction.title,
+          amount: transaction.amount,
+        },
+      });
+    }
+  };
+
+  const getSortLabel = (sort: SortOption) => {
+    switch (sort) {
+      case "date-newest": return "Terbaru";
+      case "date-oldest": return "Terlama";
+      case "amount-highest": return "Terbesar";
+      case "amount-lowest": return "Terkecil";
+    }
+  };
+
+  const getCategoryLabel = (category: CategoryFilter) => {
+    switch (category) {
+      case "semua": return "Semua";
+      case "dibuat": return "Dibuat";
+      case "tagihan": return "Tagihan";
+    }
+  };
+
+  const resetFilters = () => {
+    setCategoryFilter("semua");
+    setSortBy("date-newest");
+  };
+
+  const hasActiveFilters = categoryFilter !== "semua" || sortBy !== "date-newest";
+
+  const sortedTransactions = getFilteredAndSortedTransactions();
+
+  // Calculate total based on currently filtered and displayed transactions
+  const getTabTotal = () => {
+    if (activeTab !== "tagihan") return null;
+    
+    // Only calculate total for pending payments (red cards) that are currently displayed
+    const displayedPendingPayments = sortedTransactions
+      .filter(t => t.status === "pending" && t.type === "expense");
+    
+    if (displayedPendingPayments.length === 0) return null;
+    
+    const total = displayedPendingPayments
+      .reduce((sum, t) => sum + parseInt(t.amount.replace(/[^\d]/g, '')), 0);
+    
+    return `Rp ${total.toLocaleString("id-ID")}`;
+  };
+
+  const getTotalLabel = () => {
+    return "Total Tagihan Tertunda";
+  };
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
-      {/* <View style={styles.header}>
-        <Text style={styles.headerTitle}>Activity Tab - Bill Management</Text>
-      </View> */}
-
-      {/* Segmented Control */}
-      <View style={styles.segmentedControl}>
-        <Pressable
-          style={[
-            styles.segment,
-            activeTab === "running" && styles.activeSegment,
-          ]}
-          onPress={() => setActiveTab("running")}
+    <SafeAreaView style={styles.container}>
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Aktivitas</Text>
+        <Pressable 
+          style={[styles.headerFilterButton, hasActiveFilters && styles.headerFilterButtonActive]}
+          onPress={() => setShowFilterModal(true)}
         >
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === "running" && styles.activeSegmentText,
-            ]}
-          >
-            Tagihan Berjalan
+          <Ionicons 
+            name="options-outline" 
+            size={20} 
+            color={hasActiveFilters ? COLORS.white : COLORS.textPrimary} 
+          />
+          {hasActiveFilters && (
+            <View style={styles.headerFilterBadge} />
+          )}
+        </Pressable>
+      </View>
+
+      {/* Tab Navigation */}
+      <View style={styles.tabContainer}>
+        <Pressable
+          style={[styles.tab, activeTab === "tagihan" && styles.activeTab]}
+          onPress={() => setActiveTab("tagihan")}
+        >
+          <Text style={[styles.tabText, activeTab === "tagihan" && styles.activeTabText]}>
+            Tagihan
           </Text>
         </Pressable>
         <Pressable
-          style={[
-            styles.segment,
-            activeTab === "completed" && styles.activeSegment,
-          ]}
-          onPress={() => setActiveTab("completed")}
+          style={[styles.tab, activeTab === "riwayat" && styles.activeTab]}
+          onPress={() => setActiveTab("riwayat")}
         >
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === "completed" && styles.activeSegmentText,
-            ]}
-          >
-            Tagihan Selesai
+          <Text style={[styles.tabText, activeTab === "riwayat" && styles.activeTabText]}>
+            Riwayat
           </Text>
         </Pressable>
       </View>
 
-      <ScrollView
+      {/* Conditional Total Card */}
+      {getTabTotal() && (
+        <View style={styles.totalCard}>
+          <Text style={styles.totalAmount}>{getTabTotal()}</Text>
+          <Text style={styles.totalLabel}>{getTotalLabel()}</Text>
+        </View>
+      )}
+
+
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.filterModal}>
+            <View style={styles.filterHeader}>
+              <Pressable onPress={() => setShowFilterModal(false)}>
+                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+              </Pressable>
+              <Text style={styles.filterTitle}>Filter</Text>
+              <Pressable onPress={resetFilters}>
+                <Text style={styles.resetText}>Reset</Text>
+              </Pressable>
+            </View>
+            
+            {/* Category Filter (only for tagihan tab) */}
+            {activeTab === "tagihan" && (
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>Kategori</Text>
+                <View style={styles.filterOptions}>
+                  {(["semua", "dibuat", "tagihan"] as CategoryFilter[]).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[styles.filterChip, categoryFilter === option && styles.filterChipActive]}
+                      onPress={() => setCategoryFilter(option)}
+                    >
+                      <Text style={[styles.filterChipText, categoryFilter === option && styles.filterChipTextActive]}>
+                        {getCategoryLabel(option)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+            
+            {/* Sort Filter */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Urutkan</Text>
+              <View style={styles.filterOptions}>
+                {(["date-newest", "date-oldest", "amount-highest", "amount-lowest"] as SortOption[]).map((option) => (
+                  <Pressable
+                    key={option}
+                    style={[styles.filterChip, sortBy === option && styles.filterChipActive]}
+                    onPress={() => setSortBy(option)}
+                  >
+                    <Text style={[styles.filterChipText, sortBy === option && styles.filterChipTextActive]}>
+                      {getSortLabel(option)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            
+            <Pressable 
+              style={styles.applyButton}
+              onPress={() => setShowFilterModal(false)}
+            >
+              <Text style={styles.applyButtonText}>Terapkan Filter</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      <ScrollView 
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {activeTab === "running" ? (
-          <>
-            {/* Summary Cards */}
-            <View style={styles.summaryRow}>
-              {MOCK_DATA.running.summary.map((card, index) => (
-                <View key={index} style={styles.summaryCard}>
-                  <Text style={styles.summaryTitle}>{card.title}</Text>
-                  <Text style={styles.summaryAmount}>
-                    {card.value.formatted}
-                  </Text>
+        {/* Transaction List */}
+        {sortedTransactions.map((transaction) => (
+          <View key={transaction.id} style={[styles.transactionCard, { borderLeftColor: getIconColor(transaction) }]}>
+            <View style={styles.transactionItem}>
+              <Pressable
+                style={styles.transactionContent}
+                onPress={() => (transaction.type === "income" && activeTab === "tagihan") ? toggleExpanded(transaction.id) : null}
+              >
+                <View style={[styles.iconContainer, { backgroundColor: getIconBgColor(transaction) }]}>
+                  <Ionicons 
+                    name={getTransactionIcon(transaction)} 
+                    size={20} 
+                    color={getIconColor(transaction)} 
+                  />
                 </View>
-              ))}
-            </View>
-
-            {/* Tagihan yang Aku Buat */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                {MOCK_DATA.running.myBills.title}
-              </Text>
-              {MOCK_DATA.running.myBills.items.map((bill) => (
-                <View key={bill.id} style={styles.billCard}>
-                  <View style={styles.billHeader}>
-                    <View style={styles.billInfo}>
-                      <Text style={styles.billTitle}>{bill.title}</Text>
-                      <Text style={styles.paymentMethodText}>
-                        {bill.paymentMethod === "PAY_NOW"
-                          ? "Bayar Sekarang"
-                          : "Bayar Nanti"}
-                        {bill.paymentMethod === "PAY_LATER" &&
-                          bill.dueDate &&
-                          ` • ${bill.dueDate}`}
-                      </Text>
-                      <Text style={styles.billDate}>{bill.date}</Text>
-                      <Text style={styles.billAmount}>
-                        {bill.total.formatted}
-                      </Text>
-                    </View>
-                    <View style={styles.billActions}>
-                      <DonutChart progress={bill.progress} />
-                      <Pressable onPress={() => toggleExpanded(bill.id)}>
-                        <Ionicons
-                          name={
-                            expandedBills.has(bill.id)
-                              ? "chevron-up"
-                              : "chevron-down"
-                          }
-                          size={20}
-                          color={COLORS.textSecondary}
-                        />
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  {expandedBills.has(bill.id) && (
-                    <View style={styles.expandedContent}>
-                      {bill.people.map((person, index) => (
-                        <View key={index} style={styles.personSection}>
-                          <View style={styles.personHeader}>
-                            <View style={styles.avatarContainer}>
-                              <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                  {person.name.charAt(0)}
-                                </Text>
-                              </View>
-                              <Text style={styles.friendName}>
-                                {person.name}
-                              </Text>
-                            </View>
-                            <View style={styles.friendRight}>
-                              <Text style={styles.friendAmount}>
-                                {person.subtotal.formatted}
-                              </Text>
-                              <View
-                                style={[
-                                  styles.statusBadge,
-                                  person.status === "lunas"
-                                    ? styles.statusLunas
-                                    : styles.statusTertunda,
-                                ]}
-                              >
-                                <Text
-                                  style={[
-                                    styles.statusText,
-                                    person.status === "lunas"
-                                      ? styles.statusTextLunas
-                                      : styles.statusTextTertunda,
-                                  ]}
-                                >
-                                  {person.status === "lunas"
-                                    ? "Lunas"
-                                    : "Tertunda"}
-                                </Text>
-                              </View>
-                            </View>
-                          </View>
-                          {person.orderItems && (
-                            <View style={styles.itemsTable}>
-                              {person.orderItems.map((item, idx) => {
-                                const itemTotal = item.qty * item.price;
-                                return (
-                                  <View key={idx} style={styles.itemRow}>
-                                    <Text style={styles.itemName}>
-                                      {item.name}
-                                    </Text>
-                                    <Text style={styles.itemQty}>
-                                      {item.qty}x
-                                    </Text>
-                                    <Text style={styles.itemPrice}>
-                                      Rp {itemTotal.toLocaleString("id-ID")}
-                                    </Text>
-                                  </View>
-                                );
-                              })}
-                            </View>
-                          )}
-                        </View>
-                      ))}
-                      <Pressable style={styles.receiptButton}>
-                        <Text style={styles.receiptButtonText}>
-                          Lihat Struk
-                        </Text>
-                      </Pressable>
-                    </View>
+                <View style={styles.transactionInfo}>
+                  <Text style={styles.transactionTitle}>{transaction.title}</Text>
+                  <Text style={styles.transactionSubtitle}>
+                    {transaction.from && `${transaction.from} • `}
+                    {transaction.method}
+                  </Text>
+                  {transaction.status === "pending" && (
+                    <Text style={styles.dueDateText}>
+                      Jatuh tempo: {transaction.date}
+                    </Text>
                   )}
                 </View>
-              ))}
+                <View style={styles.transactionRight}>
+                  <Text style={[styles.transactionAmount, { color: getAmountColor(transaction) }]}>
+                    {transaction.amount}
+                  </Text>
+                  {transaction.type === "income" && activeTab === "tagihan" && (
+                    <Pressable onPress={() => toggleExpanded(transaction.id)}>
+                      <Ionicons
+                        name={expandedItems[activeTab].has(transaction.id) ? "chevron-up" : "chevron-down"}
+                        size={20}
+                        color={COLORS.textSecondary}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+              </Pressable>
+              
+              {/* Payment Button for Pending Transactions */}
+              {transaction.status === "pending" && (
+                <View style={styles.paymentButtonContainer}>
+                  <Pressable 
+                    style={styles.payTagihanButton}
+                    onPress={() => handleTransactionPress(transaction)}
+                  >
+                    <Text style={styles.payTagihanText}>Bayar Tagihan</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
-
-            {/* Tagihan yang Harus Dibayar */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                Tagihan yang Harus Dibayar
-              </Text>
-              {runningTransactions.map((bill) => (
-                <View
-                  key={bill.id}
-                  style={[styles.paymentCard, styles.payableCard]}
-                >
-                  <View style={styles.paymentInfo}>
-                    <View style={styles.paymentHeader}>
-                      <Text style={styles.billTitle}>{bill.title}</Text>
-                      <View
-                        style={[
-                          styles.statusIndicator,
-                          bill.status === "pengingat" && styles.statusPengingat,
-                          bill.status === "permintaan" &&
-                            styles.statusPermintaan,
-                          bill.status === "terlambat" && styles.statusTerlambat,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.statusIndicatorText,
-                            bill.status === "pengingat" &&
-                              styles.statusTextPengingat,
-                            bill.status === "permintaan" &&
-                              styles.statusTextPermintaan,
-                            bill.status === "terlambat" &&
-                              styles.statusTextTerlambat,
-                          ]}
-                        >
-                          {bill.status.toUpperCase()}
-                        </Text>
-                      </View>
+            
+            {/* Expanded Content for Income (Created Bills) */}
+            {transaction.type === "income" && expandedItems[activeTab].has(transaction.id) && activeTab === "tagihan" && (
+              <View style={styles.expandedContent}>
+                <Text style={styles.expandedTitle}>Detail Pembayaran</Text>
+                <View style={styles.payerItem}>
+                  <Text style={styles.payerName}>John Doe</Text>
+                  <View style={styles.payerRight}>
+                    <Text style={styles.payerAmount}>Rp 90.000</Text>
+                    <View style={styles.statusBadgeSuccess}>
+                      <Text style={styles.statusTextSuccess}>Lunas</Text>
                     </View>
-                    <Text style={styles.payerName}>
-                      Dibayar oleh: {bill.from}
-                    </Text>
-                    <Text style={styles.dueDate}>
-                      Jatuh tempo: {bill.dueDate}
-                    </Text>
-                    <Text style={styles.billAmount}>
-                      {bill.amount.formatted}
-                    </Text>
-                  </View>
-                  <View style={styles.paymentActions}>
-                    {(() => {
-                      const rule = BUTTON_RULES.buttonRules.find(
-                        (r) => r.when.status === bill.status
-                      );
-                      const actions = rule?.setActions || {
-                        payNow: false,
-                        payLater: false,
-                        overdue: false,
-                      };
-                      return (
-                        <>
-                          {actions.payNow && (
-                            <Pressable
-                              style={styles.payNowButton}
-                              onPress={() => {
-                                console.log(
-                                  "Paying for transaction:",
-                                  bill.id,
-                                  bill.title,
-                                  bill.amount.formatted
-                                );
-                                router.push({
-                                  pathname:
-                                    "/monitoring/transaction/pembayaran",
-                                  params: {
-                                    transactionId: bill.id,
-                                    title: bill.title,
-                                    from: bill.from,
-                                    amount: bill.amount.formatted,
-                                    paymentMethod: "sekarang",
-                                  },
-                                });
-                              }}
-                            >
-                              <Text style={styles.payNowText}>
-                                Bayar Sekarang
-                              </Text>
-                            </Pressable>
-                          )}
-                          {actions.payLater && (
-                            <Pressable
-                              style={styles.payLaterButton}
-                              onPress={() => {
-                                console.log(
-                                  "Bayar Nanti for transaction:",
-                                  bill.id,
-                                  bill.title,
-                                  bill.amount.formatted
-                                );
-                                router.push({
-                                  pathname:
-                                    "/monitoring/transaction/pembayaran",
-                                  params: {
-                                    transactionId: bill.id,
-                                    title: bill.title,
-                                    from: bill.from,
-                                    amount: bill.amount.formatted,
-                                  },
-                                });
-                              }}
-                            >
-                              <Text style={styles.payLaterText}>
-                                Bayar Nanti
-                              </Text>
-                            </Pressable>
-                          )}
-                          {actions.overdue && (
-                            <Pressable style={styles.overdueButton} disabled>
-                              <Text style={styles.overdueText}>
-                                Jatuh Tempo
-                              </Text>
-                            </Pressable>
-                          )}
-                        </>
-                      );
-                    })()}
                   </View>
                 </View>
-              ))}
-            </View>
-          </>
-        ) : (
-          /* Tagihan Selesai */
-          <>
-            {/* Summary Cards for Completed */}
-            <View style={styles.summaryRow}>
-              <View style={[styles.summaryCard, styles.completedBillsCard]}>
-                <Text style={styles.summaryTitle}>Total Tagihan Selesai</Text>
-                <Text
-                  style={[styles.summaryAmount, styles.completedBillsAmount]}
-                >
-                  {completedSummaryData.completedHostBills.formatted}
-                </Text>
-              </View>
-              <View style={[styles.summaryCard, styles.completedPaymentCard]}>
-                <Text style={styles.summaryTitle}>
-                  Total Pembayaran Selesai
-                </Text>
-                <Text
-                  style={[styles.summaryAmount, styles.completedPaymentAmount]}
-                >
-                  {completedSummaryData.completedPayments.formatted}
-                </Text>
-              </View>
-            </View>
-            {/* Host Bills - Tagihan yang Aku Buat (100% terbayar) */}
-            {MOCK_DATA.completed.hostBills.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
-                  Tagihan yang Aku Buat (Selesai)
-                </Text>
-                {MOCK_DATA.completed.hostBills.map((bill) => (
-                  <View
-                    key={bill.id}
-                    style={[styles.completedCard, styles.completedMyBillCard]}
-                  >
-                    <View style={styles.billHeader}>
-                      <View style={styles.billInfo}>
-                        <Text style={styles.billTitle}>{bill.title}</Text>
-                        <Text style={styles.billDate}>
-                          Selesai: {bill.dateDone}
-                        </Text>
-                        <Text style={styles.billAmount}>
-                          {bill.total.formatted}
-                        </Text>
-                      </View>
-                      <View style={styles.billActions}>
-                        <DonutChart progress={bill.progress} />
-                        <Pressable onPress={() => toggleExpanded(bill.id)}>
-                          <Ionicons
-                            name={
-                              expandedBills.has(bill.id)
-                                ? "chevron-up"
-                                : "chevron-down"
-                            }
-                            size={20}
-                            color={COLORS.textSecondary}
-                          />
-                        </Pressable>
-                      </View>
+                <View style={[styles.payerItem, styles.lastPayerItem]}>
+                  <Text style={styles.payerName}>Jane Smith</Text>
+                  <View style={styles.payerRight}>
+                    <Text style={styles.payerAmount}>Rp 90.000</Text>
+                    <View style={styles.statusBadgePending}>
+                      <Text style={styles.statusTextPending}>Tertunda</Text>
                     </View>
-
-                    {expandedBills.has(bill.id) && bill.people && (
-                      <View style={styles.expandedContent}>
-                        {bill.people.map((person, index) => (
-                          <View key={index} style={styles.personSection}>
-                            <View style={styles.personHeader}>
-                              <View style={styles.avatarContainer}>
-                                <View style={styles.avatar}>
-                                  <Text style={styles.avatarText}>
-                                    {person.name.charAt(0)}
-                                  </Text>
-                                </View>
-                                <View style={styles.friendInfo}>
-                                  <Text style={styles.friendName}>
-                                    {person.name}
-                                  </Text>
-                                  <Text style={styles.paymentMethod}>
-                                    {person.method === "bayar-sekarang"
-                                      ? "Bayar Sekarang"
-                                      : "Auto-Transfer"}{" "}
-                                    : {person.paidAt}
-                                  </Text>
-                                </View>
-                              </View>
-                              <View style={styles.friendRight}>
-                                <Text style={styles.friendAmount}>
-                                  {person.subtotal.formatted}
-                                </Text>
-                                <View style={styles.statusBadgeSuccess}>
-                                  <Text style={styles.statusTextSuccess}>
-                                    Lunas
-                                  </Text>
-                                </View>
-                              </View>
-                            </View>
-                            {person.orderItems && (
-                              <View style={styles.itemsTable}>
-                                {person.orderItems.map((item, idx) => (
-                                  <View key={idx} style={styles.itemRow}>
-                                    <Text style={styles.itemName}>
-                                      {item.name}
-                                    </Text>
-                                    <Text style={styles.itemQty}>
-                                      {item.qty}x
-                                    </Text>
-                                    <Text style={styles.itemPrice}>
-                                      {item.price.formatted}
-                                    </Text>
-                                  </View>
-                                ))}
-                              </View>
-                            )}
-                          </View>
-                        ))}
-                        {bill.receiptUrl && (
-                          <Pressable style={styles.receiptButton}>
-                            <Text style={styles.receiptButtonText}>
-                              Lihat Struk
-                            </Text>
-                          </Pressable>
-                        )}
-                      </View>
-                    )}
                   </View>
-                ))}
+                </View>
               </View>
             )}
+          </View>
+        ))}
 
-            {/* Payment History - Pembayaran Selesai */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons
-                  name="checkmark-done-outline"
-                  size={20}
-                  color="#9CA3AF"
-                />
-                <Text style={styles.sectionTitle}>Pembayaran Selesai</Text>
-              </View>
-              {completedPayments.map((payment) => (
-                <View
-                  key={payment.id}
-                  style={[
-                    styles.paymentHistoryCard,
-                    styles.completedPayableCard,
-                  ]}
-                >
-                  <View style={styles.paymentHistoryHeader}>
-                    <View style={styles.avatarContainer}>
-                      <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>
-                          {payment.hostName.charAt(0)}
-                        </Text>
-                      </View>
-                      <View style={styles.paymentMainInfo}>
-                        <Text style={styles.paymentLabel}>
-                          Pembayaran Selesai untuk {payment.hostName}
-                        </Text>
-                        <Text style={styles.paymentTitle}>{payment.title}</Text>
-                        <Text style={styles.paymentMethod}>
-                          {payment.method === "bayar-sekarang"
-                            ? "Bayar Sekarang"
-                            : "Auto-Transfer"}{" "}
-                          : {payment.methodDate}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.paymentRight}>
-                      <Text style={styles.paymentAmount}>
-                        {payment.amount.formatted}
-                      </Text>
-                      <View style={styles.statusBadgeSuccess}>
-                        <Text style={styles.statusTextSuccess}>Lunas</Text>
-                      </View>
-                      <Pressable onPress={() => toggleExpanded(payment.id)}>
-                        <Ionicons
-                          name={
-                            expandedBills.has(payment.id)
-                              ? "chevron-up"
-                              : "chevron-down"
-                          }
-                          size={20}
-                          color={COLORS.textSecondary}
-                        />
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  {expandedBills.has(payment.id) && payment.items && (
-                    <View style={styles.paymentExpandedContent}>
-                      <Text style={styles.expandedTitle}>{payment.title}</Text>
-                      <Text style={styles.expandedStatus}>
-                        Done : {payment.methodDate}
-                      </Text>
-                      <View style={styles.expandedAmountRow}>
-                        <View style={styles.statusBadgeSuccess}>
-                          <Text style={styles.statusTextSuccess}>Lunas</Text>
-                        </View>
-                        <Text style={styles.expandedAmount}>
-                          {payment.amount.formatted}
-                        </Text>
-                      </View>
-
-                      <View style={styles.dividerToolbar}>
-                        <Text style={styles.dividerText}>
-                          Rincian Pesanan Kamu
-                        </Text>
-                        {payment.receiptUrl && (
-                          <Pressable style={styles.receiptButtonSmall}>
-                            <Text style={styles.receiptButtonSmallText}>
-                              Lihat Struk
-                            </Text>
-                          </Pressable>
-                        )}
-                      </View>
-
-                      <View style={styles.itemsTable}>
-                        {payment.items.map((item, index) => (
-                          <View key={index} style={styles.itemRow}>
-                            <Text style={styles.itemName}>{item.name}</Text>
-                            <Text style={styles.itemQty}>{item.qty}x</Text>
-                            <Text style={styles.itemPrice}>
-                              {item.price.formatted}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </View>
-          </>
+        {/* Empty State */}
+        {sortedTransactions.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="receipt-outline" size={48} color={COLORS.textSecondary} />
+            <Text style={styles.emptyText}>Tidak ada transaksi</Text>
+          </View>
         )}
       </ScrollView>
+
+      {/* Floating Action Button */}
+      <Pressable style={styles.fab} onPress={() => router.push("/create-bill")}>
+        <Ionicons name="add" size={24} color={COLORS.white} />
+      </Pressable>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
-    backgroundColor: UI_STATE_PAYLOAD.theme.colors.backgroundMain,
+    backgroundColor: COLORS.backgroundLight,
   },
   header: {
-    backgroundColor: "#00897B",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
-    paddingTop: 12,
-    paddingBottom: 16,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
   },
   headerTitle: {
-    color: COLORS.white,
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
   },
-  segmentedControl: {
+  headerFilterButton: {
+    padding: 8,
+    borderRadius: 20,
+    position: "relative",
+  },
+  headerFilterButtonActive: {
+    backgroundColor: COLORS.teal,
+  },
+  headerFilterBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.orange,
+  },
+  tabContainer: {
     flexDirection: "row",
     margin: 16,
+    marginTop: 16,
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 4,
@@ -877,21 +541,40 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  segment: {
+  totalCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: COLORS.teal,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  totalAmount: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.white,
+    marginBottom: 4,
+  },
+  totalLabel: {
+    fontSize: 13,
+    color: COLORS.white,
+    opacity: 0.9,
+  },
+  tab: {
     flex: 1,
     paddingVertical: 12,
     alignItems: "center",
     borderRadius: 8,
   },
-  activeSegment: {
-    backgroundColor: "#00897B",
+  activeTab: {
+    backgroundColor: COLORS.teal,
   },
-  segmentText: {
+  tabText: {
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.textSecondary,
   },
-  activeSegmentText: {
+  activeTabText: {
     color: COLORS.white,
   },
   content: {
@@ -899,406 +582,193 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scrollContent: {
-    paddingBottom: 120,
-    flexGrow: 1,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 24,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: UI_STATE_PAYLOAD.theme.colors.cardBg,
-    borderRadius: UI_STATE_PAYLOAD.theme.radius,
-    padding: 16,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  summaryTitle: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 8,
-  },
-  summaryAmount: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#00897B",
-  },
-  pendingPaymentCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#FF8736",
-    backgroundColor: "#FFF7ED",
-  },
-  pendingPaymentAmount: {
-    color: "#FF8736",
-  },
-  myBillsCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#00897B",
-    backgroundColor: "#F0FDFA",
-  },
-  myBillsAmount: {
-    color: "#00897B",
-  },
-  completedPaymentCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#9CA3AF",
-    backgroundColor: "#F9FAFB",
-  },
-  completedPaymentAmount: {
-    color: "#9CA3AF",
-  },
-  completedBillsCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#16A34A",
-    backgroundColor: "#F0FDF4",
-  },
-  completedBillsAmount: {
-    color: "#16A34A",
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 12,
-  },
-  billCard: {
-    backgroundColor: UI_STATE_PAYLOAD.theme.colors.cardBg,
-    borderRadius: UI_STATE_PAYLOAD.theme.radius,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  myBillCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#00897B",
-    backgroundColor: "#F0FDFA",
-  },
-  payableCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#FF8736",
-    backgroundColor: "#FFF7ED",
-  },
-  billHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  billInfo: {
-    flex: 1,
-  },
-  billTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-    flex: 1,
-  },
-  paymentMethodText: {
-    fontSize: 12,
-    color: "#00897B",
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  billDate: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  billAmount: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#00897B",
-  },
-  billActions: {
-    alignItems: "flex-end",
-    gap: 8,
+    paddingBottom: 100,
   },
 
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    zIndex: 1000,
+  },
+  filterModal: {
+    backgroundColor: COLORS.white,
+    margin: 0,
+    marginTop: 60,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    flex: 1,
+  },
+  filterHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+  },
+  resetText: {
+    fontSize: 14,
+    color: COLORS.teal,
+    fontWeight: "600",
+  },
+  filterSection: {
+    padding: 16,
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+    marginBottom: 12,
+  },
+  filterOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  filterChipActive: {
+    backgroundColor: COLORS.teal,
+    borderColor: COLORS.teal,
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  filterChipTextActive: {
+    color: COLORS.white,
+    fontWeight: "600",
+  },
+  applyButton: {
+    margin: 16,
+    backgroundColor: COLORS.teal,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  applyButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  transactionCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    borderLeftWidth: 4,
+  },
+  transactionItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  transactionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  transactionRight: {
+    alignItems: "flex-end",
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  transactionInfo: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  transactionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+    marginBottom: 0,
+  },
+  transactionSubtitle: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    lineHeight: 16,
+  },
+  dueDateText: {
+    fontSize: 12,
+    color: COLORS.orange,
+    fontWeight: "bold",
+    lineHeight: 14,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    marginTop: 12,
+  },
   expandedContent: {
-    marginTop: 16,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 8,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
-  friendRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  personSection: {
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  personHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  friendInfo: {
-    flex: 1,
-  },
-  friendName: {
+  expandedTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  orderItems: {
-    marginTop: 4,
-  },
-  orderItem: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 2,
-  },
-  friendRight: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  friendAmount: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: COLORS.success,
-  },
-  statusLunas: {
-    backgroundColor: "#DCFCE7",
-  },
-  statusTertunda: {
-    backgroundColor: "#FEF3C7",
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: COLORS.white,
-  },
-  statusTextLunas: {
-    color: "#16A34A",
-  },
-  statusTextTertunda: {
-    color: "#D97706",
-  },
-  receiptButton: {
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: "#E0F2F1",
-    borderRadius: 8,
-    alignSelf: "flex-start",
-  },
-  receiptButtonText: {
-    fontSize: 12,
-    color: "#00897B",
-    fontWeight: "600",
-  },
-  paymentCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  paymentInfo: {
-    marginBottom: 12,
-  },
-  paymentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
-  statusIndicator: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: "flex-start",
-  },
-  statusPengingat: {
-    backgroundColor: "#E3F2FD",
-  },
-  statusPermintaan: {
-    backgroundColor: "#FFF8E1",
-  },
-  statusTerlambat: {
-    backgroundColor: "#FFEBEE",
-  },
-  statusIndicatorText: {
-    fontSize: 10,
-    fontWeight: "600",
-  },
-  statusTextPengingat: {
-    color: "#1976D2",
-  },
-  statusTextPermintaan: {
-    color: "#F57C00",
-  },
-  statusTextTerlambat: {
-    color: "#D32F2F",
+  payerItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   payerName: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    flex: 1,
   },
-  dueDate: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 8,
-  },
-  paymentActions: {
+  payerRight: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
-  payNowButton: {
-    flex: 1,
-    backgroundColor: "#00897B",
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  payNowText: {
-    color: COLORS.white,
-    fontSize: 12,
+  payerAmount: {
+    fontSize: 14,
     fontWeight: "600",
+    color: COLORS.textPrimary,
   },
-  payLaterButton: {
-    flex: 1,
-    backgroundColor: COLORS.border,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  payLaterText: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: "900",
-  },
-  overdueButton: {
-    flex: 1,
-    backgroundColor: COLORS.disabled,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  overdueText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  completedCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  paymentHistoryCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  completedMyBillCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#16A34A",
-    backgroundColor: "#F0FDF4",
-  },
-  completedPayableCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#9CA3AF",
-    backgroundColor: "#F9FAFB",
-  },
-  paymentHistoryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  avatarContainer: {
-    flexDirection: "row",
-    flex: 1,
-    alignItems: "flex-start",
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.textSecondary,
-  },
-  paymentMainInfo: {
-    flex: 1,
-  },
-  paymentLabel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  paymentTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  paymentMethod: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  paymentRight: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  paymentAmount: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#00897B",
+  lastPayerItem: {
+    borderBottomWidth: 0,
   },
   statusBadgeSuccess: {
     paddingHorizontal: 8,
@@ -1311,95 +781,46 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#16A34A",
   },
-  paymentExpandedContent: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  expandedHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  expandedHeaderText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginLeft: 8,
-  },
-  expandedTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  expandedStatus: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 12,
-  },
-  expandedAmountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  expandedAmount: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#00897B",
-  },
-  dividerToolbar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 12,
-  },
-  dividerText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  receiptButtonSmall: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: "#E0F2F1",
-    borderRadius: 6,
-  },
-  receiptButtonSmallText: {
-    fontSize: 10,
-    color: "#00897B",
-    fontWeight: "600",
-  },
-  itemsTable: {
-    gap: 8,
-  },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  statusBadgePending: {
+    paddingHorizontal: 8,
     paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: "#FEF3C7",
   },
-  itemName: {
-    flex: 1,
-    fontSize: 14,
-    color: COLORS.text,
-  },
-  itemQty: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginRight: 16,
-    minWidth: 30,
-    textAlign: "center",
-  },
-  itemPrice: {
-    fontSize: 14,
+  statusTextPending: {
+    fontSize: 10,
     fontWeight: "600",
-    color: COLORS.text,
-    textAlign: "right",
-    minWidth: 80,
+    color: "#D97706",
+  },
+  paymentButtonContainer: {
+    marginTop: 8,
+  },
+  payTagihanButton: {
+    backgroundColor: COLORS.teal,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    width: "100%",
+  },
+  payTagihanText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.success,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
