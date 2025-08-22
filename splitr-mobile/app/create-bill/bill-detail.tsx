@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useBillStore } from "@/store/billStore";
 import { formatRp } from "@/lib/currency";
-import { Colors } from '../../constants/Colors';
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function BillDetail() {
   const { draft, recalcTotals } = useBillStore();
@@ -17,181 +17,281 @@ export default function BillDetail() {
   const canConfirm = draft.name.trim().length > 0 && !!draft.category && draft.items.length > 0;
   
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Detail Tagihan</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.billName}>Nama: <Text style={styles.boldText}>{draft.name}</Text></Text>
-            <Text style={styles.billCategory}>Kategori: {draft.category ?? "-"}</Text>
-          </View>
-          <Pressable onPress={() => router.push("/create-bill/edit-bill")} style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit</Text>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </Pressable>
-        </View>
-        
-        <View style={styles.itemsContainer}>
-          {draft.items.map((it) => (
-            <View key={it.id} style={styles.itemRow}>
-              <Text style={styles.itemText}>{it.name} × {it.qty}</Text>
-              <Text style={styles.itemPrice}>{formatRp(it.qty * it.price)}</Text>
-            </View>
-          ))}
-        </View>
-        
-        <View style={styles.divider} />
-        
-        <View style={styles.totalsContainer}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
-            <Text style={styles.totalValue}>{formatRp(draft.totals.subTotal)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Pajak</Text>
-            <Text style={styles.totalValue}>{formatRp(draft.totals.tax)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Layanan</Text>
-            <Text style={styles.totalValue}>{formatRp(draft.totals.service)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.grandTotalLabel}>Total</Text>
-            <Text style={styles.grandTotalValue}>{formatRp(draft.totals.grandTotal)}</Text>
-          </View>
+          <Text style={styles.headerTitle}>Detail Tagihan</Text>
+          <View style={styles.placeholder} />
         </View>
 
-        <Pressable 
-          onPress={() => router.push("/create-bill/payment-method")} 
-          disabled={!canConfirm}
-          style={[styles.confirmButton, { opacity: canConfirm ? 1 : 0.5 }]}
-        >
-          <Text style={styles.confirmText}>Konfirmasi</Text>
-        </Pressable>
-      </View>
-    </SafeAreaView>
+        <View style={styles.whiteModalContainer}>
+          <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Informasi Tagihan</Text>
+              <View style={styles.infoCard}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Nama Tagihan</Text>
+                  <Text style={styles.infoValue}>{draft.name}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Kategori</Text>
+                  <Text style={styles.infoValue}>{draft.category ?? "-"}</Text>
+                </View>
+                <Pressable onPress={() => router.push("/create-bill/edit-bill")} style={styles.editButton}>
+                  <Ionicons name="create-outline" size={16} color={COLORS.teal} />
+                  <Text style={styles.editButtonText}>Edit Tagihan</Text>
+                </Pressable>
+              </View>
+            </View>
+        
+            <View style={styles.itemsSection}>
+              <Text style={styles.sectionTitle}>Daftar Item</Text>
+              <View style={styles.itemsCard}>
+                {draft.items.map((it) => (
+                  <View key={it.id} style={styles.itemRow}>
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.itemName}>{it.name}</Text>
+                      <Text style={styles.itemDetails}>{it.qty} × {formatRp(it.price)}</Text>
+                    </View>
+                    <Text style={styles.itemPrice}>{formatRp(it.qty * it.price)}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+        
+            <View style={styles.summarySection}>
+              <Text style={styles.sectionTitle}>Ringkasan Pembayaran</Text>
+              <View style={styles.summaryCard}>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Subtotal</Text>
+                  <Text style={styles.totalValue}>{formatRp(draft.totals.subTotal)}</Text>
+                </View>
+                {draft.totals.tax > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Pajak</Text>
+                    <Text style={styles.totalValue}>{formatRp(draft.totals.tax)}</Text>
+                  </View>
+                )}
+                {draft.totals.service > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Layanan</Text>
+                    <Text style={styles.totalValue}>{formatRp(draft.totals.service)}</Text>
+                  </View>
+                )}
+                {draft.totals.discount > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>
+                      Diskon {draft.fees.discountPct > 0 ? `(${draft.fees.discountPct}%)` : '(Nominal)'}
+                    </Text>
+                    <Text style={[styles.totalValue, { color: COLORS.success }]}>-{formatRp(draft.totals.discount)}</Text>
+                  </View>
+                )}
+                <View style={styles.divider} />
+                <View style={styles.totalRow}>
+                  <Text style={styles.grandTotalLabel}>Total Keseluruhan</Text>
+                  <Text style={styles.grandTotalValue}>{formatRp(draft.totals.grandTotal)}</Text>
+                </View>
+              </View>
+            </View>
+
+            <Pressable 
+              onPress={() => router.push("/create-bill/payment-method")} 
+              disabled={!canConfirm}
+              style={[styles.confirmButton, !canConfirm && styles.confirmButtonDisabled]}
+            >
+              <Text style={[styles.confirmText, !canConfirm && styles.confirmTextDisabled]}>Konfirmasi</Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
-    backgroundColor: '#F7F7FB',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    backgroundColor: '#00897B',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
   },
   backButton: {
-    marginRight: 16,
+    padding: 5,
   },
   headerTitle: {
-    color: Colors.white,
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  placeholder: {
+    width: 24,
+  },
+  whiteModalContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    flex: 1,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
   },
-  billName: {
-    fontSize: 16,
-    marginBottom: 4,
-    color: Colors.text,
+  scrollContent: {
+    paddingBottom: 20,
   },
-  billCategory: {
-    fontSize: 16,
-    color: Colors.text,
+  sectionTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
   },
-  headerRow: {
+  infoSection: {
+    marginBottom: SPACING.lg,
+  },
+  infoCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+  },
+  infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  infoLabel: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  infoValue: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
   },
   editButton: {
-    backgroundColor: '#E0F2F1',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.backgroundLight,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    marginTop: SPACING.sm,
+    gap: SPACING.xs,
   },
   editButtonText: {
-    color: '#00897B',
-    fontSize: 14,
-    fontWeight: '600',
+    color: COLORS.teal,
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
   },
-  boldText: {
-    fontWeight: '600',
+  itemsSection: {
+    marginBottom: SPACING.lg,
   },
-  itemsContainer: {
-    marginBottom: 12,
+  itemsCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
   },
   itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 6,
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  itemText: {
-    fontSize: 14,
-    color: Colors.text,
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+  },
+  itemDetails: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
   itemPrice: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.teal,
   },
-  divider: {
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderColor: "#eee",
+  summarySection: {
+    marginBottom: SPACING.lg,
   },
-  totalsContainer: {
-    marginTop: 8,
+  summaryCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 4,
+    alignItems: 'center',
+    paddingVertical: SPACING.xs,
   },
   totalLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
   },
   totalValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: SPACING.sm,
   },
   grandTotalLabel: {
-    fontWeight: "700",
-    fontSize: 16,
-    color: Colors.text,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
   },
   grandTotalValue: {
-    fontWeight: "700",
-    fontSize: 16,
-    color: '#00897B',
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.teal,
   },
   confirmButton: {
-    backgroundColor: '#00897B',
-    padding: 14,
-    borderRadius: 10,
+    backgroundColor: COLORS.teal,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: SPACING.md,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: COLORS.disabled,
   },
   confirmText: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: 16,
+    color: COLORS.white,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.bold,
+  },
+  confirmTextDisabled: {
+    color: COLORS.textSecondary,
   },
 });

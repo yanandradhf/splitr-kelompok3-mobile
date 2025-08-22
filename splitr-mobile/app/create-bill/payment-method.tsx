@@ -1,149 +1,269 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useBillStore } from "@/store/billStore";
 import { toISODate } from "@/lib/date";
-import { Colors } from '../../constants/Colors';
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function PaymentMethod() {
   const { draft, setPaymentMethod, setDueDate } = useBillStore();
   const [mode, setMode] = useState<"PAY_NOW" | "PAY_LATER">(draft.paymentMethod || "PAY_NOW");
-  const [date, setDate] = useState<string>(draft.dueDate || toISODate(new Date()));
+  const [date, setDate] = useState<Date>(draft.dueDate ? new Date(draft.dueDate) : new Date());
+  const [showDatePicker, setShowDatePicker] = useState(draft.paymentMethod === "PAY_LATER");
 
   const onConfirm = () => {
     setPaymentMethod(mode);
-    if (mode === "PAY_LATER") setDueDate(date);
+    if (mode === "PAY_LATER") setDueDate(toISODate(date));
     router.push("/create-bill/member-bills");
   };
 
-  return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Pilih Metode Tagihan</Text>
-      </View>
+  const onDateConfirm = (selectedDate: Date) => {
+    setShowDatePicker(false);
+    setDate(selectedDate);
+  };
 
-      <View style={styles.content}>
-        <View style={styles.methodContainer}>
-          {(["PAY_NOW", "PAY_LATER"] as const).map((m) => (
-            <Pressable key={m} onPress={() => setMode(m)} style={[styles.pill, mode === m && styles.pillActive]}>
-              <Text style={[styles.pillText, mode === m && styles.pillActiveText]}>
-                {m === "PAY_NOW" ? "Bayar Sekarang" : "Bayar Nanti"}
-              </Text>
-            </Pressable>
-          ))}
+  const onDateCancel = () => {
+    setShowDatePicker(false);
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Pilih Metode Tagihan</Text>
+          <View style={styles.placeholder} />
         </View>
 
-        {mode === "PAY_LATER" && (
-          <View style={styles.dateContainer}>
-            <Text style={styles.dateLabel}>Jatuh Tempo</Text>
-            <Pressable onPress={() => setDate(toISODate(new Date()))} style={styles.dateButton}>
-              <Text style={styles.dateText}>{date}</Text>
-            </Pressable>
-            <Text style={styles.dateNote}>(* Ganti dengan komponen kalender sesuai desain Anda)</Text>
-          </View>
-        )}
+        <View style={styles.whiteModalContainer}>
+          <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+            <Text style={styles.sectionTitle}>Metode Pembayaran</Text>
+            <Text style={styles.sectionSubtitle}>Pilih kapan tagihan harus dibayar</Text>
+            <View style={styles.methodContainer}>
+              <Pressable 
+                onPress={() => setMode("PAY_NOW")} 
+                style={[styles.methodCard, mode === "PAY_NOW" && styles.methodCardActive]}
+              >
+                <View style={styles.methodIcon}>
+                  <Ionicons 
+                    name="flash" 
+                    size={24} 
+                    color={mode === "PAY_NOW" ? COLORS.white : COLORS.teal} 
+                  />
+                </View>
+                <Text style={[styles.methodTitle, mode === "PAY_NOW" && styles.methodTitleActive]}>
+                  Bayar Sekarang
+                </Text>
+                <Text style={[styles.methodDesc, mode === "PAY_NOW" && styles.methodDescActive]}>
+                  Tagihan harus dibayar segera
+                </Text>
+              </Pressable>
 
-        <Pressable onPress={onConfirm} style={styles.confirmButton}>
-          <Text style={styles.confirmText}>Kirim ke Anggota</Text>
-        </Pressable>
-      </View>
-    </SafeAreaView>
+              <Pressable 
+                onPress={() => setMode("PAY_LATER")} 
+                style={[styles.methodCard, mode === "PAY_LATER" && styles.methodCardActive]}
+              >
+                <View style={styles.methodIcon}>
+                  <Ionicons 
+                    name="calendar" 
+                    size={24} 
+                    color={mode === "PAY_LATER" ? COLORS.white : COLORS.teal} 
+                  />
+                </View>
+                <Text style={[styles.methodTitle, mode === "PAY_LATER" && styles.methodTitleActive]}>
+                  Bayar Nanti
+                </Text>
+                <Text style={[styles.methodDesc, mode === "PAY_LATER" && styles.methodDescActive]}>
+                  Atur tanggal jatuh tempo
+                </Text>
+              </Pressable>
+            </View>
+
+            {mode === "PAY_LATER" && (
+              <View style={styles.dateSection}>
+                <Text style={styles.sectionTitle}>Tanggal Jatuh Tempo</Text>
+                <Pressable onPress={() => setShowDatePicker(true)} style={styles.dateInputContainer}>
+                  <Ionicons name="calendar-outline" size={20} color={COLORS.teal} style={styles.dateIcon} />
+                  <Text style={styles.dateInputText}>
+                    {formatDate(date)}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
+                </Pressable>
+                
+                <DateTimePickerModal
+                  isVisible={showDatePicker}
+                  mode="date"
+                  onConfirm={onDateConfirm}
+                  onCancel={onDateCancel}
+                  minimumDate={new Date()}
+                  date={date}
+                />
+              </View>
+            )}
+
+            <Pressable onPress={onConfirm} style={styles.confirmButton}>
+              <Text style={styles.confirmText}>Kirim ke Anggota</Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
-    backgroundColor: '#F7F7FB',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    backgroundColor: '#00897B',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
   },
   backButton: {
-    marginRight: 16,
+    padding: 5,
   },
   headerTitle: {
-    color: Colors.white,
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  placeholder: {
+    width: 24,
+  },
+  whiteModalContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    flex: 1,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
+  },
+  sectionSubtitle: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.lg,
   },
   methodContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
   },
-  pill: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  methodCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.inputBorder,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  methodCardActive: {
+    backgroundColor: COLORS.teal,
+    borderColor: COLORS.teal,
+  },
+  methodIcon: {
+    marginBottom: SPACING.md,
+  },
+  methodTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
+  },
+  methodTitleActive: {
+    color: COLORS.white,
+  },
+  methodDesc: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  methodDescActive: {
+    color: COLORS.white,
+  },
+  dateSection: {
+    marginBottom: SPACING.lg,
+  },
+  dateInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.sm,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 16,
-    backgroundColor: Colors.white,
+    borderColor: COLORS.inputBorder,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
   },
-  pillActive: {
-    backgroundColor: '#E6FFF3',
-    borderColor: '#20C997',
+  dateIcon: {
+    marginRight: SPACING.sm,
   },
-  pillText: {
-    fontSize: 14,
-    color: Colors.text,
+  dateInputText: {
+    flex: 1,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
   },
-  pillActiveText: {
-    color: '#20C997',
-  },
-  dateContainer: {
-    marginTop: 12,
-  },
-  dateLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: Colors.text,
-  },
-  dateButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 8,
-    backgroundColor: Colors.white,
-  },
-  dateText: {
-    fontSize: 14,
-    color: Colors.text,
-  },
-  dateNote: {
-    opacity: 0.7,
-    marginTop: 6,
-    fontSize: 12,
-    color: Colors.textSecondary,
+  dateHint: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
   },
   confirmButton: {
-    backgroundColor: '#00897B',
-    padding: 14,
-    borderRadius: 10,
+    backgroundColor: COLORS.teal,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: SPACING.md,
   },
   confirmText: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: 16,
+    color: COLORS.white,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.bold,
   },
 });

@@ -1,36 +1,82 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, StyleSheet, ScrollView, FlatList } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useBillStore } from "@/store/billStore";
-import { useFriends } from "@/hooks/useApi";
-import { formatRp } from "@/lib/currency";
-import { Colors } from '../../constants/Colors';
+import { useBillStore } from "../../store/billStore";
+import { useFriends, useGroups } from "../../hooks/useApi";
+import { useAuthStore } from "../../features/auth/auth.store";
+import { COLORS, FONTS } from '../../constants/theme';
 
 export default function SplitBill() {
   const { draft, assignShare, markPaidUpfront, finalize } = useBillStore();
   const { friends } = useFriends();
-  const [assignments, setAssignments] = useState<{[itemId: string]: {[memberId: string]: number}}>({});
-  const [paidUpfront, setPaidUpfront] = useState<{[itemId: string]: string | null}>({});
-
-  // Get selected members with names + host (me)
-  const selectedMembers = friends
-    .filter(f => draft.selectedMemberIds.includes(f.friend?.userId || f.id))
-    .map(f => ({ id: f.friend?.userId || f.id, name: f.friend?.name || f.name }));
+  const { groups } = useGroups(false);
+  const [assignments, setAssignments] = useState({});
+  const [paidUpfront, setPaidUpfront] = useState({});
   
-  // Add host (me) as first member
-  const allMembers = [{ id: 'host', name: 'Saya' }, ...selectedMembers];
+  // Initialize paidUpfront with host as default for all items
+  useEffect(() => {
+    const initialPaidUpfront = {};
+    draft.items.forEach(item => {
+      initialPaidUpfront[item.id] = 'host'; // Auto-set host as paid upfront
+    });
+    setPaidUpfront(initialPaidUpfront);
+  }, [draft.items]);
+  
+  // Get current user ID to exclude from selected members
+  const { user } = useAuthStore();
+  const currentUserId = user?.userId;
 
-  const isValidAssignment = (itemId: string, qty: number) => {
-    const itemAssignments = assignments[itemId] || {};
-    const totalShares = Object.values(itemAssignments).reduce((sum, shares) => sum + shares, 0);
-    return totalShares === qty;
+  const formatRp = (amount) => {
+    return `Rp ${amount.toLocaleString('id-ID')}`;
   };
 
-  const allItemsValid = draft.items.every(item => isValidAssignment(item.id, item.qty));
+  // Create a map of all users (friends + group members) by userId
+  const userMap = new Map();
+  
+  // Add friends to map
+  friends.forEach(f => {
+    if (f.friend?.userId) {
+      userMap.set(f.friend.userId, { id: f.friend.userId, name: f.friend.name });
+    }
+  });
+  
+  // Add group members to map (will overwrite if same userId)
+  groups.forEach(group => {
+    group.members?.forEach(member => {
+      userMap.set(member.userId, { id: member.userId, name: member.name });
+    });
+  });
+  
+  // Get selected members by looking up their userIds, excluding current user
+  const selectedMembers = draft.selectedMemberIds
+    .filter(userId => userId !== currentUserId) // Exclude current user
+    .map(userId => userMap.get(userId))
+    .filter(Boolean); // Remove any undefined entries
+  
+  // Always put current user (You) first, then other selected members
+  const allMembers = [
+    { id: 'host', name: 'You' },
+    ...selectedMembers
+  ];
 
-  const updateAssignment = (itemId: string, memberId: string, shares: number) => {
+  const isValidAssignment = (item) => {
+    const itemAssignments = assignments[item.id] || {};
+    if (item.isSharing) {
+      // For sharing items, check if at least one person is selected
+      const participantCount = Object.values(itemAssignments).filter(val => val > 0).length;
+      return participantCount > 0;
+    } else {
+      // For normal items, check if total shares equals quantity
+      const totalShares = Object.values(itemAssignments).reduce((sum, shares) => sum + shares, 0);
+      return totalShares === item.qty;
+    }
+  };
+
+  const allItemsValid = draft.items.every(item => isValidAssignment(item));
+
+  const updateAssignment = (itemId, memberId, shares) => {
     setAssignments(prev => ({
       ...prev,
       [itemId]: { ...prev[itemId], [memberId]: shares }
@@ -40,11 +86,28 @@ export default function SplitBill() {
   const handleConfirm = () => {
     // Save assignments to store
     Object.entries(assignments).forEach(([itemId, memberShares]) => {
-      Object.entries(memberShares).forEach(([memberId, shareQty]) => {
-        if (shareQty > 0) {
-          assignShare({ itemId, memberId, shareQty, isPaidUpfront: paidUpfront[itemId] === memberId });
-        }
-      });
+      const item = draft.items.find(i => i.id === itemId);
+      if (item?.isSharing) {
+        // For sharing items, calculate equal division
+        const participants = Object.entries(memberShares).filter(([_, val]) => val > 0);
+        const sharePerPerson = item.price / participants.length;
+        
+        participants.forEach(([memberId]) => {
+          assignShare({ 
+            itemId, 
+            memberId, 
+            shareQty: sharePerPerson, 
+            isPaidUpfront: paidUpfront[itemId] === memberId 
+          });
+        });
+      } else {
+        // For normal items, use the assigned quantities
+        Object.entries(memberShares).forEach(([memberId, shareQty]) => {
+          if (shareQty > 0) {
+            assignShare({ itemId, memberId, shareQty, isPaidUpfront: paidUpfront[itemId] === memberId });
+          }
+        });
+      }
     });
     
     // Navigate to bill summary for final confirmation
@@ -52,142 +115,193 @@ export default function SplitBill() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Pembagian Tagihan</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        <Text style={styles.memberInfo}>Anggota dipilih: {selectedMembers.length + 1} (termasuk Anda)</Text>
-        
-        <View style={styles.billSummary}>
-          <Text style={styles.summaryTitle}>Rincian Pesanan</Text>
-          {draft.items.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
-              <View style={styles.itemHeader}>
-                <Text style={styles.itemName}>{item.name} × {item.qty}</Text>
-                <Text style={styles.itemPrice}>{formatRp(item.qty * item.price)}</Text>
-              </View>
-              
-              <Text style={styles.assignLabel}>Pilih siapa yang bayar:</Text>
-              
-              {allMembers.map((member) => {
-                const currentShares = assignments[item.id]?.[member.id] || 0;
-                return (
-                  <View key={member.id} style={styles.memberRow}>
-                    <Text style={styles.memberName}>{member.name}</Text>
-                    <View style={styles.shareControls}>
-                      <Pressable 
-                        onPress={() => updateAssignment(item.id, member.id, Math.max(0, currentShares - 1))}
-                        style={styles.shareButton}
-                      >
-                        <Text style={styles.shareButtonText}>-</Text>
-                      </Pressable>
-                      <Text style={styles.shareCount}>{currentShares}</Text>
-                      <Pressable 
-                        onPress={() => updateAssignment(item.id, member.id, Math.min(item.qty, currentShares + 1))}
-                        style={styles.shareButton}
-                      >
-                        <Text style={styles.shareButtonText}>+</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                );
-              })}
-              
-              <View style={styles.paidUpfrontSection}>
-                <Text style={styles.paidLabel}>Sudah dibayar oleh:</Text>
-                <View style={styles.paidOptions}>
-                  <Pressable 
-                    onPress={() => setPaidUpfront(prev => ({ ...prev, [item.id]: null }))}
-                    style={[styles.paidOption, !paidUpfront[item.id] && styles.paidOptionActive]}
-                  >
-                    <Text style={[styles.paidOptionText, !paidUpfront[item.id] && styles.paidOptionActiveText]}>Belum</Text>
-                  </Pressable>
-                  {allMembers.map((member) => (
-                    <Pressable 
-                      key={member.id}
-                      onPress={() => setPaidUpfront(prev => ({ ...prev, [item.id]: member.id }))}
-                      style={[styles.paidOption, paidUpfront[item.id] === member.id && styles.paidOptionActive]}
-                    >
-                      <Text style={[styles.paidOptionText, paidUpfront[item.id] === member.id && styles.paidOptionActiveText]}>
-                        {member.name}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-              
-              {!isValidAssignment(item.id, item.qty) && (
-                <Text style={styles.validationError}>
-                  Total pembagian harus sama dengan qty ({item.qty})
-                </Text>
-              )}
-            </View>
-          ))}
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Pembagian Tagihan</Text>
+          <View style={styles.placeholder} />
         </View>
 
-        <Pressable 
-          onPress={handleConfirm} 
-          disabled={!allItemsValid} 
-          style={[styles.confirmButton, { opacity: allItemsValid ? 1 : 0.5 }]}
-        >
-          <Text style={styles.confirmText}>Konfirmasi</Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+        <View style={styles.whiteModalContainer}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <Text style={styles.memberInfo}>Anggota dipilih: {allMembers.length} orang (termasuk Anda)</Text>
+            
+            <View style={styles.billSummary}>
+              <Text style={styles.summaryTitle}>Rincian Pesanan</Text>
+              {draft.items.map((item) => (
+                <View key={item.id} style={styles.itemCard}>
+                  <View style={styles.itemHeader}>
+                    <Text style={styles.itemName}>{item.name} × {item.qty}</Text>
+                    <Text style={styles.itemPrice}>{formatRp(item.qty * item.price)}</Text>
+                  </View>
+                  
+                  <Text style={styles.assignLabel}>Pilih siapa yang bayar:</Text>
+                  
+                  {item.isSharing ? (
+                    // Sharing item - checkbox selection
+                    <View style={styles.sharingContainer}>
+                      <Text style={styles.sharingHint}>Pilih siapa yang ikut - akan dibagi rata otomatis</Text>
+                      {allMembers.map((member) => {
+                        const isSelected = (assignments[item.id]?.[member.id] || 0) > 0;
+                        return (
+                          <TouchableOpacity 
+                            key={member.id} 
+                            onPress={() => {
+                              if (isSelected) {
+                                updateAssignment(item.id, member.id, 0);
+                              } else {
+                                updateAssignment(item.id, member.id, 1); // Just mark as participating
+                              }
+                            }}
+                            style={styles.sharingMemberRow}
+                          >
+                            <Text style={styles.memberName}>{member.name}</Text>
+                            <View style={[styles.sharingCheckbox, isSelected && styles.sharingCheckboxActive]}>
+                              {isSelected && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  ) : (
+                    // Normal item - quantity based
+                    allMembers.map((member) => {
+                      const currentShares = assignments[item.id]?.[member.id] || 0;
+                      return (
+                        <View key={member.id} style={styles.memberRow}>
+                          <Text style={styles.memberName}>{member.name}</Text>
+                          <View style={styles.shareControls}>
+                            <TouchableOpacity 
+                              onPress={() => updateAssignment(item.id, member.id, Math.max(0, currentShares - 1))}
+                              style={styles.shareButton}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={styles.shareButtonText}>-</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.shareCount}>{currentShares}</Text>
+                            <TouchableOpacity 
+                              onPress={() => updateAssignment(item.id, member.id, Math.min(item.qty, currentShares + 1))}
+                              style={styles.shareButton}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={styles.shareButtonText}>+</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      );
+                    })
+                  )}
+                  
+                  <View style={styles.paidUpfrontSection}>
+                    <Text style={styles.paidLabel}>Sudah dibayar oleh:</Text>
+                    <View style={styles.paidInfoContainer}>
+                      <View style={[styles.paidOption, styles.paidOptionActive]}>
+                        <Text style={[styles.paidOptionText, styles.paidOptionActiveText]}>You</Text>
+                      </View>
+                      <Text style={styles.paidInfoText}>(Otomatis karena Anda pembuat tagihan)</Text>
+                    </View>
+                  </View>
+                  
+                  {!isValidAssignment(item) && (
+                    <Text style={styles.validationError}>
+                      {item.isSharing 
+                        ? 'Pilih minimal 1 orang yang ikut'
+                        : `Total pembagian harus sama dengan qty (${item.qty})`
+                      }
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity 
+              onPress={handleConfirm} 
+              disabled={!allItemsValid} 
+              style={[styles.confirmButton, { opacity: allItemsValid ? 1 : 0.5 }]}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.confirmText}>Konfirmasi</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
-    backgroundColor: '#F7F7FB',
+    backgroundColor: COLORS.backgroundMain,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    backgroundColor: '#00897B',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
     paddingVertical: 16,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
   },
   backButton: {
-    marginRight: 16,
+    padding: 5,
   },
   headerTitle: {
-    color: Colors.white,
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+  },
+  placeholder: {
+    width: 24,
+  },
+  whiteModalContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    flex: 1,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   memberInfo: {
     fontSize: 16,
+    fontFamily: FONTS.medium,
     marginBottom: 8,
-    color: Colors.text,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    backgroundColor: COLORS.inputBg,
+    padding: 12,
+    borderRadius: 8,
   },
   billSummary: {
     marginTop: 16,
   },
   summaryTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: Colors.text,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   itemCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: Colors.shadow,
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -200,19 +314,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   itemName: {
-    fontWeight: "600",
+    fontFamily: FONTS.semiBold,
     fontSize: 16,
-    color: Colors.text,
+    color: COLORS.textPrimary,
   },
   itemPrice: {
-    fontWeight: "600",
+    fontFamily: FONTS.bold,
     fontSize: 16,
-    color: '#00897B',
+    color: COLORS.teal,
   },
   assignLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   memberRow: {
@@ -223,87 +337,147 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 14,
-    color: Colors.text,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
     flex: 1,
   },
   shareControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    backgroundColor: COLORS.inputBg,
+    borderRadius: 8,
+    padding: 4,
   },
   shareButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#00897B',
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: COLORS.teal,
     alignItems: 'center',
     justifyContent: 'center',
   },
   shareButtonText: {
-    color: Colors.white,
-    fontSize: 18,
-    fontWeight: '600',
+    color: COLORS.white,
+    fontSize: 16,
+    fontFamily: FONTS.bold,
+    lineHeight: 16,
   },
   shareCount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text,
-    minWidth: 24,
+    fontSize: 14,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    minWidth: 32,
     textAlign: 'center',
+    paddingHorizontal: 8,
   },
   paidUpfrontSection: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: COLORS.inputBorder,
   },
   paidLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   paidOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   paidOption: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: COLORS.inputBorder,
+    backgroundColor: COLORS.inputBg,
+    minWidth: 50,
+    alignItems: 'center',
   },
   paidOptionActive: {
-    backgroundColor: '#E6FFF3',
-    borderColor: '#20C997',
+    backgroundColor: COLORS.teal,
+    borderColor: COLORS.teal,
   },
   paidOptionText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
+    fontSize: 11,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
   paidOptionActiveText: {
-    color: '#20C997',
-    fontWeight: '600',
+    color: COLORS.white,
+    fontFamily: FONTS.semiBold,
+  },
+  paidInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  paidInfoText: {
+    fontSize: 11,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
   },
   validationError: {
-    color: Colors.danger,
+    color: COLORS.red,
     fontSize: 12,
+    fontFamily: FONTS.regular,
     marginTop: 8,
     fontStyle: 'italic',
   },
   confirmButton: {
-    backgroundColor: '#00897B',
-    padding: 14,
-    borderRadius: 10,
+    backgroundColor: COLORS.teal,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 20,
+    marginBottom: 10,
+    shadowColor: COLORS.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   confirmText: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: 16,
+    color: COLORS.white,
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+  },
+  sharingContainer: {
+    backgroundColor: COLORS.inputBg,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  sharingHint: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
+  sharingMemberRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  sharingCheckbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+  },
+  sharingCheckboxActive: {
+    backgroundColor: COLORS.teal,
+    borderColor: COLORS.teal,
   },
 });

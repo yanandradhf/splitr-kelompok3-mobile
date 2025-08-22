@@ -8,16 +8,18 @@ import type {
   BillCategory,
 } from "@/types/bill";
 
-const emptyTotals: Totals = { subTotal: 0, tax: 0, service: 0, grandTotal: 0 };
+const emptyTotals: Totals = { subTotal: 0, tax: 0, service: 0, discount: 0, grandTotal: 0 };
 
 const newDraft = (): BillDraft => ({
   id: Math.random().toString(36).slice(2),
   name: "",
   category: null,
   items: [],
-  fees: { taxPct: 0, servicePct: 0 },
+  fees: { taxPct: 0, servicePct: 0, discountPct: 0, discountNominal: 0 },
   assignments: [],
   selectedMemberIds: [],
+  paymentMethod: undefined,
+  dueDate: undefined,
   totals: emptyTotals,
 });
 
@@ -64,11 +66,22 @@ export const useBillStore = create<BillState>((set, get) => ({
   setFees: (fees) => set((s) => ({ draft: { ...s.draft, fees } })),
   recalcTotals: () => {
     const { items, fees } = get().draft;
-    const subTotal = items.reduce((t, it) => t + it.qty * it.price, 0);
-    const tax = Math.floor(subTotal * (fees.taxPct / 100));
+    const subTotal = items.reduce((t, it) => {
+      return t + (it.isSharing ? it.price : it.qty * it.price);
+    }, 0);
     const service = Math.floor(subTotal * (fees.servicePct / 100));
-    const grandTotal = subTotal + tax + service;
-    set((s) => ({ draft: { ...s.draft, totals: { subTotal, tax, service, grandTotal } } }));
+    const tax = Math.floor((subTotal + service) * (fees.taxPct / 100));
+    
+    // Calculate discount
+    let discount = 0;
+    if (fees.discountPct > 0) {
+      discount = Math.floor((subTotal + service + tax) * (fees.discountPct / 100));
+    } else if (fees.discountNominal > 0) {
+      discount = fees.discountNominal;
+    }
+    
+    const grandTotal = Math.max(0, subTotal + service + tax - discount);
+    set((s) => ({ draft: { ...s.draft, totals: { subTotal, tax, service, discount, grandTotal } } }));
   },
   setSelectedMembers: (ids) =>
     set((s) => ({ draft: { ...s.draft, selectedMemberIds: ids } })),
