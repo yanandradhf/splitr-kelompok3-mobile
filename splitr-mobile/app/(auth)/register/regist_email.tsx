@@ -77,8 +77,8 @@ export default function RegisterEmail() {
 
   const validateEmail = (value: string) => {
     if (value.length === 0) return "";
-    const gmailRegex = /^[^\s@]+@gmail\.com$/;
-    return gmailRegex.test(value) ? "" : "Format email salah";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value) ? "" : "Format email salah";
   };
 
   const handleNext = async () => {
