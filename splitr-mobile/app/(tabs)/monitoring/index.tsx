@@ -909,7 +909,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: COLORS.border,
   },
   personHeader: {
     flexDirection: "row",

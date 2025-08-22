@@ -378,19 +378,7 @@ export default function HomeScreen() {
                         <Text style={styles.groupMembers}>
                           {group.memberCount} orang dalam grup ini
                         </Text>
-                        <TouchableOpacity
-                          style={styles.addFriendButton}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons
-                            name="person-add-outline"
-                            size={14}
-                            color={LOCAL_COLORS.headerBrown}
-                          />
-                          <Text style={styles.addFriendText}>
-                            Tambahkan Teman
-                          </Text>
-                        </TouchableOpacity>
+
                       </View>
                     </View>
                   </TouchableOpacity>
