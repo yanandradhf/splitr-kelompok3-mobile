@@ -12,7 +12,7 @@ export default function CreateBillIndex() {
 
   const handleContinue = () => {
     if (selectedMethod === 'scan') {
-      router.push('/create-bill/camera');
+      router.push('/bill/scan-bill/camera');
     } else if (selectedMethod === 'manual') {
       router.push('/create-bill/manual');
     }
