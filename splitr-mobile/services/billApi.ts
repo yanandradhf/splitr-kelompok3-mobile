@@ -3,8 +3,10 @@ import { BillDraft } from '@/types/bill';
 
 export interface CreateBillRequest {
   billName: string;
-  categoryId: string;
+  categoryId: string | null;
+  groupId?: string | null;
   totalAmount: number;
+  receiptImageUrl?: string;
   maxPaymentDate: string;
   allowScheduledPayment: boolean;
   splitMethod: 'custom' | 'equal';
@@ -17,6 +19,7 @@ export interface CreateBillRequest {
     category: string;
     isSharing: boolean;
     isVerified: boolean;
+    ocrConfidence?: number;
   }[];
   participants: {
     userId: string;
@@ -25,6 +28,13 @@ export interface CreateBillRequest {
       quantity: number;
       amount: number;
     }[];
+    breakdown: {
+      subtotal: number;
+      taxAmount: number;
+      serviceAmount: number;
+      discountAmount: number;
+      totalAmount: number;
+    };
   }[];
   fees: {
     taxPct: number;
@@ -43,12 +53,48 @@ export interface CreateBillResponse {
   billId: string;
   billCode: string;
   billName: string;
-  totalAmount: number;
+  totalAmount: string;
+  maxPaymentDate: string;
+  allowScheduledPayment: boolean;
+  splitMethod: string;
+  currency: string;
+  status: string;
+  items: {
+    itemId: string;
+    tempItemId: string;
+    itemName: string;
+    price: number;
+    quantity: number;
+    category: string;
+    isSharing: boolean;
+    isVerified: boolean;
+  }[];
+  host: { name: string; account: string };
   inviteLink: string;
   qrCodeUrl: string;
-  host: { name: string; account: string };
-  items: any[];
-  status: string;
+  fees: {
+    taxPct: number;
+    servicePct: number;
+    discountPct: number;
+    discountNominal: number;
+    subTotal: number;
+    taxAmount: number;
+    serviceAmount: number;
+    discountAmount: number;
+  };
+  calculatedByFrontend: boolean;
+  participantsAdded: number;
+  notificationsSent: number;
+  participantBreakdowns: {
+    userId: string;
+    breakdown: {
+      subtotal: number;
+      taxAmount: number;
+      serviceAmount: number;
+      discountAmount: number;
+      totalAmount: number;
+    };
+  }[];
 }
 
 function generateTempItemId(itemName: string, index: number): string {
@@ -70,7 +116,7 @@ function getUserIdFromMemberId(memberId: string, userMap: Map<string, any>, curr
   return user?.userId || user?.id || memberId;
 }
 
-export function transformDraftToCreateBillRequest(draft: BillDraft, categoryId: string, userMap?: Map<string, any>, currentUser?: any): CreateBillRequest {
+export function transformDraftToCreateBillRequest(draft: BillDraft, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]): CreateBillRequest {
   const now = new Date();
   const maxPaymentDate = draft.paymentMethod === 'PAY_NOW' 
     ? new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
@@ -99,25 +145,56 @@ export function transformDraftToCreateBillRequest(draft: BillDraft, categoryId: 
     if (!participantMap.has(assignment.memberId)) {
       participantMap.set(assignment.memberId, {
         userId,
-        items: []
+        items: [],
+        breakdown: { subtotal: 0, taxAmount: 0, serviceAmount: 0, discountAmount: 0, totalAmount: 0 }
       });
     }
     
     const participant = participantMap.get(assignment.memberId)!;
+    const itemTotal = item.isSharing ? assignment.shareQty : (item.price * assignment.shareQty);
+    
+    // 1. Hitung diskon per item dulu
+    let itemDiscount = 0;
+    if (draft.fees.discountPct > 0) {
+      itemDiscount = Math.floor(itemTotal * (draft.fees.discountPct / 100));
+    } else if (draft.fees.discountNominal > 0) {
+      const memberShareRatio = itemTotal / draft.totals.subTotal;
+      itemDiscount = Math.floor(draft.fees.discountNominal * memberShareRatio);
+    }
+    
+    // 2. Harga setelah diskon
+    const itemAfterDiscount = Math.max(0, itemTotal - itemDiscount);
+    
+    // 3. Hitung service dari harga setelah diskon
+    const itemService = Math.floor(itemAfterDiscount * (draft.fees.servicePct / 100));
+    
+    // 4. Hitung pajak dari harga setelah diskon
+    const itemTax = Math.floor(itemAfterDiscount * (draft.fees.taxPct / 100));
+    
     participant.items.push({
       tempItemId,
       quantity: assignment.shareQty,
-      amount: item.isSharing ? assignment.shareQty : (item.price * assignment.shareQty)
+      amount: itemTotal
     });
+    
+    participant.breakdown.subtotal += itemTotal;
+    participant.breakdown.taxAmount += itemTax;
+    participant.breakdown.serviceAmount += itemService;
+    participant.breakdown.discountAmount += itemDiscount;
+    participant.breakdown.totalAmount += itemAfterDiscount + itemService + itemTax;
   });
   
   const participants = Array.from(participantMap.values());
   const hasSharedItems = draft.items.some(item => item.isSharing);
   const splitMethod = hasSharedItems ? 'custom' : 'equal';
   
+  // Find category ID from categories list based on selected category
+  const selectedCategory = categories?.find(cat => cat.categoryName === draft.category);
+  const finalCategoryId = selectedCategory?.categoryId || categoryId;
+  
   return {
     billName: draft.name,
-    categoryId,
+    categoryId: finalCategoryId,
     totalAmount: draft.totals.grandTotal,
     maxPaymentDate,
     allowScheduledPayment: draft.paymentMethod === 'PAY_LATER',
@@ -138,9 +215,3 @@ export function transformDraftToCreateBillRequest(draft: BillDraft, categoryId: 
   };
 }
 
-export async function createBill(draft: BillDraft, categoryId: string, userMap?: Map<string, any>, currentUser?: any): Promise<CreateBillResponse> {
-  const requestData = transformDraftToCreateBillRequest(draft, categoryId, userMap, currentUser);
-  console.log('🚀 Sending bill data to API:', JSON.stringify(requestData, null, 2));
-  const response = await api.post('/api/mobile/bills/create', requestData);
-  return response.data;
-}

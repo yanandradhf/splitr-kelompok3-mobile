@@ -139,7 +139,7 @@ export default function PinVerification() {
       }
 
       // Finalize and send to backend
-      const apiResponse = await finalize(memberNames, categoryId, userMap, user);
+      const apiResponse = await finalize(memberNames, categoryId, userMap, user, categories);
       
       // Navigate to success page
       const allMemberNames = Object.values(memberNames);

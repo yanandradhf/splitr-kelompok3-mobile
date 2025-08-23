@@ -5,7 +5,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { formatRp } from '@/lib/currency';
-import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../../../../constants/theme';
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../constants/theme';
+import { API_CONFIG } from '../constants/config';
+import api from '../services/api';
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -23,6 +25,7 @@ export default function PaymentScreen() {
   const [paymentMethod, setPaymentMethod] = useState<'instant' | 'scheduled'>('instant');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Dummy account data
   const myAccount = {
@@ -34,6 +37,22 @@ export default function PaymentScreen() {
   const paymentAmount = parseInt(amount as string);
   const deadline = paymentDeadline ? new Date(paymentDeadline as string) : null;
   const maxScheduleDate = deadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const isDeadlineExpired = deadline && new Date() > deadline;
+  
+  // Ensure selected date doesn't exceed payment deadline
+  const isDateValid = !deadline || selectedDate <= deadline;
+  
+  // Debug parameters
+  console.log('🔍 Payment params:', {
+    canSchedule,
+    isOverdue,
+    paymentDeadline,
+    isDeadlineExpired
+  });
+  
+  // Can schedule only if canSchedule is true AND deadline is not expired
+  const canActuallySchedule = canSchedule === 'true' && !isDeadlineExpired;
+  console.log('🔍 canActuallySchedule:', canActuallySchedule);
 
   const handleDateChange = (event: any, date?: Date) => {
     setShowDatePicker(false);
@@ -48,36 +67,30 @@ export default function PaymentScreen() {
       return;
     }
 
-    if (paymentMethod === 'instant') {
-      Alert.alert(
-        'Konfirmasi Pembayaran',
-        `Bayar ${formatRp(paymentAmount)} sekarang?`,
-        [
-          { text: 'Batal', style: 'cancel' },
-          { 
-            text: 'Bayar', 
-            onPress: () => {
-              router.push('/monitoring/transaction/pembayaran/berhasil');
-            }
-          }
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Konfirmasi Jadwal Pembayaran',
-        `Jadwalkan pembayaran ${formatRp(paymentAmount)} pada ${selectedDate.toLocaleDateString('id-ID')}?`,
-        [
-          { text: 'Batal', style: 'cancel' },
-          { 
-            text: 'Jadwalkan', 
-            onPress: () => {
-              router.push('/monitoring/transaction/pembayaran/berhasil');
-            }
-          }
-        ]
-      );
+    if (paymentMethod === 'scheduled' && !isDateValid) {
+      Alert.alert('Tanggal Tidak Valid', 'Tanggal jadwal pembayaran tidak boleh melebihi batas waktu pembayaran.');
+      return;
     }
+
+    // Navigate to PIN verification page
+    router.push({
+      pathname: '/pin-verification',
+      params: {
+        title: 'Konfirmasi Pembayaran',
+        subtitle: paymentMethod === 'instant' 
+          ? `Bayar ${formatRp(paymentAmount)} sekarang`
+          : `Jadwalkan pembayaran ${formatRp(paymentAmount)}`,
+        billId: billId as string,
+        amount: paymentAmount.toString(),
+        paymentMethod: paymentMethod,
+        scheduledDate: paymentMethod === 'scheduled' ? selectedDate.toISOString() : undefined,
+        hostName: hostName as string,
+        billName: billName as string
+      }
+    });
   };
+
+
 
   return (
     <View style={styles.container}>
@@ -140,7 +153,7 @@ export default function PaymentScreen() {
             </View>
 
             {/* Payment Method */}
-            {canSchedule === 'true' && (
+            {canActuallySchedule && (
               <View style={styles.methodCard}>
                 <Text style={styles.cardTitle}>Metode Pembayaran</Text>
                 
@@ -173,16 +186,29 @@ export default function PaymentScreen() {
                 {paymentMethod === 'scheduled' && (
                   <View style={styles.dateSection}>
                     <Text style={styles.dateLabel}>Pilih Tanggal Pembayaran</Text>
-                    <Pressable style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-                      <Ionicons name="calendar-outline" size={20} color={COLORS.teal} />
-                      <Text style={styles.dateText}>{selectedDate.toLocaleDateString('id-ID')}</Text>
+                    <Pressable style={[styles.dateButton, !isDateValid && styles.dateButtonInvalid]} onPress={() => setShowDatePicker(true)}>
+                      <Ionicons name="calendar-outline" size={20} color={isDateValid ? COLORS.teal : COLORS.red} />
+                      <Text style={[styles.dateText, !isDateValid && styles.dateTextInvalid]}>{selectedDate.toLocaleDateString('id-ID')}</Text>
                       <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
                     </Pressable>
                     <Text style={styles.dateHint}>
                       Maksimal: {maxScheduleDate.toLocaleDateString('id-ID')}
                     </Text>
+                    {!isDateValid && (
+                      <Text style={styles.dateError}>
+                        Tanggal tidak boleh melebihi batas waktu pembayaran
+                      </Text>
+                    )}
                   </View>
                 )}
+              </View>
+            )}
+
+            {/* Deadline Expired Warning */}
+            {isDeadlineExpired && canSchedule === 'true' && (
+              <View style={styles.expiredWarningCard}>
+                <Ionicons name="time" size={20} color={COLORS.red} />
+                <Text style={styles.expiredWarningText}>Batas waktu pembayaran telah berakhir. Anda hanya bisa bayar sekarang.</Text>
               </View>
             )}
 
@@ -193,6 +219,8 @@ export default function PaymentScreen() {
                 <Text style={styles.warningText}>Saldo tidak mencukupi untuk pembayaran ini</Text>
               </View>
             )}
+
+
           </ScrollView>
 
           {/* Payment Button */}
@@ -200,10 +228,10 @@ export default function PaymentScreen() {
             <Pressable 
               style={[
                 styles.payButton,
-                paymentAmount > myAccount.balance && styles.payButtonDisabled
+                (paymentAmount > myAccount.balance || (paymentMethod === 'scheduled' && !isDateValid)) && styles.payButtonDisabled
               ]} 
               onPress={handlePayment}
-              disabled={paymentAmount > myAccount.balance}
+              disabled={paymentAmount > myAccount.balance || (paymentMethod === 'scheduled' && !isDateValid)}
             >
               <Text style={styles.payButtonText}>
                 {paymentMethod === 'instant' ? 'Bayar Sekarang' : 'Jadwalkan Pembayaran'}
@@ -454,6 +482,10 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     marginBottom: SPACING.xs,
   },
+  dateButtonInvalid: {
+    borderColor: COLORS.red,
+    backgroundColor: '#FEF2F2',
+  },
   dateText: {
     flex: 1,
     fontSize: FONT_SIZES.base,
@@ -461,10 +493,19 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginLeft: SPACING.sm,
   },
+  dateTextInvalid: {
+    color: COLORS.red,
+  },
   dateHint: {
     fontSize: FONT_SIZES.xs,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
+  },
+  dateError: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.medium,
+    color: COLORS.red,
+    marginTop: SPACING.xs,
   },
   warningCard: {
     flexDirection: 'row',
@@ -477,10 +518,27 @@ const styles = StyleSheet.create({
     borderColor: '#FDE68A',
     marginBottom: SPACING.md,
   },
+  expiredWarningCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: '#FEF2F2',
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginBottom: SPACING.md,
+  },
   warningText: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.medium,
     color: COLORS.warning,
+    flex: 1,
+  },
+  expiredWarningText: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.red,
     flex: 1,
   },
   buttonContainer: {
