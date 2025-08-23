@@ -6,11 +6,13 @@ interface NotificationMetadata {
   groupName?: string;
   creatorName?: string;
   action?: string;
+  billId?: string;
+  billName?: string;
 }
 
 interface Notification {
   notificationId: string;
-  type: 'group_invitation' | 'group_member_left' | 'group_member_removed' | 'group_updated' | 'group_deleted';
+  type: 'group_invitation' | 'group_member_left' | 'group_member_removed' | 'group_updated' | 'group_deleted' | 'payment_reminder' | 'payment_received' | 'bill_assignment';
   title: string;
   message: string;
   billId?: string;

@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://fe1ee772c33e.ngrok-free.app",
+  BASE_URL: "https://fce870ee0878.ngrok-free.app",
   ENDPOINTS: {
     // Auth
     LOGIN: "/api/mobile/auth/login",
@@ -86,7 +86,11 @@ export const UI_STATE_PAYLOAD = {
       summary: [
         {
           title: "Pembayaran Tertunda",
-          value: { amount: 11985000, currency: "IDR", formatted: "Rp 11.985.000" },
+          value: {
+            amount: 11985000,
+            currency: "IDR",
+            formatted: "Rp 11.985.000",
+          },
           subtitle: "Yang harus dibayar",
         },
         {
