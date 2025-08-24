@@ -108,6 +108,8 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         error: error.response?.data?.message || 'Failed to fetch group details',
         isLoading: false 
       });
+      // Re-throw error so it can be caught in the component
+      throw error;
     }
   },
 

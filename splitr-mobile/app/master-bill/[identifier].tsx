@@ -7,6 +7,7 @@ import { formatRp } from '@/lib/currency';
 import api from '@/services/api';
 import { API_CONFIG } from '@/constants/config';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import { getBillEndpoint } from '../../utils/billEndpoints';
 
 interface MasterBillData {
   billId: string;
@@ -99,7 +100,7 @@ export default function MasterBillDetail() {
         }
       }
       
-      const endpoint = `${API_CONFIG.ENDPOINTS.MASTER}/${identifier}`;
+      const endpoint = getBillEndpoint(identifier, true); // Always host for master-bill
       console.log('🔍 [MASTER] Fetching master bill data:', endpoint);
       
       const response = await api.get(endpoint);

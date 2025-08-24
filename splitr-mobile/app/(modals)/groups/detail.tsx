@@ -9,6 +9,7 @@ import {
   ScrollView,
   FlatList,
   Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -104,13 +105,40 @@ export default function GroupDetailScreen() {
     // Clear current group cache first
     clearCurrentGroup();
     
-    if (groupId) {
-      console.log('Fetching by groupId:', groupId);
-      fetchGroupDetail(groupId);
-    } else if (groupData?.groupId) {
-      console.log('Fetching by groupData.groupId:', groupData.groupId);
-      fetchGroupDetail(groupData.groupId);
-    }
+    const fetchData = async () => {
+      try {
+        if (groupId) {
+          console.log('Fetching by groupId:', groupId);
+          await fetchGroupDetail(groupId);
+        } else if (groupData?.groupId) {
+          console.log('Fetching by groupData.groupId:', groupData.groupId);
+          await fetchGroupDetail(groupData.groupId);
+        }
+      } catch (error) {
+        console.error('Error fetching group detail:', error);
+        if (error.response?.status === 404) {
+          // Group not found - show alert and go back
+          Alert.alert(
+            'Grup Tidak Ditemukan',
+            'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace('/(modals)/groups');
+                  }
+                }
+              }
+            ]
+          );
+        }
+      }
+    };
+    
+    fetchData();
   }, [groupId, groupData?.groupId, isGroupDeleted]);
 
   // Update local state when displayGroup changes
@@ -280,26 +308,19 @@ export default function GroupDetailScreen() {
     try {
       await apiAddMember(displayGroup?.groupId, selectedFriendToAdd.friend.userId);
       
-      // Immediately add new member to local state
-      const newMember = {
-        id: selectedFriendToAdd.friend.userId,
-        name: selectedFriendToAdd.friend.name,
-        status: "active",
-        avatar: selectedFriendToAdd.friend.avatar || personImages[members.length % 4],
-        isCreator: false,
-        isFriend: true,
-        canAddFriend: false,
-        isCurrentUser: false,
-      };
-      setMembers(prev => [...prev, newMember]);
-      
       setShowAddMemberModal(false);
       setShowAddMemberSuccessModal(true);
       
+      // Refresh data immediately after API success
+      if (displayGroup?.groupId) {
+        fetchGroupDetail(displayGroup.groupId);
+      }
+      
+      // Close success modal
       setTimeout(() => {
         setShowAddMemberSuccessModal(false);
         setSelectedFriendToAdd(null);
-      }, 500);
+      }, 1000);
     } catch (error) {
       console.error("Error adding member:", error);
       setShowAddMemberModal(false);
@@ -605,7 +626,7 @@ export default function GroupDetailScreen() {
               <FlatList
                 data={members}
                 renderItem={renderMember}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
                 scrollEnabled={false}
               />
             </View>
@@ -897,7 +918,7 @@ export default function GroupDetailScreen() {
                 
                 <FlatList
                   data={availableFriends}
-                  keyExtractor={(item) => item.friend.userId}
+                  keyExtractor={(item, index) => `${item.friend.userId}-${index}`}
                   style={styles.friendsList}
                   showsVerticalScrollIndicator={false}
                   renderItem={({ item }) => (

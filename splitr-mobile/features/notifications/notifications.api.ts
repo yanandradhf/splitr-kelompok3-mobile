@@ -3,12 +3,14 @@ import { API_CONFIG } from '../../constants/config';
 
 export const notificationsAPI = {
   // Get notifications with pagination
-  getNotifications: (limit = 20, offset = 0, unreadOnly = false) => {
+  getNotifications: (limit = 20, offset = 0, timestamp = null) => {
     const params = new URLSearchParams({
       limit: limit.toString(),
-      offset: offset.toString(),
-      unreadOnly: unreadOnly.toString()
+      offset: offset.toString()
     });
+    if (timestamp) {
+      params.append('_t', timestamp.toString());
+    }
     console.log(`🌐 Making API call to: ${API_CONFIG.ENDPOINTS.NOTIFICATIONS}?${params}`);
     return api.get(`${API_CONFIG.ENDPOINTS.NOTIFICATIONS}?${params}`);
   },

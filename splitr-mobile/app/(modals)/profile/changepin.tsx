@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../../constants/theme';
-import { profileAPI, authAPI } from '../../../services/api';
+import { profileAPI, authAPI } from '../../../services';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import * as SecureStore from 'expo-secure-store';
 
