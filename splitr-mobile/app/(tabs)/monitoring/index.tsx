@@ -135,11 +135,10 @@ export default function MonitoringIndex() {
       case "berjalan":
         // Prioritas utama: tagihan yang harus dibayar
         filtered = filtered.filter(
-          (bill) =>
-            !bill.isHost &&
-            (bill.paymentStatus === "pending" ||
-              bill.paymentStatus === "scheduled") &&
-            !bill.isExpired
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return !bill.isHost && !isPaid && !bill.isExpired;
+          }
         );
         break;
       case "dibuat":
@@ -147,12 +146,18 @@ export default function MonitoringIndex() {
         break;
       case "selesai":
         filtered = filtered.filter(
-          (bill) => bill.paymentStatus === "completed"
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return isPaid;
+          }
         );
         break;
       case "expired":
         filtered = filtered.filter(
-          (bill) => bill.isExpired && bill.paymentStatus !== "completed"
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return bill.isExpired && !isPaid;
+          }
         );
         break;
       case "semua":
@@ -160,16 +165,10 @@ export default function MonitoringIndex() {
         // When showing all, prioritize actionable bills first
         filtered = filtered.sort((a, b) => {
           // Prioritas 1: Tagihan yang harus dibayar (paling urgent)
-          const aUrgent =
-            !a.isHost &&
-            (a.paymentStatus === "pending" ||
-              a.paymentStatus === "scheduled") &&
-            !a.isExpired;
-          const bUrgent =
-            !b.isHost &&
-            (b.paymentStatus === "pending" ||
-              b.paymentStatus === "scheduled") &&
-            !b.isExpired;
+          const aIsPaid = a.paymentStatus === "completed" || a.paymentStatus === "paid" || a.actions?.isPaid;
+          const bIsPaid = b.paymentStatus === "completed" || b.paymentStatus === "paid" || b.actions?.isPaid;
+          const aUrgent = !a.isHost && !aIsPaid && !a.isExpired;
+          const bUrgent = !b.isHost && !bIsPaid && !b.isExpired;
           if (aUrgent && !bUrgent) return -1;
           if (!aUrgent && bUrgent) return 1;
 
@@ -321,8 +320,8 @@ export default function MonitoringIndex() {
       return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
     }
 
-    // For participants
-    if (bill.paymentStatus === "completed") {
+    // For participants - check new API response format
+    if (bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid) {
       return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
     }
 
@@ -413,16 +412,22 @@ export default function MonitoringIndex() {
     // Participant bills (money I need to pay)
     const participantBills = allBills.filter((bill) => !bill.isHost);
     const ongoingParticipant = participantBills.filter(
-      (bill) =>
-        (bill.paymentStatus === "pending" ||
-          bill.paymentStatus === "scheduled") &&
-        !bill.isExpired
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return !isPaid && !bill.isExpired;
+      }
     );
     const expiredParticipant = participantBills.filter(
-      (bill) => bill.isExpired && bill.paymentStatus !== "completed"
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return bill.isExpired && !isPaid;
+      }
     );
     const completedParticipant = participantBills.filter(
-      (bill) => bill.paymentStatus === "completed"
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return isPaid;
+      }
     );
 
     // Host bills (money coming to me)
@@ -757,7 +762,9 @@ export default function MonitoringIndex() {
               const isExpanded = expandedItems[activeTab].has(bill.billId);
 
               const getCardStyle = () => {
-                if (bill.isExpired && bill.paymentStatus !== "completed") {
+                const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+                
+                if (bill.isExpired && !isPaid) {
                   return styles.expiredCard;
                 }
 
@@ -770,7 +777,7 @@ export default function MonitoringIndex() {
                   return styles.hostCard;
                 }
 
-                if (bill.paymentStatus === "completed") {
+                if (isPaid) {
                   return styles.completedCard;
                 }
                 if (bill.isHost) {
@@ -872,58 +879,63 @@ export default function MonitoringIndex() {
                     });
                     return null;
                   })()}
-                  {!bill.isHost && bill.paymentStatus !== "completed" && (
-                    <View style={styles.paymentButtonContainer}>
-                      <Pressable
-                        style={[
-                          styles.payButton,
-                          bill.isExpired
-                            ? styles.overdueButton
-                            : bill.canSchedule
-                            ? styles.scheduledButton
-                            : styles.instantButton,
-                        ]}
-                        onPress={() => handlePaymentPress(bill)}
-                      >
-                        <Ionicons
-                          name={
-                            bill.isExpired
-                              ? "flash"
-                              : bill.canSchedule
-                              ? "calendar"
-                              : "flash"
-                          }
-                          size={14}
-                          color={
-                            bill.isExpired
-                              ? COLORS.red
-                              : bill.canSchedule
-                              ? "#0369A1"
-                              : COLORS.teal
-                          }
-                          style={styles.buttonIcon}
-                        />
-                        <Text
+                  {(() => {
+                    const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+                    const canPay = bill.actions?.canPay !== false && !isPaid;
+                    
+                    return !bill.isHost && canPay && (
+                      <View style={styles.paymentButtonContainer}>
+                        <Pressable
                           style={[
-                            styles.payButtonText,
-                            {
-                              color: bill.isExpired
+                            styles.payButton,
+                            bill.isExpired
+                              ? styles.overdueButton
+                              : bill.canSchedule
+                              ? styles.scheduledButton
+                              : styles.instantButton,
+                          ]}
+                          onPress={() => handlePaymentPress(bill)}
+                        >
+                          <Ionicons
+                            name={
+                              bill.isExpired
+                                ? "flash"
+                                : bill.canSchedule
+                                ? "calendar"
+                                : "flash"
+                            }
+                            size={14}
+                            color={
+                              bill.isExpired
                                 ? COLORS.red
                                 : bill.canSchedule
                                 ? "#0369A1"
-                                : COLORS.teal,
-                            },
-                          ]}
-                        >
-                          {bill.isExpired
-                            ? "Bayar Walau Terlambat"
-                            : bill.canSchedule
-                            ? "Bayar atau Jadwalkan"
-                            : "Bayar Sekarang"}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  )}
+                                : COLORS.teal
+                            }
+                            style={styles.buttonIcon}
+                          />
+                          <Text
+                            style={[
+                              styles.payButtonText,
+                              {
+                                color: bill.isExpired
+                                  ? COLORS.red
+                                  : bill.canSchedule
+                                  ? "#0369A1"
+                                  : COLORS.teal,
+                              },
+                            ]}
+                          >
+                            {bill.isExpired
+                              ? "Bayar Walau Terlambat"
+                              : bill.canSchedule
+                              ? "Bayar atau Jadwalkan"
+                              : "Bayar Sekarang"}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    );
+                  })()}
 
                   {/* Host Dropdown - Show participants status */}
                   {bill.isHost &&
