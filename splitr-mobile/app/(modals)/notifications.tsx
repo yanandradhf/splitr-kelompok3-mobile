@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -97,8 +98,37 @@ export default function NotificationsScreen() {
         return;
       }
       
-      // Only group_invitation needs API call to navigate to group detail
+      // Handle group notifications with pre-validation
       if (notification.type === 'group_invitation') {
+        const groupId = notification.groupId || notification.metadata?.groupId;
+        
+        if (groupId) {
+          // Pre-validate group exists before navigation
+          try {
+            const response = await api.get(`/api/mobile/groups/${groupId}`);
+            if (response.data) {
+              await markAsReadOptimistic(notification.notificationId);
+              router.push({
+                pathname: '/(modals)/groups/detail',
+                params: { groupId }
+              });
+              return;
+            }
+          } catch (error) {
+            console.error('Group validation failed:', error);
+            if (error.response?.status === 404) {
+              await markAsReadOptimistic(notification.notificationId);
+              Alert.alert(
+                'Grup Tidak Ditemukan',
+                'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+                [{ text: 'OK' }]
+              );
+              return;
+            }
+          }
+        }
+        
+        // Fallback to API action if direct validation fails
         try {
           const result = await handleNotificationAction(notification.notificationId, 'view_group');
           if (result?.groupId) {
@@ -110,22 +140,50 @@ export default function NotificationsScreen() {
           }
         } catch (error) {
           console.error('API failed for group invitation:', error);
-        }
-        
-        // Fallback: use groupId from notification
-        const groupId = notification.groupId || notification.metadata?.groupId;
-        if (groupId) {
           await markAsReadOptimistic(notification.notificationId);
-          router.push({
-            pathname: '/(modals)/groups/detail',
-            params: { groupId }
-          });
+          Alert.alert(
+            'Grup Tidak Ditemukan',
+            'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+            [{ text: 'OK' }]
+          );
           return;
         }
       }
       
-      // Handle group notifications (updated, deleted, etc) - just mark as read
-      if (notification.type.startsWith('group_')) {
+      // Handle other group notifications
+      if (notification.type.startsWith('group_') && notification.type !== 'group_invitation') {
+        const groupId = notification.groupId || notification.metadata?.groupId;
+        
+        // For notifications that should navigate to group detail (like added to group)
+        const navigableTypes = ['group_member_added'];
+        
+        if (navigableTypes.includes(notification.type) && groupId) {
+          // Pre-validate group exists before navigation
+          try {
+            const response = await api.get(`/api/mobile/groups/${groupId}`);
+            if (response.data) {
+              await markAsReadOptimistic(notification.notificationId);
+              router.push({
+                pathname: '/(modals)/groups/detail',
+                params: { groupId }
+              });
+              return;
+            }
+          } catch (error) {
+            console.error('Group validation failed:', error);
+            if (error.response?.status === 404) {
+              await markAsReadOptimistic(notification.notificationId);
+              Alert.alert(
+                'Grup Tidak Ditemukan',
+                'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+                [{ text: 'OK' }]
+              );
+              return;
+            }
+          }
+        }
+        
+        // For non-navigable group notifications, just mark as read silently
         await markAsReadOptimistic(notification.notificationId);
         return;
       }
