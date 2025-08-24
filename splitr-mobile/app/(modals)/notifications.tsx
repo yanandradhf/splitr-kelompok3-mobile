@@ -15,6 +15,7 @@ import { useNotificationsStore } from '../../store';
 import { COLORS, FONTS } from '../../constants/theme';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import api from '../../services/api';
+import { getBillNavigationFromNotification, getIsHostFromNotification } from '../../utils/billEndpoints';
 
 const LOCAL_COLORS = {
   background: COLORS.backgroundMain,
@@ -76,25 +77,23 @@ export default function NotificationsScreen() {
       console.log('  - Message:', notification.message);
       console.log('  - Identifier:', identifier);
       
-      // Handle payment notifications for hosts
-      if ((notification.type === 'payment_received' || notification.type === 'payment_complete') && identifier) {
-        console.log('💰 Host payment notification detected with identifier:', identifier);
-        await markAsReadOptimistic(notification.notificationId);
-        router.push(`/master-bill/${identifier}`);
-        return;
-      }
+      // Handle bill-related notifications with smart routing
+      const billRelatedTypes = [
+        'bill_created', 'payment_received', 'participant_joined',
+        'bill_assignment', 'bill_invitation', 'payment_reminder'
+      ];
       
-      // Handle other bill-related notifications
-      const isBillRelated = 
-        notification.type === 'bill_assignment' ||
-        notification.type === 'payment_reminder' ||
-        notification.billId ||
-        notification.metadata?.billCode;
-      
-      if (isBillRelated && identifier) {
-        console.log('💰 Bill notification detected with identifier:', identifier);
+      if (billRelatedTypes.includes(notification.type) && identifier) {
+        const isHost = getIsHostFromNotification(notification.type);
+        console.log(`💰 ${isHost ? 'HOST' : 'PARTICIPANT'} notification detected:`, {
+          type: notification.type,
+          identifier,
+          isHost
+        });
+        
         await markAsReadOptimistic(notification.notificationId);
-        router.push(`/bill-notification/${identifier}`);
+        const navigationPath = getBillNavigationFromNotification(identifier, notification.type);
+        router.push(navigationPath);
         return;
       }
       
