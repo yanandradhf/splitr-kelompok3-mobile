@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import { OCRLearningSystem, LearningData } from './ocrLearningSystem';
 
 export interface OrderItem {
   name: string;
@@ -29,6 +30,8 @@ export class FixedGroqService {
 
   static async processReceipt(imageUri: string): Promise<OCRResult> {
     console.log('Fixed Groq: Starting receipt OCR processing:', imageUri);
+    
+    const startTime = Date.now();
     
     try {
       // Rate limiting
@@ -61,7 +64,7 @@ export class FixedGroqService {
               content: [
                 {
                   type: "text",
-                  text: this.createReceiptPrompt()
+                  text: await this.createReceiptPrompt()
                 },
                 {
                   type: "image_url",
@@ -87,16 +90,33 @@ export class FixedGroqService {
         throw new Error(`Groq API error: ${response.status} - ${errorText}`);
       }
 
-      const result = await response.json();
+      const apiResult = await response.json();
       console.log('Fixed Groq: API Response received');
 
-      const content = result.choices?.[0]?.message?.content;
+      const content = apiResult.choices?.[0]?.message?.content;
       if (!content) {
         throw new Error('No response content from Groq');
       }
 
       console.log('Fixed Groq: Raw response:', content);
-      return this.parseResponse(content);
+      const result = this.parseResponse(content);
+      
+      // Store learning data for continuous improvement
+      const learningData: LearningData = {
+        imageUri,
+        actualResult: result,
+        confidence: result.confidence,
+        timestamp: Date.now(),
+        success: result.items.length > 0 && result.confidence > 0.5
+      };
+      
+      // Store asynchronously without blocking
+      OCRLearningSystem.storeLearningData(learningData).catch(err => 
+        console.warn('Failed to store learning data:', err)
+      );
+      
+      console.log(`Fixed Groq: Processing completed in ${Date.now() - startTime}ms`);
+      return result;
 
     } catch (error) {
       console.error('Fixed Groq: Processing failed:', error);
@@ -104,8 +124,13 @@ export class FixedGroqService {
     }
   }
 
-  static createReceiptPrompt(): string {
-    return `Analisis gambar struk/receipt Indonesia ini dengan teliti dan ekstrak informasi berikut:
+  static async createReceiptPrompt(): Promise<string> {
+    // Get improved prompt based on learning data
+    const learningPrompt = await OCRLearningSystem.generateImprovedPrompt();
+    
+    return `${learningPrompt}
+
+Analisis gambar struk/receipt Indonesia ini dengan teliti dan ekstrak informasi berikut:
 
 TUGAS:
 1. Baca semua teks pada struk

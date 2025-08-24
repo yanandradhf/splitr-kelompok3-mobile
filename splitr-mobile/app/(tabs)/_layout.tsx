@@ -10,7 +10,7 @@ function CustomTabBar() {
   const isMonitoring = pathname.includes("/monitoring");
   const isPayment = pathname.includes("/pembayaran");
   const isPilihTanggal = pathname.includes("/bayarNanti/pilih-tanggal");
-  const isBill = pathname.includes("/bill");
+  const isBill = pathname.includes("/bill") || pathname.includes("/create-bill");
 
   if (isPayment || isPilihTanggal || isBill) {
     return null;
@@ -87,9 +87,8 @@ function CustomTabBar() {
             shadowOpacity: 0.15,
             shadowRadius: 3,
           }}
-          onPress={() => router.push("/(tabs)/bill")}
-          activeOpacity={0.7}
           onPress={() => router.push("/create-bill")}
+          activeOpacity={0.7}
         >
           <Ionicons name="add-circle-outline" size={32} color="#000000" />
         </TouchableOpacity>
@@ -153,7 +152,8 @@ export default function TabsLayout() {
     pathname.includes("/groups") ||
     pathname.includes("/group-detail") ||
     pathname.includes("/create-group") ||
-    pathname.includes("/bill");
+    pathname.includes("/bill") ||
+    pathname.includes("/create-bill");
 
   return (
     <>
@@ -189,12 +189,7 @@ export default function TabsLayout() {
             href: null,
           }}
         />
-        <Tabs.Screen
-          name="bill"
-          options={{
-            href: null,
-          }}
-        />
+
 
       </Tabs>
       {!hideTabBar && <CustomTabBar />}

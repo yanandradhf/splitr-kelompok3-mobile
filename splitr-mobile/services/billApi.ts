@@ -1,5 +1,5 @@
 import api from './api';
-import { BillDraft } from '@/types/bill';
+import { BillDraft } from '../types/bill';
 
 export interface CreateBillRequest {
   billName: string;

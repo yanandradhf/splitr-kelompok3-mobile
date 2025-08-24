@@ -18,6 +18,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 const BG = "#000";
 const BUBBLE = "rgba(0,0,0,0.45)";
 const ORANGE = "#FF9A56";
+const CIRCLE = 44;
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -27,7 +28,7 @@ export default function CameraScreen() {
   const [flash, setFlash] = useState<"off" | "on">("off");
   const [torch, setTorch] = useState(false);
 
-  // --- Hide tab bar ketika layar kamera aktif
+  // Sembunyikan tab bar di layar kamera
   useFocusEffect(
     React.useCallback(() => {
       const parent = navigation.getParent?.();
@@ -36,7 +37,7 @@ export default function CameraScreen() {
     }, [navigation])
   );
 
-  // --- Helper: pastikan folder scans/ ada, lalu copy file ke sana
+  // Persist gambar ke storage aplikasi
   const persistToAppStorage = useCallback(async (srcUri: string) => {
     try {
       const dir = FileSystem.documentDirectory + "scans/";
@@ -44,21 +45,17 @@ export default function CameraScreen() {
       if (!dirInfo.exists) {
         await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
       }
-      // Ekstensi default .jpg (ImagePicker & Kamera biasanya JPEG)
       const dest = `${dir}scan_${Date.now()}.jpg`;
       await FileSystem.copyAsync({ from: srcUri, to: dest });
-      return dest; // pakai path yang sudah persisten
+      return dest;
     } catch (e) {
-      console.warn("Gagal menyimpan ke storage app, fallback pakai srcUri:", e);
-      return srcUri; // fallback tetap kirim uri sumber
+      console.warn("Gagal menyimpan, pakai srcUri:", e);
+      return srcUri;
     }
   }, []);
 
   const goToPreview = useCallback((uri: string) => {
-    router.push({
-      pathname: "/(tabs)/bill/scan-bill/preview",
-      params: { uri },
-    });
+    router.push({ pathname: "/create-bill/scan-bill/preview", params: { uri } });
   }, []);
 
   const onCapture = useCallback(async () => {
@@ -81,19 +78,14 @@ export default function CameraScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Izin Diperlukan",
-          "Aplikasi memerlukan izin akses galeri untuk memilih foto."
-        );
+        Alert.alert("Izin Diperlukan", "Aplikasi memerlukan izin akses galeri untuk memilih foto.");
         return;
       }
-
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 1,
       });
-
       const uri = result.assets?.[0]?.uri;
       if (!result.canceled && uri) {
         const saved = await persistToAppStorage(uri);
@@ -113,7 +105,7 @@ export default function CameraScreen() {
     });
   }, []);
 
-  // --- Loading / permission
+  // Permission state
   if (!permission) return <View style={{ flex: 1, backgroundColor: BG }} />;
 
   if (!permission.granted) {
@@ -121,9 +113,7 @@ export default function CameraScreen() {
       <SafeAreaView style={styles.permWrap}>
         <Ionicons name="camera" size={48} color="#888" />
         <Text style={styles.permTitle}>Izin Kamera Diperlukan</Text>
-        <Text style={styles.permDesc}>
-          Untuk memindai struk, aktifkan izin kamera.
-        </Text>
+        <Text style={styles.permDesc}>Untuk memindai struk, aktifkan izin kamera.</Text>
         <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
           <Text style={styles.permBtnText}>Izinkan Kamera</Text>
         </TouchableOpacity>
@@ -133,14 +123,17 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Close (X) kanan atas */}
-      <TouchableOpacity
-        style={styles.closeBtn}
-        onPress={() => router.back()}
-        accessibilityLabel="Tutup kamera"
-      >
-        <Ionicons name="close" size={26} color="#fff" />
-      </TouchableOpacity>
+      {/* Close (X) — diameter sama dengan galeri & flash */}
+      <View style={styles.closeWrap}>
+        <TouchableOpacity
+          style={styles.sideBtn}
+          onPress={() => router.back()}
+          accessibilityLabel="Tutup kamera"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="close" size={22} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       {/* Kamera fullscreen */}
       <CameraView
@@ -151,14 +144,20 @@ export default function CameraScreen() {
         enableTorch={torch}
       />
 
-      {/* Teks arahan */}
-      <View style={styles.tipWrap} pointerEvents="none">
-        <Text style={styles.tipText}>
-          Pastikan struk terbaca dan difoto di tempat terang untuk hasil yang optimal.
-        </Text>
+      {/* Tips di tengah: header (ikon + "Tips") lalu deskripsi */}
+      <View style={styles.tipContainer} pointerEvents="none">
+        <View style={styles.tipCard}>
+          <View style={styles.tipHeader}>
+            <Ionicons name="bulb-outline" size={16} color="#fff" />
+            <Text style={styles.tipTitle}>Tips</Text>
+          </View>
+          <Text style={styles.tipBody}>
+            Pastikan struk terbaca dan difoto di tempat terang untuk hasil yang optimal.
+          </Text>
+        </View>
       </View>
 
-      {/* Kontrol bawah: Galeri — Shutter — Flash */}
+      {/* Kontrol bawah */}
       <View style={styles.controls}>
         <TouchableOpacity
           style={styles.sideBtn}
@@ -192,23 +191,53 @@ export default function CameraScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG, justifyContent: "flex-end" },
 
-  closeBtn: {
+  // Posisi tombol close, ukurannya pakai sideBtn (CIRCLE)
+  closeWrap: {
     position: "absolute",
     top: Platform.select({ ios: 50, android: 24 }),
     right: 16,
     zIndex: 5,
   },
 
-  tipWrap: {
-    alignSelf: "center",
-    backgroundColor: BUBBLE,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginBottom: 18,
+  // ===== TIP CARD (tengah) =====
+  tipContainer: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    bottom: Platform.select({ ios: 140, android: 120 }),
+    zIndex: 3,
+    alignItems: "center", // card di tengah
   },
-  tipText: { color: "#fff", fontSize: 12, textAlign: "center" },
+  tipCard: {
+    backgroundColor: BUBBLE,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: "center", // konten card rata tengah
+  },
+  tipHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center", // ikon + judul di tengah
+    gap: 8,
+    marginBottom: 6,
+  },
+  tipTitle: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+    textAlign: "center",
+  },
+  tipBody: {
+    color: "#fff",
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
+    alignSelf: "stretch",
+  },
 
+  // ===== BOTTOM CONTROLS =====
   controls: {
     flexDirection: "row",
     alignItems: "center",
@@ -216,15 +245,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     paddingBottom: 22,
   },
-
   sideBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: CIRCLE,
+    height: CIRCLE,
+    borderRadius: CIRCLE / 2,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.35)",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
 
   shutterOuter: {
