@@ -14,6 +14,8 @@ import { API_CONFIG } from "../../../constants/config";
 import api from "../../../services/api";
 import { formatRp } from "../../../lib/currency";
 import { useTransactionStore } from "../../../store/transaction.store";
+import { useMonitoringStore } from "../../../store/monitoring.store";
+import { getBillNavigationPath } from "../../../utils/billEndpoints";
 
 interface BillActivity {
   billId: string;
@@ -80,44 +82,31 @@ export default function MonitoringIndex() {
     tagihan: new Set(),
     riwayat: new Set(),
   });
-  const [billActivities, setBillActivities] = useState<BillActivity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    billActivities, 
+    paymentHistory: storePaymentHistory, 
+    loading, 
+    historyLoading, 
+    fetchMyActivity, 
+    fetchPaymentHistory 
+  } = useMonitoringStore();
 
   useEffect(() => {
     fetchMyActivity();
   }, []);
 
-  const fetchMyActivity = async () => {
-    try {
-      setLoading(true);
-      const timestamp = Date.now();
-      const response = await api.get(
-        `${API_CONFIG.ENDPOINTS.MY_ACTIVITY}?limit=10&_t=${timestamp}`
-      );
-      console.log(
-        "🔍 MY_ACTIVITY API Response:",
-        JSON.stringify(response.data, null, 2)
-      );
-      if (response.data.success) {
-        const activities = response.data.myActivity || [];
-        console.log("📋 Bill Activities:", activities);
-        // Debug each bill's button properties
-        activities.forEach((bill: BillActivity) => {
-          console.log(`🔘 ${bill.billName}:`, {
-            showPayNow: bill.showPayNow,
-            canSchedule: bill.canSchedule,
-            isHost: bill.isHost,
-            paymentStatus: bill.paymentStatus,
-          });
-        });
-        setBillActivities(activities);
+  useEffect(() => {
+    const unsubscribe = router.addListener?.('focus', () => {
+      console.log('🔄 Monitoring screen focused - refreshing data');
+      fetchMyActivity();
+      if (activeTab === 'riwayat') {
+        fetchPaymentHistory();
       }
-    } catch (error) {
-      console.error("Error fetching my activity:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    return unsubscribe;
+  }, [activeTab]);
+
+
 
   const toggleExpanded = (id: string) => {
     const currentTabExpanded = new Set(expandedItems[activeTab]);
@@ -227,33 +216,29 @@ export default function MonitoringIndex() {
   };
 
   // Payment history state
-  const [paymentHistory, setPaymentHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState(storePaymentHistory);
 
-  const fetchPaymentHistory = async () => {
+  useEffect(() => {
+    setPaymentHistory(storePaymentHistory);
+  }, [storePaymentHistory]);
+
+  const fetchPaymentHistoryLocal = async () => {
     if (activeTab !== "riwayat") return;
-
-    try {
-      setHistoryLoading(true);
-      const timestamp = Date.now();
-      const response = await api.get(
-        `${API_CONFIG.ENDPOINTS.PAYMENT_HISTORY}?page=1&limit=20&_t=${timestamp}`
-      );
-      if (response.data.success) {
-        setPaymentHistory(response.data.payments || []);
-      }
-    } catch (error) {
-      console.error("Error fetching payment history:", error);
-    } finally {
-      setHistoryLoading(false);
-    }
+    await fetchPaymentHistory();
   };
 
   useEffect(() => {
     if (activeTab === "riwayat") {
-      fetchPaymentHistory();
+      fetchPaymentHistoryLocal();
     }
   }, [activeTab]);
+
+  const refreshData = () => {
+    fetchMyActivity();
+    if (activeTab === 'riwayat') {
+      fetchPaymentHistory();
+    }
+  };
 
   const getStatusBadgeHistory = (status, paymentType) => {
     if (status === "completed" && paymentType === "instant") {
@@ -292,23 +277,18 @@ export default function MonitoringIndex() {
       event.stopPropagation();
     }
 
-    // Navigate to appropriate page based on user role
-    if (bill.isHost) {
-      router.push({
-        pathname: "/master-bill/[identifier]",
-        params: {
-          identifier: bill.billId,
-        },
-      });
-    } else {
-      router.push({
-        pathname: "/bill-notification/[identifier]",
-        params: {
-          identifier: bill.billId,
-          isHost: "false",
-        },
-      });
-    }
+    console.log('🔍 Bill press - Role check:', {
+      billId: bill.billId,
+      billName: bill.billName,
+      isHost: bill.isHost,
+      role: bill.role
+    });
+
+    // Use utility function for correct navigation
+    const navigationPath = getBillNavigationPath(bill.billId, bill.isHost);
+    console.log(`📍 Navigating to: ${navigationPath.pathname} (${bill.isHost ? 'HOST' : 'PARTICIPANT'})`);
+    
+    router.push(navigationPath);
   };
 
   const handlePaymentPress = (bill: BillActivity) => {
@@ -528,7 +508,10 @@ export default function MonitoringIndex() {
       <View style={styles.tabContainer}>
         <Pressable
           style={[styles.tab, activeTab === "tagihan" && styles.activeTab]}
-          onPress={() => setActiveTab("tagihan")}
+          onPress={() => {
+            setActiveTab("tagihan");
+            fetchMyActivity();
+          }}
         >
           <Text
             style={[
@@ -541,7 +524,10 @@ export default function MonitoringIndex() {
         </Pressable>
         <Pressable
           style={[styles.tab, activeTab === "riwayat" && styles.activeTab]}
-          onPress={() => setActiveTab("riwayat")}
+          onPress={() => {
+            setActiveTab("riwayat");
+            fetchPaymentHistoryLocal();
+          }}
         >
           <Text
             style={[

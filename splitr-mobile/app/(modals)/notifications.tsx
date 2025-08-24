@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useNotifications } from '../../hooks/useApi';
+
 import { useNotificationsStore } from '../../store';
 import { COLORS, FONTS } from '../../constants/theme';
 import { SkeletonList } from '../../components/ui/Skeleton';
@@ -25,27 +25,29 @@ const LOCAL_COLORS = {
 };
 
 export default function NotificationsScreen() {
-  const { notifications, loading } = useNotifications();
-  const { handleNotificationAction, markAsRead } = useNotificationsStore();
+  const { 
+    notifications, 
+    loading, 
+    markAsRead, 
+    handleNotificationAction,
+    fetchNotifications 
+  } = useNotificationsStore();
   const [forceLoading, setForceLoading] = useState(true);
-  const [localNotifications, setLocalNotifications] = useState([]);
 
-  useEffect(() => {
-    setLocalNotifications(notifications);
-  }, [notifications]);
-
-  const updateNotificationAsRead = (notificationId) => {
-    setLocalNotifications(prev => 
-      prev.map(notif => 
-        notif.notificationId === notificationId 
-          ? { ...notif, isRead: true }
-          : notif
-      )
-    );
+  const markAsReadOptimistic = async (notificationId) => {
+    await markAsRead(notificationId);
   };
   
   useEffect(() => {
     setTimeout(() => setForceLoading(false), 1500);
+    fetchNotifications(true);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = router.addListener?.('focus', () => {
+      fetchNotifications(true);
+    });
+    return unsubscribe;
   }, []);
 
   const handleNotificationPress = async (notification: any) => {
@@ -77,12 +79,7 @@ export default function NotificationsScreen() {
       // Handle payment notifications for hosts
       if ((notification.type === 'payment_received' || notification.type === 'payment_complete') && identifier) {
         console.log('💰 Host payment notification detected with identifier:', identifier);
-        try {
-          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
-          updateNotificationAsRead(notification.notificationId);
-        } catch (error) {
-          console.error('Failed to mark as read:', error);
-        }
+        await markAsReadOptimistic(notification.notificationId);
         router.push(`/master-bill/${identifier}`);
         return;
       }
@@ -96,12 +93,7 @@ export default function NotificationsScreen() {
       
       if (isBillRelated && identifier) {
         console.log('💰 Bill notification detected with identifier:', identifier);
-        try {
-          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
-          updateNotificationAsRead(notification.notificationId);
-        } catch (error) {
-          console.error('Failed to mark as read:', error);
-        }
+        await markAsReadOptimistic(notification.notificationId);
         router.push(`/bill-notification/${identifier}`);
         return;
       }
@@ -124,12 +116,7 @@ export default function NotificationsScreen() {
         // Fallback: use groupId from notification
         const groupId = notification.groupId || notification.metadata?.groupId;
         if (groupId) {
-          try {
-            await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
-            updateNotificationAsRead(notification.notificationId);
-          } catch (error) {
-            console.error('Failed to mark as read:', error);
-          }
+          await markAsReadOptimistic(notification.notificationId);
           router.push({
             pathname: '/(modals)/groups/detail',
             params: { groupId }
@@ -140,30 +127,15 @@ export default function NotificationsScreen() {
       
       // Handle group notifications (updated, deleted, etc) - just mark as read
       if (notification.type.startsWith('group_')) {
-        try {
-          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
-          updateNotificationAsRead(notification.notificationId);
-        } catch (error) {
-          console.error('Failed to mark as read:', error);
-        }
+        await markAsReadOptimistic(notification.notificationId);
         return;
       }
       
       // For all other notifications, just mark as read
-      try {
-        await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
-        updateNotificationAsRead(notification.notificationId);
-      } catch (error) {
-        console.error('Failed to mark as read:', error);
-      }
+      await markAsReadOptimistic(notification.notificationId);
     } catch (error) {
       console.error('Error handling notification:', error);
-      // Always try to mark as read
-      try {
-        await markAsRead(notification.notificationId);
-      } catch (readError) {
-        console.error('Failed to mark as read:', readError);
-      }
+      await markAsReadOptimistic(notification.notificationId);
     }
   };
 
@@ -215,6 +187,7 @@ export default function NotificationsScreen() {
         <View style={styles.purpleSection}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => {
+              fetchNotifications(true);
               if (router.canGoBack()) {
                 router.back();
               } else {
@@ -243,7 +216,7 @@ export default function NotificationsScreen() {
                 <Text style={styles.emptySubtitle}>Notifikasi akan muncul di sini</Text>
               </View>
             ) : (
-              localNotifications.map((notification, index) => (
+              notifications.map((notification, index) => (
                 <TouchableOpacity 
                   key={notification.notificationId || index} 
                   style={[
