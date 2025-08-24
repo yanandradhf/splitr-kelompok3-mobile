@@ -423,7 +423,7 @@ export default function MonitoringIndex() {
   const getDashboardInfo = () => {
     if (activeTab !== "tagihan") return null;
 
-    const allBills = filteredBills;
+    const allBills = billActivities; // Use all bills, not filtered
     const now = new Date();
 
     // Participant bills (money I need to pay)
@@ -498,7 +498,7 @@ export default function MonitoringIndex() {
       return hoursLeft <= 24 && hoursLeft > 0;
     });
 
-    if (allBills.length === 0) return null;
+    // Always show dashboard card, even with empty data
 
     return {
       // Financial overview
@@ -555,7 +555,7 @@ export default function MonitoringIndex() {
       </View>
 
       {/* Compact Summary Card */}
-      {getDashboardInfo() && (
+      {activeTab === "tagihan" && (
         <View style={styles.compactCard}>
           {/* Complex Chart Effect */}
           <View style={styles.chartEffect}>
@@ -614,19 +614,31 @@ export default function MonitoringIndex() {
 
           {/* Main Content - Centered */}
           <View style={styles.compactContent}>
-            <Text style={styles.compactAmount}>
-              {getDashboardInfo()?.totalToPay}
-            </Text>
-            <View style={styles.compactLabelRow}>
-              <Text style={styles.compactLabel}>Total Harus Dibayar</Text>
-              {getDashboardInfo()?.stats.urgentCount > 0 && (
-                <View style={styles.compactUrgent}>
-                  <Text style={styles.compactUrgentText}>
-                    {getDashboardInfo()?.stats.urgentCount} urgent
-                  </Text>
-                </View>
-              )}
-            </View>
+            {(() => {
+              const totalToPay = getDashboardInfo()?.totalToPay || "Rp 0";
+              const isZero = totalToPay === "Rp 0";
+              return (
+                <>
+                  {!isZero && (
+                    <Text style={styles.compactAmount}>
+                      {totalToPay}
+                    </Text>
+                  )}
+                  <View style={styles.compactLabelRow}>
+                    <Text style={styles.compactLabel}>
+                      {isZero ? "Anda tidak memiliki tagihan untuk dibayar" : "Total Harus Dibayar"}
+                    </Text>
+                    {!isZero && (getDashboardInfo()?.stats?.urgentCount || 0) > 0 && (
+                      <View style={styles.compactUrgent}>
+                        <Text style={styles.compactUrgentText}>
+                          {getDashboardInfo()?.stats?.urgentCount} urgent
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </>
+              );
+            })()}
           </View>
         </View>
       )}
@@ -1001,7 +1013,7 @@ export default function MonitoringIndex() {
             })
           ))}
 
-        {/* Tab Riwayat - Transaction Style */}
+        {/* Tab Riwayat - Redesigned */}
         {activeTab === "riwayat" &&
           (historyLoading ? (
             <View style={styles.loadingContainer}>
@@ -1018,7 +1030,6 @@ export default function MonitoringIndex() {
                 {
                   day: "numeric",
                   month: "short",
-                  year: "numeric",
                 }
               );
               const paymentTime = new Date(payment.paidAt).toLocaleTimeString(
@@ -1032,50 +1043,43 @@ export default function MonitoringIndex() {
               return (
                 <Pressable
                   key={payment.paymentId}
-                  style={styles.transactionCard}
+                  style={styles.newHistoryCard}
                   onPress={() => handleHistoryCardPress(payment.paymentId)}
                 >
-                  <View style={styles.transactionIcon}>
-                    <Ionicons
-                      name={payment.paymentType === "scheduled" ? "calendar" : "flash"}
-                      size={20}
-                      color={COLORS.white}
-                    />
+                  <View style={styles.newHistoryHeader}>
+                    <View style={styles.newHistoryLeft}>
+                      <View style={styles.newHistoryIcon}>
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={COLORS.success}
+                        />
+                      </View>
+                      <View style={styles.newHistoryInfo}>
+                        <Text style={styles.newHistoryTitle}>Pembayaran Berhasil</Text>
+                        <Text style={styles.newHistoryBill}>{payment.billName}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.newHistoryAmount}>
+                      <Text style={styles.newAmountText}>{formatRp(payment.amount)}</Text>
+                    </View>
                   </View>
                   
-                  <View style={styles.transactionContent}>
-                    <View style={styles.transactionMain}>
-                      <Text style={styles.transactionTitle}>
-                        {payment.billName}
-                      </Text>
-                      <Text style={styles.transactionAmount}>
-                        -{formatRp(payment.amount)}
-                      </Text>
+                  <View style={styles.newHistoryDetails}>
+                    <View style={styles.newDetailRow}>
+                      <Text style={styles.newDetailLabel}>Kepada</Text>
+                      <Text style={styles.newDetailValue}>{payment.hostName}</Text>
                     </View>
-                    
-                    <View style={styles.transactionDetails}>
-                      <Text style={styles.transactionRecipient}>
-                        Kepada {payment.hostName}
-                      </Text>
-                      <View style={styles.transactionMeta}>
-                        <Text style={styles.transactionDate}>
-                          {paymentDate} • {paymentTime}
+                    <View style={styles.newDetailRow}>
+                      <Text style={styles.newDetailLabel}>Waktu</Text>
+                      <Text style={styles.newDetailValue}>{paymentDate} • {paymentTime}</Text>
+                    </View>
+                    <View style={styles.newDetailRow}>
+                      <Text style={styles.newDetailLabel}>Status</Text>
+                      <View style={[styles.newStatusBadge, { backgroundColor: statusBadge.bg }]}>
+                        <Text style={[styles.newStatusText, { color: statusBadge.color }]}>
+                          {statusBadge.text}
                         </Text>
-                        <View
-                          style={[
-                            styles.transactionStatus,
-                            { backgroundColor: statusBadge.bg },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.transactionStatusText,
-                              { color: statusBadge.color },
-                            ]}
-                          >
-                            {statusBadge.text}
-                          </Text>
-                        </View>
                       </View>
                     </View>
                   </View>
@@ -1511,8 +1515,8 @@ const styles = StyleSheet.create({
   },
   hostCard: {
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.orange,
-    backgroundColor: "#FFF9F5",
+    borderLeftColor: COLORS.teal,
+    backgroundColor: "#F8FFFE",
   },
   completedCard: {
     borderLeftWidth: 4,
@@ -1534,7 +1538,7 @@ const styles = StyleSheet.create({
   hostBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.orange,
+    backgroundColor: COLORS.teal,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.xs,
@@ -1830,77 +1834,90 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  transactionCard: {
+  newHistoryCard: {
     backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.sm,
-    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.md,
+    padding: SPACING.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  newHistoryHeader: {
     flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.success,
+    justifyContent: "space-between",
+    marginBottom: SPACING.md,
   },
-  transactionIcon: {
+  newHistoryLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  newHistoryIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.success,
+    backgroundColor: "#DCFCE7",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: SPACING.md,
-  },
-  transactionContent: {
-    flex: 1,
-  },
-  transactionMain: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.xs,
-  },
-  transactionTitle: {
-    fontSize: FONT_SIZES.base,
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-    flex: 1,
     marginRight: SPACING.sm,
   },
-  transactionAmount: {
+  newHistoryInfo: {
+    flex: 1,
+  },
+  newHistoryTitle: {
     fontSize: FONT_SIZES.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.red,
+    color: COLORS.textPrimary,
+    marginBottom: 2,
   },
-  transactionDetails: {
-    gap: SPACING.xs,
+  newHistoryBill: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
   },
-  transactionRecipient: {
+  newHistoryAmount: {
+    alignItems: "flex-end",
+  },
+  newAmountText: {
+    fontSize: FONT_SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.teal,
+  },
+  newHistoryDetails: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
+  newDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  newDetailLabel: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
-  transactionMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  newDetailValue: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
   },
-  transactionDate: {
+  newStatusBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  newStatusText: {
     fontSize: FONT_SIZES.xs,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-  },
-  transactionStatus: {
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.xs,
-  },
-  transactionStatusText: {
-    fontSize: FONT_SIZES.xs,
-    fontFamily: FONTS.medium,
+    fontFamily: FONTS.semiBold,
   },
   createFab: {
     position: "absolute",

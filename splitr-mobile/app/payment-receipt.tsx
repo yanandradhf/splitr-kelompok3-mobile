@@ -1,14 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Share } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, Share, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import ViewShot from 'react-native-view-shot';
 import { formatRp } from '@/lib/currency';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../constants/theme';
 
 export default function PaymentReceiptScreen() {
   const params = useLocalSearchParams();
   const { receiptData } = params;
+  const viewRef = useRef(null);
 
   let receipt = null;
   try {
@@ -46,23 +48,18 @@ export default function PaymentReceiptScreen() {
 
   const handleShare = async () => {
     try {
-      const shareContent = `
-🧾 BUKTI PEMBAYARAN SPLITR
-
-📋 ${receipt.bill.billName}
-💰 ${formatRp(receipt.breakdown.totalPaid)}
-📅 ${new Date(receipt.paidAt).toLocaleDateString('id-ID')}
-🆔 ${receipt.transactionId}
-
-Terima kasih telah menggunakan Splitr! 🙏
-      `.trim();
-
+      const date = new Date(receipt.paidAt);
+      const formattedDate = `${date.getDate().toString().padStart(2, '0')}${date.toLocaleDateString('id-ID', { month: 'short' })}${date.getFullYear()}`;
+      const uri = await viewRef.current.capture();
+      
       await Share.share({
-        message: shareContent,
-        title: 'Bukti Pembayaran Splitr'
+        url: uri,
+        title: 'Bukti Pembayaran Splitr',
+        message: `Splitr-receipt-${formattedDate}`
       });
     } catch (error) {
-      console.error('Error sharing receipt:', error);
+      console.error('Error capturing screenshot:', error);
+      Alert.alert('Error', 'Gagal mengambil screenshot');
     }
   };
 
@@ -75,36 +72,33 @@ Terima kasih telah menggunakan Splitr! 🙏
             <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>Bukti Pembayaran</Text>
-          <Pressable onPress={handleShare} style={styles.shareButton}>
-            <Ionicons name="share-outline" size={24} color={COLORS.textPrimary} />
-          </Pressable>
-        </View>
-
-        {/* Success Icon */}
-        <View style={styles.iconContainer}>
-          <View style={styles.successIcon}>
-            <Ionicons 
-              name={receipt.paymentType === 'scheduled' ? "calendar-outline" : "checkmark"} 
-              size={48} 
-              color={COLORS.white} 
-            />
-          </View>
-        </View>
-
-        <Text style={styles.title}>Pembayaran Berhasil!</Text>
-        <View style={[styles.statusBadge, { backgroundColor: statusBadge.bg }]}>
-          <Text style={[styles.statusText, { color: statusBadge.color }]}>
-            {statusBadge.text}
-          </Text>
+          <View style={styles.placeholder} />
         </View>
 
         {/* White Modal Container */}
         <View style={styles.whiteModalContainer}>
           <ScrollView 
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
+            <ViewShot ref={viewRef} options={{ format: 'png', quality: 0.9 }} style={{ backgroundColor: COLORS.white, paddingTop: SPACING.lg }}>
+              <View style={styles.iconContainer}>
+                <View style={styles.successIcon}>
+                  <Ionicons 
+                    name={receipt.paymentType === 'scheduled' ? "calendar-outline" : "checkmark"} 
+                    size={48} 
+                    color={COLORS.white} 
+                  />
+                </View>
+              </View>
+              <Text style={styles.title}>Pembayaran Berhasil!</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusBadge.bg }]}>
+                <Text style={[styles.statusText, { color: statusBadge.color }]}>
+                  {statusBadge.text}
+                </Text>
+              </View>
+              <View style={[styles.whiteModalContainer, { flex: 0, marginTop: 0 }]}>
+                <View style={styles.scrollContent}>
             {/* Transaction Info */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Informasi Transaksi</Text>
@@ -216,15 +210,19 @@ Terima kasih telah menggunakan Splitr! 🙏
                 <Text style={styles.totalValue}>{formatRp(receipt.breakdown.totalPaid)}</Text>
               </View>
             </View>
+                </View>
+              </View>
+            </ViewShot>
           </ScrollView>
 
           {/* Fixed Button */}
           <View style={styles.buttonContainer}>
             <Pressable 
-              style={styles.primaryButton}
-              onPress={() => router.push('/monitoring')}
+              style={styles.shareButtonBottom}
+              onPress={handleShare}
             >
-              <Text style={styles.primaryButtonText}>Kembali ke Beranda</Text>
+              <Ionicons name="share-outline" size={20} color={COLORS.teal} />
+              <Text style={styles.shareButtonText}>Bagikan</Text>
             </Pressable>
           </View>
         </View>
@@ -256,8 +254,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
-  shareButton: {
-    padding: 5,
+  placeholder: {
+    width: 24,
   },
   iconContainer: {
     alignItems: 'center',
@@ -294,6 +292,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.semiBold,
   },
+
   whiteModalContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
@@ -311,9 +310,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: SPACING.lg,
     paddingBottom: SPACING.xl,
+    backgroundColor: COLORS.white,
   },
   section: {
     marginBottom: SPACING.lg,
+    backgroundColor: '#F8F9FA',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
@@ -447,6 +450,23 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+    gap: SPACING.sm,
+  },
+  shareButtonBottom: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.teal,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+  },
+  shareButtonText: {
+    color: COLORS.teal,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
   },
   primaryButton: {
     backgroundColor: COLORS.teal,

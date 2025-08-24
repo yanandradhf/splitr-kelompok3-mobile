@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -6,6 +6,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { formatRp } from '@/lib/currency';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../../../../constants/theme';
+import { API_CONFIG } from '../../../../../constants/config';
+import api from '../../../../../services/api';
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -23,12 +25,31 @@ export default function PaymentScreen() {
   const [paymentMethod, setPaymentMethod] = useState<'instant' | 'scheduled'>('instant');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
-  // Dummy account data
-  const myAccount = {
-    name: 'Andra Dhafa',
-    accountNumber: '1954219066',
-    balance: 15000000
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get(API_CONFIG.ENDPOINTS.MY_ACCOUNT);
+      if (response.data) {
+        setUserProfile(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching account:', error);
+    }
+  };
+
+  const myAccount = userProfile ? {
+    name: userProfile.accountName,
+    accountNumber: userProfile.accountNumber,
+    balance: userProfile.balance || 0
+  } : {
+    name: 'Loading...',
+    accountNumber: '...',
+    balance: 0
   };
 
   const paymentAmount = parseInt(amount as string);
@@ -43,6 +64,11 @@ export default function PaymentScreen() {
   };
 
   const handlePayment = () => {
+    if (!userProfile) {
+      Alert.alert('Error', 'Data profil belum dimuat. Silakan coba lagi.');
+      return;
+    }
+
     if (paymentAmount > myAccount.balance) {
       Alert.alert('Saldo Tidak Cukup', 'Saldo Anda tidak mencukupi untuk melakukan pembayaran ini.');
       return;

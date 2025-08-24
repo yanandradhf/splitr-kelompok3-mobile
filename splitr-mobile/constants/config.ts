@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://b4002777f7d9.ngrok-free.app",
+  BASE_URL: "https://8f0f3277fd25.ngrok-free.app",
   ENDPOINTS: {
     // Auth
     LOGIN: "/api/mobile/auth/login",

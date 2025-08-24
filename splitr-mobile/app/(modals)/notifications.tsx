@@ -36,26 +36,44 @@ export default function NotificationsScreen() {
     console.log('🔔 Notification pressed:', JSON.stringify(notification, null, 2));
     
     try {
-      // Get identifier from billId or billCode
-      const identifier = notification.billId || notification.metadata?.billCode;
+      // Get identifier from billId or billCode or data object
+      let identifier = notification.billId || 
+                      notification.metadata?.billCode || 
+                      notification.data?.billId;
+      
+      // Fallback: extract from message if no identifier found
+      if (!identifier && (notification.type === 'payment_received' || notification.type === 'payment_complete')) {
+        // Try to extract bill name from message and use it as fallback
+        const messageMatch = notification.message.match(/'([^']+)'/); 
+        if (messageMatch) {
+          identifier = messageMatch[1]; // Use bill name as identifier
+        }
+      }
       
       console.log('🔍 Checking notification data:');
       console.log('  - Type:', notification.type);
       console.log('  - BillId:', notification.billId);
+      console.log('  - Data BillId:', notification.data?.billId);
       console.log('  - BillCode:', notification.metadata?.billCode);
+      console.log('  - Message:', notification.message);
       console.log('  - Identifier:', identifier);
       
-      // Handle bill-related notifications
+      // Handle payment notifications for hosts
+      if ((notification.type === 'payment_received' || notification.type === 'payment_complete') && identifier) {
+        console.log('💰 Host payment notification detected with identifier:', identifier);
+        router.push(`/master-bill/${identifier}`);
+        return;
+      }
+      
+      // Handle other bill-related notifications
       const isBillRelated = 
         notification.type === 'bill_assignment' ||
         notification.type === 'payment_reminder' ||
-        notification.type === 'payment_received' ||
         notification.billId ||
         notification.metadata?.billCode;
       
       if (isBillRelated && identifier) {
         console.log('💰 Bill notification detected with identifier:', identifier);
-        await markAsRead(notification.notificationId);
         router.push(`/bill-notification/${identifier}`);
         return;
       }
@@ -78,7 +96,6 @@ export default function NotificationsScreen() {
         // Fallback: use groupId from notification
         const groupId = notification.groupId || notification.metadata?.groupId;
         if (groupId) {
-          await markAsRead(notification.notificationId);
           router.push({
             pathname: '/(modals)/groups/detail',
             params: { groupId }
@@ -86,9 +103,6 @@ export default function NotificationsScreen() {
           return;
         }
       }
-      
-      // For all other notifications (removed, left, deleted, etc), just mark as read
-      await markAsRead(notification.notificationId);
     } catch (error) {
       console.error('Error handling notification:', error);
       // Always try to mark as read
