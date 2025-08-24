@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://fe1ee772c33e.ngrok-free.app",
+  BASE_URL: "https://8f0f3277fd25.ngrok-free.app",
   ENDPOINTS: {
     // Auth
     LOGIN: "/api/mobile/auth/login",
@@ -31,6 +31,17 @@ export const API_CONFIG = {
     NOTIFICATIONS: "/api/mobile/notifications",
     NOTIFICATION_ACTION: "/api/mobile/notifications/group-action",
     MARK_ALL_READ: "/api/mobile/notifications/read-all",
+
+    // Bills
+    BILL_DETAIL: "/api/mobile/bills",
+    MY_ACTIVITY: "/api/mobile/bills/my-activity",
+    PERSONAL: "/api/mobile/bills/personal",
+    MASTER: "/api/mobile/bills/master",
+
+    // Payment
+    PAYMENT_CREATE: "/api/mobile/payments/create",
+    PAYMENT_HISTORY: "/api/mobile/payments/history",
+    PAYMENT_RECEIPT: "/api/mobile/payments/:paymentId/receipt",
   },
   TIMEOUT: 10000,
 };
@@ -86,7 +97,11 @@ export const UI_STATE_PAYLOAD = {
       summary: [
         {
           title: "Pembayaran Tertunda",
-          value: { amount: 11985000, currency: "IDR", formatted: "Rp 11.985.000" },
+          value: {
+            amount: 11985000,
+            currency: "IDR",
+            formatted: "Rp 11.985.000",
+          },
           subtitle: "Yang harus dibayar",
         },
         {

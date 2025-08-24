@@ -1,5 +1,5 @@
 // app/create-bill/camera.tsx
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -7,12 +7,19 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '../../constants/Colors';
+import { useBillStore } from '../../store/billStore';
 
 export default function CameraScreen() {
   const [facing, setFacing] = useState<'front' | 'back'>('back');
   const [flash, setFlash] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const { reset } = useBillStore();
+
+  // Reset store when entering camera screen
+  useEffect(() => {
+    reset();
+  }, []);
 
   if (!permission) {
     return <View />;

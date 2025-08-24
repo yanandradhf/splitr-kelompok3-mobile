@@ -13,7 +13,7 @@ import { COLORS, FONTS } from '../../../../../constants/theme';
 
 export default function RincianBayarScreen() {
   const params = useLocalSearchParams();
-  const { nominal = '0', transactionId, title = 'TIKET KONSER COLDPLAY', from = 'Hans Sye' } = params;
+  const { nominal = '0', transactionId, title, from } = params;
 
   const stepData = {
     title: 'Rincian Split Bill',
@@ -45,11 +45,11 @@ export default function RincianBayarScreen() {
             <View style={styles.userSection}>
               <View style={styles.userInfo}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>HS</Text>
+                  <Text style={styles.avatarText}>{(from as string)?.substring(0, 2)?.toUpperCase() || 'XX'}</Text>
                 </View>
                 <View style={styles.userDetails}>
-                  <Text style={styles.userName}>Hans Sye</Text>
-                  <Text style={styles.userBank}>BNI • 1902489737</Text>
+                  <Text style={styles.userName}>{from}</Text>
+                  <Text style={styles.userBank}>BNI • ****</Text>
                 </View>
               </View>
             </View>
@@ -69,9 +69,9 @@ export default function RincianBayarScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Sumber Dana</Text>
                 <View style={styles.sourceContainer}>
-                  <Text style={styles.sourceText}>TAPLUS PEGAWAI BNI • 1918292749</Text>
-                  <Text style={styles.sourceSubtext}>IVANA ILHAMSYAH</Text>
-                  <Text style={styles.sourceBalance}>Rp ****************</Text>
+                  <Text style={styles.sourceText}>BNI Taplus</Text>
+                  <Text style={styles.sourceSubtext}>Rekening Utama</Text>
+                  <Text style={styles.sourceBalance}>Saldo tersedia</Text>
                 </View>
               </View>
 
@@ -86,23 +86,19 @@ export default function RincianBayarScreen() {
               {stepData.showSummary && (
                 <View style={styles.summarySection}>
                   <Text style={styles.summaryTitle}>Penerima</Text>
-                  <Text style={styles.summaryName}>HANS SYE</Text>
+                  <Text style={styles.summaryName}>{(from as string)?.toUpperCase()}</Text>
                   
                   <Text style={styles.summaryTitle}>Sumber Dana</Text>
-                  <Text style={styles.summaryText}>IVANA ILHAMSYAH</Text>
-                  <Text style={styles.summarySubtext}>TAPLUS PEGAWAI BNI • 1918292749</Text>
+                  <Text style={styles.summaryText}>BNI Taplus</Text>
+                  <Text style={styles.summarySubtext}>Rekening Utama</Text>
                   
                   <Text style={styles.summaryTitle}>Pembayaran</Text>
-                  <Text style={styles.summaryText}>TIKET KONSER COLDPLAY</Text>
+                  <Text style={styles.summaryText}>{(title as string)?.toUpperCase() || 'PEMBAYARAN'}</Text>
                   
                   <View style={styles.amountSection}>
                     <View style={styles.amountRow}>
                       <Text style={styles.amountLabel}>Jumlah Nominal</Text>
                       <Text style={styles.amountValue}>Rp {stepData.nominal}</Text>
-                    </View>
-                    <View style={styles.amountRow}>
-                      <Text style={styles.amountLabel}>Biaya Transaksi</Text>
-                      <Text style={styles.amountValue}>Rp 0</Text>
                     </View>
                   </View>
                 </View>
@@ -113,8 +109,19 @@ export default function RincianBayarScreen() {
             <TouchableOpacity 
               style={styles.confirmButton}
               onPress={() => {
-                // Navigate to PIN screen with all transaction data
-                router.push(`/monitoring/transaction/bayarSekarang/pin?nominal=${encodeURIComponent(stepData.nominal)}&transactionId=${transactionId}&title=${encodeURIComponent(title as string)}&from=${encodeURIComponent(from as string)}`);
+                // Navigate to PIN verification screen
+                router.push({
+                  pathname: '/pin-verification',
+                  params: {
+                    title: 'Konfirmasi Pembayaran',
+                    subtitle: `Bayar Rp ${stepData.nominal}`,
+                    billId: transactionId,
+                    amount: stepData.nominal,
+                    paymentMethod: 'instant',
+                    hostName: from,
+                    billName: title
+                  }
+                });
               }}
             >
               <Text style={styles.confirmButtonText}>Konfirmasi</Text>
