@@ -38,7 +38,7 @@ interface BillState {
   markPaidUpfront: (itemId: string, memberId: string | null) => void;
   setPaymentMethod: (p: "PAY_NOW" | "PAY_LATER") => void;
   setDueDate: (iso: string) => void;
-  finalize: (memberNames: {[id: string]: string}) => void;
+  finalize: (memberNames: {[id: string]: string}, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]) => void;
 }
 
 export const useBillStore = create<BillState>((set, get) => ({
@@ -69,18 +69,27 @@ export const useBillStore = create<BillState>((set, get) => ({
     const subTotal = items.reduce((t, it) => {
       return t + (it.isSharing ? it.price : it.qty * it.price);
     }, 0);
-    const service = Math.floor(subTotal * (fees.servicePct / 100));
-    const tax = Math.floor((subTotal + service) * (fees.taxPct / 100));
     
-    // Calculate discount
+    // 1. Hitung diskon dulu dari subtotal
     let discount = 0;
     if (fees.discountPct > 0) {
-      discount = Math.floor((subTotal + service + tax) * (fees.discountPct / 100));
+      discount = Math.floor(subTotal * (fees.discountPct / 100));
     } else if (fees.discountNominal > 0) {
       discount = fees.discountNominal;
     }
     
-    const grandTotal = Math.max(0, subTotal + service + tax - discount);
+    // 2. Harga setelah diskon
+    const afterDiscount = Math.max(0, subTotal - discount);
+    
+    // 3. Hitung service dari harga setelah diskon
+    const service = Math.floor(afterDiscount * (fees.servicePct / 100));
+    
+    // 4. Hitung pajak dari harga setelah diskon
+    const tax = Math.floor(afterDiscount * (fees.taxPct / 100));
+    
+    // 5. Total akhir
+    const grandTotal = afterDiscount + service + tax;
+    
     set((s) => ({ draft: { ...s.draft, totals: { subTotal, tax, service, discount, grandTotal } } }));
   },
   setSelectedMembers: (ids) =>
@@ -102,17 +111,32 @@ export const useBillStore = create<BillState>((set, get) => ({
     })),
   setPaymentMethod: (p) => set((s) => ({ draft: { ...s.draft, paymentMethod: p } })),
   setDueDate: (iso) => set((s) => ({ draft: { ...s.draft, dueDate: iso } })),
-  finalize: (memberNames: {[id: string]: string}) => {
-    // TODO: Send to API
+  finalize: async (memberNames: {[id: string]: string}, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]) => {
     const { draft } = get();
     console.log('Finalizing bill:', draft);
     
-    // Save to created bills store
-    const { addCreatedBill } = require('@/store/createdBillsStore').useCreatedBillsStore.getState();
-    addCreatedBill(draft, memberNames);
-    
-    // Reset after successful submission
-    set({ draft: newDraft() });
+    try {
+      // Create bill via API
+      const { createBill, transformDraftToCreateBillRequest } = require('@/services/billApi');
+      const requestData = transformDraftToCreateBillRequest(draft, categoryId, userMap, currentUser, categories);
+      console.log('🚀 Sending bill data to API:', JSON.stringify(requestData, null, 2));
+      const response = await require('@/services/api').default.post('/api/mobile/bills/create', requestData);
+      const billResponse = response.data;
+      
+      console.log('Bill created:', billResponse);
+      
+      // Save to created bills store
+      const { addCreatedBill } = require('@/store/createdBillsStore').useCreatedBillsStore.getState();
+      addCreatedBill(draft, memberNames);
+      
+      // Reset after successful submission
+      set({ draft: newDraft() });
+      
+      return billResponse;
+    } catch (error) {
+      console.error('Failed to create bill:', error);
+      throw error;
+    }
   },
 }));
 

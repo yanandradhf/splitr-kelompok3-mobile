@@ -69,7 +69,7 @@ export default function PaymentMethod() {
                   Bayar Sekarang
                 </Text>
                 <Text style={[styles.methodDesc, mode === "PAY_NOW" && styles.methodDescActive]}>
-                  Tagihan harus dibayar segera
+                  Maksimal 24 jam setelah undangan
                 </Text>
               </Pressable>
 
@@ -92,6 +92,17 @@ export default function PaymentMethod() {
                 </Text>
               </Pressable>
             </View>
+
+            {mode === "PAY_NOW" && (
+              <View style={styles.infoSection}>
+                <View style={styles.infoBox}>
+                  <Ionicons name="time" size={16} color={COLORS.warning} />
+                  <Text style={styles.infoText}>
+                    Tagihan akan expired dalam 24 jam setelah dikirim ke anggota
+                  </Text>
+                </View>
+              </View>
+            )}
 
             {mode === "PAY_LATER" && (
               <View style={styles.dateSection}>
@@ -265,5 +276,25 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.bold,
+  },
+  infoSection: {
+    marginBottom: SPACING.lg,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderRadius: BORDER_RADIUS.sm,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.warning,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: '#92400E',
+    lineHeight: 18,
   },
 });

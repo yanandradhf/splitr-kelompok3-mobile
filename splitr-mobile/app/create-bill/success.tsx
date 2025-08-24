@@ -11,14 +11,26 @@ export default function BillSuccess() {
   const params = useLocalSearchParams();
   const [billData, setBillData] = useState({
     name: '',
+    code: '',
     total: 0,
-    memberNames: [] as string[]
+    memberNames: [] as string[],
+    inviteLink: '',
+    qrCodeUrl: '',
+    hostName: '',
+    participantsAdded: 0,
+    notificationsSent: 0
   });
 
   useEffect(() => {
     // Get data from params
     const billName = params.billName as string || 'Tagihan';
+    const billCode = params.billCode as string || '';
     const totalAmount = parseInt(params.totalAmount as string || '0');
+    const inviteLink = params.inviteLink as string || '';
+    const qrCodeUrl = params.qrCodeUrl as string || '';
+    const hostName = params.hostName as string || '';
+    const participantsAdded = parseInt(params.participantsAdded as string || '0');
+    const notificationsSent = parseInt(params.notificationsSent as string || '0');
     const memberNamesParam = params.memberNames as string;
     
     let memberNames: string[] = [];
@@ -36,8 +48,14 @@ export default function BillSuccess() {
     
     setBillData({
       name: billName,
+      code: billCode,
       total: totalAmount,
-      memberNames: memberNames
+      memberNames: memberNames,
+      inviteLink,
+      qrCodeUrl,
+      hostName,
+      participantsAdded,
+      notificationsSent
     });
   }, [params.billName, params.totalAmount, params.memberNames]);
 
@@ -71,10 +89,18 @@ export default function BillSuccess() {
           {/* Bill Summary */}
           <View style={styles.summaryCard}>
             <Text style={styles.billName}>{billData.name}</Text>
+            {billData.code && (
+              <Text style={styles.billCode}>Kode: {billData.code}</Text>
+            )}
             <Text style={styles.totalAmount}>{formatRp(billData.total)}</Text>
             <Text style={styles.memberCount}>
               Dibagi untuk {billData.memberNames.length} orang
             </Text>
+            {billData.notificationsSent > 0 && (
+              <Text style={styles.notificationInfo}>
+                📩 {billData.notificationsSent} notifikasi terkirim
+              </Text>
+            )}
           </View>
 
           {/* Members List */}
@@ -202,6 +228,18 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
+  },
+  billCode: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.teal,
+    marginBottom: SPACING.xs,
+  },
+  notificationInfo: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.success,
+    marginTop: SPACING.xs,
   },
   totalAmount: {
     fontSize: FONT_SIZES.xxl,

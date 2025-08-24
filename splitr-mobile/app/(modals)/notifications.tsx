@@ -14,6 +14,7 @@ import { useNotifications } from '../../hooks/useApi';
 import { useNotificationsStore } from '../../store';
 import { COLORS, FONTS } from '../../constants/theme';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import api from '../../services/api';
 
 const LOCAL_COLORS = {
   background: COLORS.backgroundMain,
@@ -27,13 +28,84 @@ export default function NotificationsScreen() {
   const { notifications, loading } = useNotifications();
   const { handleNotificationAction, markAsRead } = useNotificationsStore();
   const [forceLoading, setForceLoading] = useState(true);
+  const [localNotifications, setLocalNotifications] = useState([]);
+
+  useEffect(() => {
+    setLocalNotifications(notifications);
+  }, [notifications]);
+
+  const updateNotificationAsRead = (notificationId) => {
+    setLocalNotifications(prev => 
+      prev.map(notif => 
+        notif.notificationId === notificationId 
+          ? { ...notif, isRead: true }
+          : notif
+      )
+    );
+  };
   
   useEffect(() => {
     setTimeout(() => setForceLoading(false), 1500);
   }, []);
 
   const handleNotificationPress = async (notification: any) => {
+    console.log('🔔 Notification pressed:', JSON.stringify(notification, null, 2));
+    
     try {
+      // Get identifier from billId or billCode or data object
+      let identifier = notification.billId || 
+                      notification.metadata?.billCode || 
+                      notification.data?.billId;
+      
+      // Fallback: extract from message if no identifier found
+      if (!identifier && (notification.type === 'payment_received' || notification.type === 'payment_complete')) {
+        // Try to extract bill name from message and use it as fallback
+        const messageMatch = notification.message.match(/'([^']+)'/); 
+        if (messageMatch) {
+          identifier = messageMatch[1]; // Use bill name as identifier
+        }
+      }
+      
+      console.log('🔍 Checking notification data:');
+      console.log('  - Type:', notification.type);
+      console.log('  - BillId:', notification.billId);
+      console.log('  - Data BillId:', notification.data?.billId);
+      console.log('  - BillCode:', notification.metadata?.billCode);
+      console.log('  - Message:', notification.message);
+      console.log('  - Identifier:', identifier);
+      
+      // Handle payment notifications for hosts
+      if ((notification.type === 'payment_received' || notification.type === 'payment_complete') && identifier) {
+        console.log('💰 Host payment notification detected with identifier:', identifier);
+        try {
+          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+          updateNotificationAsRead(notification.notificationId);
+        } catch (error) {
+          console.error('Failed to mark as read:', error);
+        }
+        router.push(`/master-bill/${identifier}`);
+        return;
+      }
+      
+      // Handle other bill-related notifications
+      const isBillRelated = 
+        notification.type === 'bill_assignment' ||
+        notification.type === 'payment_reminder' ||
+        notification.billId ||
+        notification.metadata?.billCode;
+      
+      if (isBillRelated && identifier) {
+        console.log('💰 Bill notification detected with identifier:', identifier);
+        try {
+          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+          updateNotificationAsRead(notification.notificationId);
+        } catch (error) {
+          console.error('Failed to mark as read:', error);
+        }
+        router.push(`/bill-notification/${identifier}`);
+        return;
+      }
+      
       // Only group_invitation needs API call to navigate to group detail
       if (notification.type === 'group_invitation') {
         try {
@@ -52,7 +124,12 @@ export default function NotificationsScreen() {
         // Fallback: use groupId from notification
         const groupId = notification.groupId || notification.metadata?.groupId;
         if (groupId) {
-          await markAsRead(notification.notificationId);
+          try {
+            await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+            updateNotificationAsRead(notification.notificationId);
+          } catch (error) {
+            console.error('Failed to mark as read:', error);
+          }
           router.push({
             pathname: '/(modals)/groups/detail',
             params: { groupId }
@@ -61,8 +138,24 @@ export default function NotificationsScreen() {
         }
       }
       
-      // For all other notifications (removed, left, deleted, etc), just mark as read
-      await markAsRead(notification.notificationId);
+      // Handle group notifications (updated, deleted, etc) - just mark as read
+      if (notification.type.startsWith('group_')) {
+        try {
+          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+          updateNotificationAsRead(notification.notificationId);
+        } catch (error) {
+          console.error('Failed to mark as read:', error);
+        }
+        return;
+      }
+      
+      // For all other notifications, just mark as read
+      try {
+        await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+        updateNotificationAsRead(notification.notificationId);
+      } catch (error) {
+        console.error('Failed to mark as read:', error);
+      }
     } catch (error) {
       console.error('Error handling notification:', error);
       // Always try to mark as read
@@ -150,7 +243,7 @@ export default function NotificationsScreen() {
                 <Text style={styles.emptySubtitle}>Notifikasi akan muncul di sini</Text>
               </View>
             ) : (
-              notifications.map((notification, index) => (
+              localNotifications.map((notification, index) => (
                 <TouchableOpacity 
                   key={notification.notificationId || index} 
                   style={[
@@ -275,11 +368,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 16,
-    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 8,
+    elevation: 3,
     borderWidth: 1,
     borderColor: '#F0F0F0',
   },
@@ -289,13 +382,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   notificationIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F8F9FA',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0F9FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
   },
   notificationContent: {
     flex: 1,
@@ -314,33 +409,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dateContainer: {
-    backgroundColor: '#76B9BB',
-    paddingHorizontal: 8,
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
   },
   notificationDate: {
     fontSize: 11,
     fontFamily: FONTS.medium,
-    color: LOCAL_COLORS.textPrimary,
+    color: '#0369A1',
     textAlign: 'center',
   },
   unreadNotification: {
     borderLeftWidth: 4,
-    borderLeftColor: '#00897B',
-    backgroundColor: '#F8FFFF',
+    borderLeftColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
   },
   unreadText: {
     fontFamily: FONTS.bold,
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#00897B',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#EF4444',
     position: 'absolute',
     top: 16,
     right: 16,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
