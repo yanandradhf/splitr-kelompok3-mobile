@@ -22,6 +22,9 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   lastRefresh: 0,
 
   fetchMyActivity: async () => {
+    const { loading } = get();
+    if (loading) return; // Prevent duplicate calls
+    
     try {
       set({ loading: true });
       const timestamp = Date.now();
@@ -31,6 +34,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
       
       if (response.data.success) {
         const activities = response.data.myActivity || [];
+        console.log('🔄 Store updated with', activities.length, 'activities');
         set({ 
           billActivities: activities,
           lastRefresh: timestamp,

@@ -108,6 +108,8 @@ export default function MonitoringIndex() {
 
 
 
+
+
   const toggleExpanded = (id: string) => {
     const currentTabExpanded = new Set(expandedItems[activeTab]);
     if (currentTabExpanded.has(id)) {
@@ -124,7 +126,9 @@ export default function MonitoringIndex() {
   const getFilteredBills = () => {
     if (activeTab !== "tagihan") return [];
 
-    let filtered = billActivities;
+    // Force fresh data from store
+    let filtered = [...billActivities];
+    console.log('🔄 Using fresh bill data:', filtered.length, 'bills');
 
     // Apply category filter with smart prioritization
     switch (categoryFilter) {
