@@ -14,6 +14,7 @@ import { useNotifications } from '../../hooks/useApi';
 import { useNotificationsStore } from '../../store';
 import { COLORS, FONTS } from '../../constants/theme';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import api from '../../services/api';
 
 const LOCAL_COLORS = {
   background: COLORS.backgroundMain,
@@ -27,6 +28,21 @@ export default function NotificationsScreen() {
   const { notifications, loading } = useNotifications();
   const { handleNotificationAction, markAsRead } = useNotificationsStore();
   const [forceLoading, setForceLoading] = useState(true);
+  const [localNotifications, setLocalNotifications] = useState([]);
+
+  useEffect(() => {
+    setLocalNotifications(notifications);
+  }, [notifications]);
+
+  const updateNotificationAsRead = (notificationId) => {
+    setLocalNotifications(prev => 
+      prev.map(notif => 
+        notif.notificationId === notificationId 
+          ? { ...notif, isRead: true }
+          : notif
+      )
+    );
+  };
   
   useEffect(() => {
     setTimeout(() => setForceLoading(false), 1500);
@@ -61,6 +77,12 @@ export default function NotificationsScreen() {
       // Handle payment notifications for hosts
       if ((notification.type === 'payment_received' || notification.type === 'payment_complete') && identifier) {
         console.log('💰 Host payment notification detected with identifier:', identifier);
+        try {
+          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+          updateNotificationAsRead(notification.notificationId);
+        } catch (error) {
+          console.error('Failed to mark as read:', error);
+        }
         router.push(`/master-bill/${identifier}`);
         return;
       }
@@ -74,6 +96,12 @@ export default function NotificationsScreen() {
       
       if (isBillRelated && identifier) {
         console.log('💰 Bill notification detected with identifier:', identifier);
+        try {
+          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+          updateNotificationAsRead(notification.notificationId);
+        } catch (error) {
+          console.error('Failed to mark as read:', error);
+        }
         router.push(`/bill-notification/${identifier}`);
         return;
       }
@@ -96,12 +124,37 @@ export default function NotificationsScreen() {
         // Fallback: use groupId from notification
         const groupId = notification.groupId || notification.metadata?.groupId;
         if (groupId) {
+          try {
+            await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+            updateNotificationAsRead(notification.notificationId);
+          } catch (error) {
+            console.error('Failed to mark as read:', error);
+          }
           router.push({
             pathname: '/(modals)/groups/detail',
             params: { groupId }
           });
           return;
         }
+      }
+      
+      // Handle group notifications (updated, deleted, etc) - just mark as read
+      if (notification.type.startsWith('group_')) {
+        try {
+          await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+          updateNotificationAsRead(notification.notificationId);
+        } catch (error) {
+          console.error('Failed to mark as read:', error);
+        }
+        return;
+      }
+      
+      // For all other notifications, just mark as read
+      try {
+        await api.put(`/api/mobile/notifications/${notification.notificationId}/read`);
+        updateNotificationAsRead(notification.notificationId);
+      } catch (error) {
+        console.error('Failed to mark as read:', error);
       }
     } catch (error) {
       console.error('Error handling notification:', error);
@@ -190,7 +243,7 @@ export default function NotificationsScreen() {
                 <Text style={styles.emptySubtitle}>Notifikasi akan muncul di sini</Text>
               </View>
             ) : (
-              notifications.map((notification, index) => (
+              localNotifications.map((notification, index) => (
                 <TouchableOpacity 
                   key={notification.notificationId || index} 
                   style={[

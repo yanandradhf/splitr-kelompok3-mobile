@@ -280,26 +280,19 @@ export default function GroupDetailScreen() {
     try {
       await apiAddMember(displayGroup?.groupId, selectedFriendToAdd.friend.userId);
       
-      // Immediately add new member to local state
-      const newMember = {
-        id: selectedFriendToAdd.friend.userId,
-        name: selectedFriendToAdd.friend.name,
-        status: "active",
-        avatar: selectedFriendToAdd.friend.avatar || personImages[members.length % 4],
-        isCreator: false,
-        isFriend: true,
-        canAddFriend: false,
-        isCurrentUser: false,
-      };
-      setMembers(prev => [...prev, newMember]);
-      
       setShowAddMemberModal(false);
       setShowAddMemberSuccessModal(true);
       
+      // Refresh data immediately after API success
+      if (displayGroup?.groupId) {
+        fetchGroupDetail(displayGroup.groupId);
+      }
+      
+      // Close success modal
       setTimeout(() => {
         setShowAddMemberSuccessModal(false);
         setSelectedFriendToAdd(null);
-      }, 500);
+      }, 1000);
     } catch (error) {
       console.error("Error adding member:", error);
       setShowAddMemberModal(false);
@@ -604,7 +597,7 @@ export default function GroupDetailScreen() {
               <FlatList
                 data={members}
                 renderItem={renderMember}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
                 scrollEnabled={false}
               />
             </View>
@@ -896,7 +889,7 @@ export default function GroupDetailScreen() {
                 
                 <FlatList
                   data={availableFriends}
-                  keyExtractor={(item) => item.friend.userId}
+                  keyExtractor={(item, index) => `${item.friend.userId}-${index}`}
                   style={styles.friendsList}
                   showsVerticalScrollIndicator={false}
                   renderItem={({ item }) => (
