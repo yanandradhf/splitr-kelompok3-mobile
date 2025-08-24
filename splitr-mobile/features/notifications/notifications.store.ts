@@ -34,6 +34,7 @@ interface NotificationsState {
   isMarkingRead: boolean;
   error: string | null;
   hasMore: boolean;
+  processingIds: Set<string>;
   
   // Actions
   fetchNotifications: (refresh?: boolean) => Promise<void>;
@@ -53,11 +54,16 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   isMarkingRead: false,
   error: null,
   hasMore: true,
+  processingIds: new Set(),
 
   fetchNotifications: async (refresh = false) => {
+    const { isLoading } = get();
+    if (isLoading && !refresh) return;
+    
     set({ isLoading: refresh, error: null });
     try {
-      const response = await notificationsAPI.getNotifications(20, 0);
+      const timestamp = Date.now();
+      const response = await notificationsAPI.getNotifications(20, 0, timestamp);
       const { notifications, unreadCount, totalCount } = response.data;
       
       set({ 
@@ -114,22 +120,24 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       
       console.log('🔔 Found notification:', notification);
       
+      // Mark as read locally first (optimistic update)
+      if (!notification.isRead) {
+        set(state => ({
+          notifications: state.notifications.map(notif => 
+            notif.notificationId === notificationId 
+              ? { ...notif, isRead: true }
+              : notif
+          ),
+          unreadCount: Math.max(0, state.unreadCount - 1)
+        }));
+      }
+      
       // For group notifications, try to extract groupId from metadata or notification itself
       if (notification.type.includes('group')) {
         const groupId = notification.groupId || notification.metadata?.groupId;
         
         if (groupId) {
           console.log('🔔 Using groupId from notification:', groupId);
-          
-          // Mark as read locally first
-          set(state => ({
-            notifications: state.notifications.map(notif => 
-              notif.notificationId === notificationId 
-                ? { ...notif, isRead: true }
-                : notif
-            ),
-            unreadCount: Math.max(0, state.unreadCount - 1)
-          }));
           
           // Try API call, but don't fail if it errors
           try {
@@ -144,17 +152,6 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       
       // For non-group notifications or when no groupId found, use normal flow
       const response = await notificationsAPI.handleNotificationAction(notificationId, action);
-      
-      // Mark notification as read locally
-      set(state => ({
-        notifications: state.notifications.map(notif => 
-          notif.notificationId === notificationId 
-            ? { ...notif, isRead: true }
-            : notif
-        ),
-        unreadCount: Math.max(0, state.unreadCount - 1)
-      }));
-      
       return response.data;
     } catch (error: any) {
       console.error('❌ Error handling notification action:', error);
@@ -166,26 +163,29 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   },
 
   markAsRead: async (notificationId) => {
-    set({ isMarkingRead: true, error: null });
+    const state = get();
+    const notification = state.notifications.find(n => n.notificationId === notificationId);
+    
+    // Skip if already read
+    if (!notification || notification.isRead) {
+      return;
+    }
+
+    // Update locally first (optimistic update)
+    set(state => ({
+      notifications: state.notifications.map(notif => 
+        notif.notificationId === notificationId 
+          ? { ...notif, isRead: true }
+          : notif
+      ),
+      unreadCount: Math.max(0, state.unreadCount - 1)
+    }));
+
+    // Then sync with API in background
     try {
       await notificationsAPI.markAsRead(notificationId);
-      
-      // Update notification locally
-      set(state => ({
-        notifications: state.notifications.map(notif => 
-          notif.notificationId === notificationId 
-            ? { ...notif, isRead: true }
-            : notif
-        ),
-        unreadCount: Math.max(0, state.unreadCount - 1),
-        isMarkingRead: false
-      }));
     } catch (error: any) {
       console.error('Error marking notification as read:', error);
-      set({ 
-        error: error.response?.data?.message || 'Failed to mark notification as read',
-        isMarkingRead: false 
-      });
     }
   },
 

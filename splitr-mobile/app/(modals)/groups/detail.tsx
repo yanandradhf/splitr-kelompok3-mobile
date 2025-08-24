@@ -10,6 +10,7 @@ import {
   ScrollView,
   FlatList,
   Modal,
+  Alert,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
@@ -104,13 +105,40 @@ export default function GroupDetailScreen() {
     // Clear current group cache first
     clearCurrentGroup();
     
-    if (groupId) {
-      console.log('Fetching by groupId:', groupId);
-      fetchGroupDetail(groupId);
-    } else if (groupData?.groupId) {
-      console.log('Fetching by groupData.groupId:', groupData.groupId);
-      fetchGroupDetail(groupData.groupId);
-    }
+    const fetchData = async () => {
+      try {
+        if (groupId) {
+          console.log('Fetching by groupId:', groupId);
+          await fetchGroupDetail(groupId);
+        } else if (groupData?.groupId) {
+          console.log('Fetching by groupData.groupId:', groupData.groupId);
+          await fetchGroupDetail(groupData.groupId);
+        }
+      } catch (error) {
+        console.error('Error fetching group detail:', error);
+        if (error.response?.status === 404) {
+          // Group not found - show alert and go back
+          Alert.alert(
+            'Grup Tidak Ditemukan',
+            'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace('/(modals)/groups');
+                  }
+                }
+              }
+            ]
+          );
+        }
+      }
+    };
+    
+    fetchData();
   }, [groupId, groupData?.groupId, isGroupDeleted]);
 
   // Update local state when displayGroup changes
