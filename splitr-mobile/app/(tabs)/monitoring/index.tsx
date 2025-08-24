@@ -762,7 +762,7 @@ export default function MonitoringIndex() {
               <Text style={styles.loadingText}>Memuat aktivitas...</Text>
             </View>
           ) : (
-            filteredBills.map((bill) => {
+            filteredBills.filter(bill => bill.paymentStatus !== "completed").map((bill) => {
               const statusBadge = getStatusBadge(bill);
               const isExpanded = expandedItems[activeTab].has(bill.billId);
 
@@ -1013,14 +1013,58 @@ export default function MonitoringIndex() {
             })
           ))}
 
-        {/* Tab Riwayat - Redesigned */}
+        {/* Tab Riwayat - New Design */}
         {activeTab === "riwayat" &&
           (historyLoading ? (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>Memuat riwayat...</Text>
             </View>
           ) : (
-            paymentHistory.map((payment) => {
+            [...paymentHistory, ...filteredBills.filter(bill => bill.paymentStatus === "completed")].map((payment, index) => {
+              // Handle completed bills from filteredBills
+              if (!payment.paymentId && payment.billId) {
+                const paymentDate = formatDate(payment.createdAt || new Date().toISOString());
+                return (
+                  <View
+                    key={payment.billId}
+                    style={[styles.billCard, styles.completedCard]}
+                  >
+                    <View style={styles.watermarkContainer}>
+                      <Ionicons name="checkmark-circle" size={100} color="rgba(22, 163, 74, 0.1)" style={styles.watermarkIcon} />
+                    </View>
+                    <Pressable
+                      style={styles.billContent}
+                      onPress={() => handleBillPress(payment)}
+                    >
+                      <View style={styles.billHeader}>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>{payment.billName}</Text>
+                          <Text style={styles.hostName}>ke {payment.hostName}</Text>
+                        </View>
+                        <View style={styles.billRight}>
+                          <Text style={styles.billAmount}>{formatRp(payment.yourShare)}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.historyBottomRow}>
+                        <View style={styles.historyBottomLeft}>
+                          <View style={[styles.paymentMethodContainer, styles.paymentMethodInstant]}>
+                            <Text style={[styles.paymentMethodText, styles.paymentMethodTextInstant]}>
+                              Bayar Langsung
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.historyStatusRow}>
+                          <Text style={styles.smallCode}>#{payment.billCode}</Text>
+                          <View style={[styles.statusBadge, { backgroundColor: "#DCFCE7" }]}>
+                            <Text style={[styles.statusBadgeText, { color: COLORS.success }]}>Selesai</Text>
+                          </View>
+                        </View>
+                      </View>
+                    </Pressable>
+                  </View>
+                );
+              }
+              // Handle regular payment history
               const statusBadge = getStatusBadgeHistory(
                 payment.status,
                 payment.paymentType
@@ -1030,69 +1074,91 @@ export default function MonitoringIndex() {
                 {
                   day: "numeric",
                   month: "short",
-                }
-              );
-              const paymentTime = new Date(payment.paidAt).toLocaleTimeString(
-                "id-ID",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
+                  year: "numeric",
                 }
               );
 
+              const getIcon = (billName) => {
+                if (billName.toLowerCase().includes('pizza')) return '🍕';
+                if (billName.toLowerCase().includes('coffee') || billName.toLowerCase().includes('cafe')) return '☕';
+                if (billName.toLowerCase().includes('lunch') || billName.toLowerCase().includes('makan')) return '🍔';
+                return '🍽️';
+              };
+
+              const getIconBgColor = (billName, index) => {
+                if (billName.toLowerCase().includes('pizza')) return COLORS.orange;
+                if (billName.toLowerCase().includes('coffee') || billName.toLowerCase().includes('cafe')) return COLORS.teal;
+                if (billName.toLowerCase().includes('lunch') || billName.toLowerCase().includes('makan')) return COLORS.warning;
+                return [COLORS.orange, COLORS.teal, COLORS.warning][index % 3];
+              };
+
+              const getBorderColor = (billName, index) => {
+                if (billName.toLowerCase().includes('pizza')) return COLORS.orange;
+                if (billName.toLowerCase().includes('coffee') || billName.toLowerCase().includes('cafe')) return COLORS.teal;
+                if (billName.toLowerCase().includes('lunch') || billName.toLowerCase().includes('makan')) return COLORS.warning;
+                return [COLORS.orange, COLORS.teal, COLORS.warning][index % 3];
+              };
+
               return (
-                <Pressable
+                <View
                   key={payment.paymentId}
-                  style={styles.newHistoryCard}
-                  onPress={() => handleHistoryCardPress(payment.paymentId)}
+                  style={[styles.billCard, styles.completedCard]}
                 >
-                  <View style={styles.newHistoryHeader}>
-                    <View style={styles.newHistoryLeft}>
-                      <View style={styles.newHistoryIcon}>
-                        <Ionicons
-                          name="checkmark-circle"
-                          size={20}
-                          color={COLORS.success}
-                        />
-                      </View>
-                      <View style={styles.newHistoryInfo}>
-                        <Text style={styles.newHistoryTitle}>Pembayaran Berhasil</Text>
-                        <Text style={styles.newHistoryBill}>{payment.billName}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.newHistoryAmount}>
-                      <Text style={styles.newAmountText}>{formatRp(payment.amount)}</Text>
-                    </View>
+                  <View style={styles.watermarkContainer}>
+                    <Ionicons name="checkmark-circle" size={100} color="rgba(22, 163, 74, 0.1)" style={styles.watermarkIcon} />
                   </View>
-                  
-                  <View style={styles.newHistoryDetails}>
-                    <View style={styles.newDetailRow}>
-                      <Text style={styles.newDetailLabel}>Kepada</Text>
-                      <Text style={styles.newDetailValue}>{payment.hostName}</Text>
-                    </View>
-                    <View style={styles.newDetailRow}>
-                      <Text style={styles.newDetailLabel}>Waktu</Text>
-                      <Text style={styles.newDetailValue}>{paymentDate} • {paymentTime}</Text>
-                    </View>
-                    <View style={styles.newDetailRow}>
-                      <Text style={styles.newDetailLabel}>Status</Text>
-                      <View style={[styles.newStatusBadge, { backgroundColor: statusBadge.bg }]}>
-                        <Text style={[styles.newStatusText, { color: statusBadge.color }]}>
-                          {statusBadge.text}
+                  <Pressable
+                    style={styles.billContent}
+                    onPress={() => handleHistoryCardPress(payment.paymentId)}
+                  >
+                    <View style={styles.billHeader}>
+                      <View style={styles.billInfo}>
+                        <Text style={styles.billTitle}>{payment.billName}</Text>
+                        <Text style={styles.hostName}>ke {payment.hostName}</Text>
+                      </View>
+                      <View style={styles.billRight}>
+                        <Text style={styles.billAmount}>{formatRp(payment.amount)}</Text>
+                        <Text style={styles.historyDateText}>
+                          Dibayar: {paymentDate}
                         </Text>
                       </View>
                     </View>
-                  </View>
-                </Pressable>
+                    <View style={styles.historyBottomRow}>
+                      <View style={styles.historyBottomLeft}>
+                        <View style={[
+                          styles.paymentMethodContainer,
+                          payment.method === 'bayar-sekarang' 
+                            ? styles.paymentMethodInstant 
+                            : styles.paymentMethodScheduled
+                        ]}>
+                          <Text style={[
+                            styles.paymentMethodText,
+                            payment.method === 'bayar-sekarang' 
+                              ? styles.paymentMethodTextInstant 
+                              : styles.paymentMethodTextScheduled
+                          ]}>
+                            {payment.method === 'bayar-sekarang' ? 'Bayar Langsung' : 'Bayar Nanti'}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.historyStatusRow}>
+                        <Text style={styles.smallCode}>#{payment.paymentId.slice(-6)}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: "#DCFCE7" }]}>
+                          <Text style={[styles.statusBadgeText, { color: COLORS.success }]}>Selesai</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </Pressable>
+                </View>
               );
             })
           ))}
 
         {/* Empty State */}
-        {((activeTab === "tagihan" && !loading && filteredBills.length === 0) ||
+        {((activeTab === "tagihan" && !loading && filteredBills.filter(bill => bill.paymentStatus !== "completed").length === 0) ||
           (activeTab === "riwayat" &&
             !historyLoading &&
-            paymentHistory.length === 0)) && (
+            [...paymentHistory, ...filteredBills.filter(bill => bill.paymentStatus === "completed")].length === 0)) && (
           <View style={styles.emptyState}>
             <Ionicons
               name="receipt-outline"
@@ -1384,7 +1450,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: SPACING.sm,
     alignItems: "center",
-    borderRadius: BORDER_RADIUS.sm,
+    borderRadius: BORDER_RADIUS.lg,
+    marginHorizontal: 2,
   },
   activeTab: {
     backgroundColor: COLORS.teal,
@@ -1500,13 +1567,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
     marginBottom: SPACING.md,
-    shadowColor: "#000",
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: COLORS.border,
     position: "relative",
   },
   participantCard: {
@@ -1530,7 +1597,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   billContent: {
-    padding: SPACING.lg,
+    padding: SPACING.md,
   },
   expiredContent: {
     opacity: 0.7,
@@ -1548,14 +1615,14 @@ const styles = StyleSheet.create({
   },
   hostBadgeText: {
     fontSize: FONT_SIZES.xs,
-    fontFamily: FONTS.semiBold,
+    fontFamily: FONTS.bold,
     color: COLORS.white,
   },
   billHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   billInfo: {
     flex: 1,
@@ -1563,55 +1630,67 @@ const styles = StyleSheet.create({
   },
   billTitle: {
     fontSize: FONT_SIZES.lg,
-    fontFamily: FONTS.semiBold,
+    fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     marginBottom: 4,
+    lineHeight: 20,
   },
   billCode: {
     fontSize: FONT_SIZES.sm,
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     color: COLORS.textSecondary,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
   hostName: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
+    lineHeight: 16,
   },
   statusText: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.medium,
     color: COLORS.teal,
+    lineHeight: 18,
   },
   billRight: {
     alignItems: "flex-end",
     gap: SPACING.xs,
+    minWidth: 100,
   },
   billAmount: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.xl,
     fontFamily: FONTS.bold,
     color: COLORS.teal,
+    textAlign: "right",
   },
   statusBadge: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: "transparent",
+    minWidth: 60,
+    alignItems: "center",
   },
   statusBadgeText: {
     fontSize: FONT_SIZES.xs,
-    fontFamily: FONTS.semiBold,
+    fontFamily: FONTS.bold,
+    textAlign: "center",
   },
   deadlineText: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.medium,
     color: COLORS.warning,
-    marginTop: SPACING.xs,
+    marginTop: SPACING.sm,
+    lineHeight: 18,
   },
   paymentButtonContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
   payButton: {
     paddingVertical: SPACING.sm,
@@ -1620,7 +1699,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -1645,8 +1724,8 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   payButtonText: {
-    fontSize: FONT_SIZES.sm,
-    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.bold,
   },
   dropdownToggle: {
     flexDirection: "row",
@@ -1683,12 +1762,14 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.medium,
     color: COLORS.textPrimary,
-    marginBottom: 2,
+    marginBottom: SPACING.xs,
+    lineHeight: 20,
   },
   participantAmount: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
+    lineHeight: 18,
   },
   participantStatusBadge: {
     paddingHorizontal: SPACING.sm,
@@ -1834,6 +1915,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
+
+  // Keep old styles for backward compatibility
   newHistoryCard: {
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
@@ -1918,6 +2001,68 @@ const styles = StyleSheet.create({
   newStatusText: {
     fontSize: FONT_SIZES.xs,
     fontFamily: FONTS.semiBold,
+  },
+
+  historyStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+  },
+  smallCode: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  historyBottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  historyBottomLeft: {
+    marginLeft: 0,
+  },
+  historyDateText: {
+    fontSize: 10,
+    fontFamily: FONTS.bold,
+    color: COLORS.warning,
+    textAlign: "right",
+  },
+  paymentMethodContainer: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    alignSelf: "flex-start",
+  },
+  paymentMethodInstant: {
+    backgroundColor: "#DCFCE7",
+  },
+  paymentMethodScheduled: {
+    backgroundColor: "#F0F9FF",
+  },
+  paymentMethodText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.semiBold,
+    lineHeight: 16,
+  },
+  paymentMethodTextInstant: {
+    color: COLORS.success,
+  },
+  paymentMethodTextScheduled: {
+    color: "#0369A1",
+  },
+  watermarkContainer: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: SPACING.lg,
+    zIndex: 0,
+  },
+  watermarkIcon: {
+    opacity: 0.8,
   },
   createFab: {
     position: "absolute",
