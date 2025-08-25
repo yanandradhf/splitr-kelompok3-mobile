@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Screen from '../../../components/layout/Screen';
@@ -18,10 +19,22 @@ const isIOS = Platform.OS === 'ios';
 
 export default function RiwayatScreen() {
   const { runningTransactions, completedPayments, initializeTransactions } = useTransactionStore();
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     initializeTransactions();
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await initializeTransactions();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [initializeTransactions]);
 
   const renderRunningTransaction = (transaction: any) => {
     const getStatusColor = (status: string) => {
@@ -95,6 +108,14 @@ export default function RiwayatScreen() {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.teal}
+              colors={[COLORS.teal]}
+            />
+          }
         >
           {/* Running Transactions */}
           {runningTransactions.length > 0 && (

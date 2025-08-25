@@ -15,9 +15,11 @@ export interface ProfileUser {
 }
 
 export interface ProfileStats {
-  totalBills: number;
-  totalSpent: number;
-  pendingPayments: number;
+  totalBills: number;        // Total bills (hosted + participated)
+  completedBills: number;    // Bills yang sudah selesai semua
+  ongoingBills: number;      // Bills yang masih ada yang belum bayar
+  totalSpent: number;        // Total uang yang sudah dibayar sebagai participant
+  pendingPayments: number;   // Tagihan yang masih pending sebagai participant
 }
 
 export interface ProfileResponse {

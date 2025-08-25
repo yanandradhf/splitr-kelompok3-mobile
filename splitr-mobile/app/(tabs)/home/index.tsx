@@ -80,7 +80,7 @@ export default function HomeScreen() {
   const showNotificationDot = unreadCount > 0;
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showStats, setShowStats] = useState(true);
+
   const [lastNavigationTime, setLastNavigationTime] = useState(0);
   const [lastGroupNavigation, setLastGroupNavigation] = useState<{[key: string]: number}>({});
 
@@ -170,126 +170,59 @@ export default function HomeScreen() {
 
           {/* ACTIVITY SECTION */}
           <View style={styles.activitySection}>
-            <View style={styles.tabSwitcher}>
-              <TouchableOpacity
-                style={[styles.tabButton, showStats && styles.activeTab]}
-                onPress={() => setShowStats(true)}
-              >
-                <Ionicons
-                  name="stats-chart-outline"
-                  size={16}
-                  color={showStats ? COLORS.white : COLORS.teal}
-                />
-                <Text
-                  style={[styles.tabText, showStats && styles.activeTabText]}
-                >
-                  Stats
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tabButton, !showStats && styles.activeTab]}
-                onPress={() => setShowStats(false)}
-              >
-                <Ionicons
-                  name="card-outline"
-                  size={16}
-                  color={!showStats ? COLORS.white : COLORS.teal}
-                />
-                <Text
-                  style={[styles.tabText, !showStats && styles.activeTabText]}
-                >
-                  Bills
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.unifiedCard}>
-              {showStats ? (
-                !storeStats || forceLoading ? (
-                  <SkeletonStats />
-                ) : (
-                  <View style={styles.statsContainer}>
-                    <View style={styles.statRow}>
-                      <View style={styles.statItem}>
-                        <View style={styles.statIconContainer}>
-                          <Ionicons
-                            name="receipt-outline"
-                            size={20}
-                            color={COLORS.teal}
-                          />
-                        </View>
-                        <Text style={styles.statNumber}>
-                          {storeStats?.totalBills || 0}
-                        </Text>
-                        <Text style={styles.statLabel}>Tagihan</Text>
-                      </View>
-                      <View style={styles.statItem}>
-                        <View style={styles.statIconContainer}>
-                          <Ionicons
-                            name="wallet-outline"
-                            size={20}
-                            color={COLORS.teal}
-                          />
-                        </View>
-                        <Text style={styles.statNumber}>
-                          {storeStats?.totalSpent
-                            ? `${(storeStats.totalSpent / 1000000).toFixed(
-                                1
-                              )}M`
-                            : "0"}
-                        </Text>
-                        <Text style={styles.statLabel}>Terbayar</Text>
-                      </View>
-                      <View style={[styles.statItem, styles.lastStatItem]}>
-                        <View style={styles.statIconContainer}>
-                          <Ionicons
-                            name="time-outline"
-                            size={20}
-                            color={COLORS.teal}
-                          />
-                        </View>
-                        <Text style={styles.statNumber}>
-                          {storeStats?.pendingPayments || 0}
-                        </Text>
-                        <Text style={styles.statLabel}>Belum Dibayar</Text>
-                      </View>
-                    </View>
-                  </View>
-                )
-              ) : notificationsLoading ? (
-                <SkeletonNotification />
-              ) : latestNotification ? (
-                <View style={styles.notifContainer}>
-                  <View style={styles.notificationRow}>
-                    <View style={styles.notifIcon}>
-                      <Ionicons name="card-outline" size={24} color="#76B9BB" />
-                    </View>
-                    <View style={styles.notifContent}>
-                      <Text style={styles.notifTitle} numberOfLines={1}>
-                        {latestNotification.title}
-                      </Text>
-                      <Text style={styles.notifMessage} numberOfLines={2}>
-                        {latestNotification.message}
-                      </Text>
-                      <View style={styles.dateContainer}>
-                        <Text style={styles.notifDate}>
-                          {formatDate(latestNotification.createdAt)}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
+            <TouchableOpacity 
+              style={styles.unifiedCard}
+              onPress={() => router.push("/(tabs)/monitoring")}
+              activeOpacity={0.8}
+            >
+              {!storeStats || forceLoading ? (
+                <SkeletonStats />
               ) : (
-                <View style={styles.emptyContainer}>
-                  <Ionicons
-                    name="notifications-off-outline"
-                    size={24}
-                    color={COLORS.textSecondary}
-                  />
-                  <Text style={styles.emptyText}>Tidak ada notifikasi</Text>
+                <View style={styles.statsContainer}>
+                  <View style={styles.statRow}>
+                    <View style={styles.statItem}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons
+                          name="receipt-outline"
+                          size={20}
+                          color={COLORS.teal}
+                        />
+                      </View>
+                      <Text style={styles.statNumber}>
+                        {storeStats?.totalBills || 0}
+                      </Text>
+                      <Text style={styles.statLabel}>Total Tagihan</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons
+                          name="checkmark-circle-outline"
+                          size={20}
+                          color={COLORS.teal}
+                        />
+                      </View>
+                      <Text style={styles.statNumber}>
+                        {storeStats?.completedBills || 0}
+                      </Text>
+                      <Text style={styles.statLabel}>Selesai</Text>
+                    </View>
+                    <View style={[styles.statItem, styles.lastStatItem]}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons
+                          name="time-outline"
+                          size={20}
+                          color={COLORS.teal}
+                        />
+                      </View>
+                      <Text style={styles.statNumber}>
+                        {storeStats?.pendingPayments || 0}
+                      </Text>
+                      <Text style={styles.statLabel}>Belum Dibayar</Text>
+                    </View>
+                  </View>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -589,38 +522,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  tabSwitcher: {
-    flexDirection: "row",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 20,
-    padding: 2,
-    alignSelf: "flex-start",
-    marginBottom: 12,
-  },
-  tabButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 18,
-    gap: 4,
-  },
-  activeTab: {
-    backgroundColor: COLORS.teal,
-    shadowColor: COLORS.teal,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tabText: {
-    fontSize: 12,
-    fontFamily: FONTS.medium,
-    color: COLORS.teal,
-  },
-  activeTabText: {
-    color: COLORS.white,
-  },
+
   modalSection: {
     marginTop: 5,
     marginBottom: 24,
