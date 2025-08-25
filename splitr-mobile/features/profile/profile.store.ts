@@ -8,11 +8,13 @@ interface ProfileState {
   stats: ProfileStats | null;
   isLoading: boolean;
   isUpdating: boolean;
+  isUploadingPhoto: boolean;
   error: string | null;
   
   // Actions
   fetchProfile: () => Promise<void>;
   updateProfile: (data: { name: string; phone: string; email: string }) => Promise<void>;
+  uploadProfilePhoto: (imageFile: any) => Promise<boolean>;
   clearError: () => void;
 }
 
@@ -21,6 +23,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   stats: null,
   isLoading: false,
   isUpdating: false,
+  isUploadingPhoto: false,
   error: null,
 
   fetchProfile: async () => {
@@ -63,6 +66,27 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       set({ 
         error: error.response?.data?.message || 'Failed to update profile',
         isUpdating: false 
+      });
+      return false;
+    }
+  },
+
+  uploadProfilePhoto: async (imageFile) => {
+    set({ isUploadingPhoto: true, error: null });
+    try {
+      const response = await profileAPI.uploadProfilePhoto(imageFile);
+      console.log('Upload response:', response.data);
+      
+      // Force refresh profile to get updated photo URL
+      await get().fetchProfile();
+      
+      set({ isUploadingPhoto: false });
+      return true;
+    } catch (error: any) {
+      console.error('Error uploading profile photo:', error);
+      set({ 
+        error: error.response?.data?.message || 'Failed to upload photo',
+        isUploadingPhoto: false 
       });
       return false;
     }

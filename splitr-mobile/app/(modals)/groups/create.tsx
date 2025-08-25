@@ -18,6 +18,7 @@ import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../cons
 import { useApi, useFriends } from "../../../hooks/useApi";
 import { useGroupsStore } from "../../../store";
 import SuccessModal from "../../../components/ui/SuccessModal";
+import UserAvatar from "../../../components/ui/UserAvatar";
 import {
   wp,
   hp,
@@ -58,7 +59,7 @@ export default function CreateGroupScreen() {
       id: friendItem.friend.userId,
       name: friendItem.friend.name,
       username: friendItem.friend.username || friendItem.friend.name.toLowerCase().replace(' ', ''),
-      avatar: friendItem.friend.avatar || personImages[index % 4],
+      avatar: friendItem.friend.profilePhotoUrl || friendItem.friend.avatar,
     }));
   }, [friends]);
 
@@ -202,7 +203,12 @@ export default function CreateGroupScreen() {
                   <View style={styles.selectedMembers}>
                     {/* Host (Creator) - Always First */}
                     <View style={styles.hostMember}>
-                      <Image source={personImages[0]} style={styles.hostAvatar} />
+                      <UserAvatar
+                        photoUrl={undefined}
+                        name="You"
+                        size={48}
+                        style={styles.hostAvatar}
+                      />
                       <Text style={styles.hostName}>You (Host)</Text>
                     </View>
                     
@@ -216,7 +222,12 @@ export default function CreateGroupScreen() {
                     {/* Selected Friends */}
                     {temanTerpilih.map((friend) => (
                       <View key={friend.id} style={styles.selectedFriend}>
-                        <Image source={friend.avatar} style={styles.selectedAvatar} />
+                        <UserAvatar
+                          photoUrl={typeof friend.avatar === 'string' ? friend.avatar : undefined}
+                          name={friend.name}
+                          size={48}
+                          style={styles.selectedAvatar}
+                        />
                         <Text style={styles.selectedName} numberOfLines={1}>{friend.name}</Text>
                         <TouchableOpacity
                           style={styles.removeButton}
@@ -328,8 +339,10 @@ export default function CreateGroupScreen() {
                             onPress={() => toggleFriend(friend)}
                             activeOpacity={0.7}
                           >
-                            <Image
-                              source={friend.avatar}
+                            <UserAvatar
+                              photoUrl={typeof friend.avatar === 'string' ? friend.avatar : undefined}
+                              name={friend.name}
+                              size={40}
                               style={styles.friendAvatar}
                             />
                             <View style={styles.friendInfo}>

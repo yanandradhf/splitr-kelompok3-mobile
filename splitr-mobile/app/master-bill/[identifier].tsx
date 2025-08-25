@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -8,6 +8,7 @@ import api from '@/services/api';
 import { API_CONFIG } from '@/constants/config';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { getBillEndpoint } from '../../utils/billEndpoints';
+import { getImageUrl } from '../../utils/imageHelper';
 
 interface MasterBillData {
   billId: string;
@@ -15,6 +16,7 @@ interface MasterBillData {
   billName: string;
   totalAmount: number;
   status: string;
+  receiptImageUrl?: string;
   host: {
     name: string;
     account: string;
@@ -79,6 +81,7 @@ export default function MasterBillDetail() {
   const [billData, setBillData] = useState<MasterBillData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   useEffect(() => {
     if (identifier) {
@@ -204,6 +207,20 @@ export default function MasterBillDetail() {
 
         <View style={styles.whiteContainer}>
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Receipt Info */}
+            {billData.receiptImageUrl && (
+              <TouchableOpacity style={styles.receiptInfoCard} onPress={() => setShowFullImage(true)}>
+                <View style={styles.receiptInfoContent}>
+                  <Ionicons name="receipt-outline" size={24} color={COLORS.teal} />
+                  <View style={styles.receiptInfoText}>
+                    <Text style={styles.receiptInfoTitle}>Struk Tersedia</Text>
+                    <Text style={styles.receiptInfoSubtitle}>Tap untuk melihat struk pembayaran</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+                </View>
+              </TouchableOpacity>
+            )}
+
             {/* Bill Overview */}
             <View style={styles.overviewCard}>
               <View style={styles.billHeader}>
@@ -365,6 +382,40 @@ export default function MasterBillDetail() {
             </View>
           </ScrollView>
         </View>
+        
+        {/* Full Screen Image Modal */}
+        <Modal visible={showFullImage} transparent animationType="fade">
+          <View style={styles.fullImageModal}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowFullImage(false)}
+            >
+              <Ionicons name="close" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+            <Image 
+              source={{ uri: getImageUrl(billData?.receiptImageUrl) }}
+              style={styles.fullImage}
+              resizeMode="contain"
+              onLoad={() => {
+                if (__DEV__) {
+                  console.log('📸 Receipt Image Loaded:', {
+                    originalUrl: billData?.receiptImageUrl,
+                    processedUrl: getImageUrl(billData?.receiptImageUrl)
+                  });
+                }
+              }}
+              onError={(error) => {
+                if (__DEV__) {
+                  console.log('❌ Receipt Image Error:', {
+                    originalUrl: billData?.receiptImageUrl,
+                    processedUrl: getImageUrl(billData?.receiptImageUrl),
+                    error
+                  });
+                }
+              }}
+            />
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -808,5 +859,56 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.lg,
     fontFamily: FONTS.bold,
     color: COLORS.teal,
+  },
+  receiptInfoCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E6FFFA',
+  },
+  receiptInfoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  receiptInfoText: {
+    flex: 1,
+  },
+  receiptInfoTitle: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
+  },
+  receiptInfoSubtitle: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  fullImageModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 10,
+  },
+  fullImage: {
+    width: '90%',
+    height: '80%',
   },
 });

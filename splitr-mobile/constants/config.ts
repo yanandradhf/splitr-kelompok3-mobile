@@ -1,50 +1,13 @@
+import { API_CONFIG as API_CONFIG_NEW, ENDPOINTS } from '../config/apiConfig';
+
+// Export for backward compatibility
 export const API_CONFIG = {
-  BASE_URL: "https://c520ce759f72.ngrok-free.app",
-  ENDPOINTS: {
-    // Auth
-    LOGIN: "/api/mobile/auth/login",
-    REGISTER: "/api/mobile/auth/register",
-    VALIDATE_BNI: "/api/mobile/auth/validate-bni",
-    SEND_OTP: "/api/mobile/auth/send-otp",
-    VERIFY_OTP: "/api/mobile/auth/verify-otp",
-    ME: "/api/mobile/auth/me",
-    LOGOUT: "/api/mobile/auth/logout",
-    SEND_RESET_OTP: "/api/mobile/auth/send-reset-otp",
-    VERIFY_RESET_OTP: "/api/mobile/auth/verify-reset-otp",
-    RESET_PASSWORD: "/api/mobile/auth/reset-password",
-    MY_ACCOUNT: "/api/mobile/auth/my-account",
-
-    // Profile
-    PROFILE: "/api/mobile/profile",
-    CHANGE_PASSWORD: "/api/mobile/profile/change-password",
-    CHANGE_PIN: "/api/mobile/profile/change-pin",
-
-    // Friends
-    FRIENDS: "/api/mobile/friends",
-    ADD_FRIEND: "/api/mobile/friends/add",
-
-    // Groups
-    GROUPS: "/api/mobile/groups",
-    CREATE_GROUP: "/api/mobile/groups/create",
-
-    // Notifications
-    NOTIFICATIONS: "/api/mobile/notifications",
-    NOTIFICATION_ACTION: "/api/mobile/notifications/group-action",
-    MARK_ALL_READ: "/api/mobile/notifications/read-all",
-
-    // Bills
-    BILL_DETAIL: "/api/mobile/bills",
-    MY_ACTIVITY: "/api/mobile/bills/my-activity",
-    PERSONAL: "/api/mobile/bills/personal",
-    MASTER: "/api/mobile/bills/master",
-
-    // Payment
-    PAYMENT_CREATE: "/api/mobile/payments/create",
-    PAYMENT_HISTORY: "/api/mobile/payments/history",
-    PAYMENT_RECEIPT: "/api/mobile/payments/:paymentId/receipt",
-  },
-  TIMEOUT: 10000,
+  BASE_URL: API_CONFIG_NEW.BASE_URL,
+  ENDPOINTS: ENDPOINTS,
+  TIMEOUT: API_CONFIG_NEW.TIMEOUT,
 };
+
+export { ENDPOINTS as API_ENDPOINTS };
 
 export const BUTTON_RULES = {
   buttonRules: [

@@ -52,4 +52,5 @@ export interface BillDraft {
   paymentMethod?: "PAY_NOW" | "PAY_LATER";
   dueDate?: string;
   totals: Totals;
+  receiptImage?: string;
 }

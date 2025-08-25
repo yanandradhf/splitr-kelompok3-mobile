@@ -18,7 +18,7 @@ import { useProfileStore } from "../../../store";
 import { useFriends, useGroups, useNotifications } from "../../../hooks/useApi";
 import { useGroupsStore } from "../../../store";
 import { useNotificationsStore } from "../../../store";
-
+import UserAvatar from "../../../components/ui/UserAvatar";
 
 import { COLORS, FONTS } from "../../../constants/theme";
 
@@ -33,13 +33,6 @@ const LOCAL_COLORS = {
   headerBrown: "#00897B",
   gray: COLORS.gray,
 };
-
-const personImages = [
-  require("../../../assets/images/person1.png"),
-  require("../../../assets/images/person2.png"),
-  require("../../../assets/images/person3.png"),
-  require("../../../assets/images/person4.png"),
-];
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
@@ -144,9 +137,10 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               onPress={() => router.push("/(modals)/profile")}
             >
-              <Image
-                source={require("../../../assets/images/person1.png")}
-                style={styles.profileImage}
+              <UserAvatar
+                photoUrl={user?.profilePhotoUrl || storeUser?.profilePhotoUrl}
+                name={user?.name || storeUser?.name || 'User'}
+                size={60}
               />
               <View style={styles.welcomeText}>
                 <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
@@ -291,20 +285,30 @@ export default function HomeScreen() {
                     </View>
                     <View style={styles.groupContent}>
                       <View style={styles.groupAvatars}>
-                        {[0, 1, 2, 3].map((avatarIndex) => {
-                          const member = group.members?.[avatarIndex];
-                          return (
-                            <Image
-                              key={avatarIndex}
-                              source={personImages[avatarIndex % 4]}
-                              style={[
-                                styles.avatar,
-                                avatarIndex > 0 && styles.avatarOverlap,
-                                !member && { opacity: 0 },
-                              ]}
-                            />
-                          );
-                        })}
+                        {group.members?.slice(0, 4).map((member, avatarIndex) => (
+                          <UserAvatar
+                            key={member.userId || avatarIndex}
+                            photoUrl={member.profilePhotoUrl || member.profilePhoto || member.avatar}
+                            name={member.name || 'User'}
+                            size={32}
+                            style={[
+                              styles.avatar,
+                              avatarIndex > 0 && styles.avatarOverlap,
+                            ]}
+                          />
+                        )) || 
+                        Array.from({ length: Math.min(group.memberCount || 1, 4) }, (_, avatarIndex) => (
+                          <UserAvatar
+                            key={avatarIndex}
+                            photoUrl={undefined}
+                            name="User"
+                            size={32}
+                            style={[
+                              styles.avatar,
+                              avatarIndex > 0 && styles.avatarOverlap,
+                            ]}
+                          />
+                        ))}
                       </View>
                       <View style={styles.groupInfo}>
                         <Text style={styles.groupName}>{group.groupName}</Text>
@@ -390,9 +394,10 @@ export default function HomeScreen() {
                     style={styles.friendItem}
                     activeOpacity={0.7}
                   >
-                    <Image
-                      source={personImages[index % 4]}
-                      style={styles.friendImage}
+                    <UserAvatar
+                      photoUrl={friendData.friend.profilePhotoUrl || friendData.friend.profilePhoto || friendData.friend.avatar}
+                      name={friendData.friend.name}
+                      size={60}
                     />
                     <Text style={styles.friendName}>
                       {friendData.friend.name}

@@ -14,9 +14,9 @@ export default function EditBill() {
   const [name, setName] = useState("");
   const [qty, setQty] = useState("1");
   const [price, setPrice] = useState("");
-  const [showTax, setShowTax] = useState(false);
-  const [showService, setShowService] = useState(false);
-  const [showDiscount, setShowDiscount] = useState(false);
+  const [showTax, setShowTax] = useState(draft.fees.taxPct > 0);
+  const [showService, setShowService] = useState(draft.fees.servicePct > 0);
+  const [showDiscount, setShowDiscount] = useState(draft.fees.discountPct > 0 || draft.fees.discountNominal > 0);
   const [discountType, setDiscountType] = useState<'percent' | 'nominal'>('percent');
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editName, setEditName] = useState("");

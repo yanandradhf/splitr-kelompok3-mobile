@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,16 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  TouchableOpacity,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useBillStore } from "../../../store/billStore";
 import { formatRp } from "../../../lib/currency";
+import { getCategories, Category } from "../../../services/categoryApi";
+import type { BillCategory } from "../../../types/bill";
 import {
   COLORS,
   FONTS,
@@ -41,11 +45,14 @@ interface ScanResults {
 
 export default function BillResult() {
   const { uri, results } = useLocalSearchParams<{ uri?: string; results?: string }>();
-  const { draft, recalcTotals, reset, addItem, setFees, setHeader } = useBillStore();
+  const { draft, recalcTotals, reset, addItem, setFees, setHeader, setReceiptImage } = useBillStore();
   
   const [scanResults, setScanResults] = React.useState<ScanResults | null>(null);
   const [name, setName] = React.useState(draft.name || "");
-  const [category, setCategory] = React.useState<string | null>(draft.category);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   React.useEffect(() => {
     if (results) {
@@ -79,15 +86,39 @@ export default function BillResult() {
           };
           setFees(fees);
         }
+        
+        // Store receipt image URI
+        if (uri) {
+          console.log('📸 Setting receipt image URI:', uri);
+          setReceiptImage(uri);
+        } else {
+          console.log('⚠️ No receipt image URI provided');
+        }
       } catch (error) {
         console.error("Failed to parse scan results:", error);
       }
     }
-  }, [results]);
+  }, [results, uri]);
 
   useEffect(() => {
     recalcTotals();
   }, [draft.items, draft.fees]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
 
   const canConfirm =
     name.trim().length > 0 && !!category && draft.items.length > 0;
@@ -97,14 +128,9 @@ export default function BillResult() {
     setHeader(newName, category as any);
   };
   
-  const handleCategoryChange = (newCategory: string) => {
-    setCategory(newCategory);
-    setHeader(name, newCategory as any);
-  };
-  
   const handleConfirm = () => {
     if (canConfirm) {
-      setHeader(name.trim(), category as any);
+      setHeader(name.trim(), category ? category.categoryName as BillCategory : null);
       router.push("/create-bill/bill-detail");
     }
   };
@@ -142,57 +168,55 @@ export default function BillResult() {
             {/* Nama Tagihan */}
             <View style={styles.fieldBlock}>
               <Text style={styles.label}>Nama Tagihan</Text>
-              <Pressable 
-                style={styles.inputLike}
-                onPress={() => {
-                  // Navigate to edit mode or show input
-                  router.push({
-                    pathname: "/create-bill/edit-bill",
-                    params: { returnTo: "scan-results" }
-                  });
-                }}
-              >
-                <Text
-                  style={[
-                    styles.inputText,
-                    !name && { color: COLORS.placeholder },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {name || "Masukkan nama tagihan"}
-                </Text>
-                <Ionicons name="create-outline" size={16} color={COLORS.textSecondary} />
-              </Pressable>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={handleNameChange}
+                placeholder="Masukkan nama tagihan"
+                placeholderTextColor={COLORS.placeholder}
+              />
             </View>
 
             {/* Kategori Tagihan */}
             <View style={styles.fieldBlock}>
               <Text style={styles.label}>Kategori Tagihan</Text>
-              <Pressable 
+              <TouchableOpacity 
                 style={styles.selectLike}
-                onPress={() => {
-                  // Navigate to category selection
-                  router.push({
-                    pathname: "/create-bill/edit-bill",
-                    params: { returnTo: "scan-results" }
-                  });
-                }}
+                onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                activeOpacity={0.7}
+                disabled={loading}
               >
-                <Text
-                  style={[
-                    styles.selectText,
-                    !category && { color: COLORS.placeholder },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {category || "Pilih kategori tagihan"}
-                </Text>
-                <Ionicons
-                  name="chevron-down"
-                  size={18}
-                  color={COLORS.textSecondary}
+                <View style={styles.dropdownContent}>
+                  {category && <Text style={styles.categoryIcon}>{category.categoryIcon}</Text>}
+                  <Text style={[styles.selectText, !category && { color: COLORS.placeholder }]}>
+                    {category ? category.categoryName : (loading ? 'Loading...' : 'Pilih kategori')}
+                  </Text>
+                </View>
+                <Ionicons 
+                  name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} 
+                  size={18} 
+                  color={COLORS.textSecondary} 
                 />
-              </Pressable>
+              </TouchableOpacity>
+              
+              {showCategoryDropdown && (
+                <View style={styles.dropdownList}>
+                  {categories.map((cat) => (
+                    <TouchableOpacity
+                      key={cat.categoryId}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setCategory(cat);
+                        setShowCategoryDropdown(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.categoryIcon}>{cat.categoryIcon}</Text>
+                      <Text style={styles.dropdownItemText}>{cat.categoryName}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
 
             {/* Kartu hasil scan + thumbnail */}
@@ -249,7 +273,10 @@ export default function BillResult() {
                   <Text style={styles.emptySubtext}>OCR gagal membaca item dari struk</Text>
                   <Pressable 
                     style={styles.addManualBtn}
-                    onPress={() => router.push("/create-bill/edit-bill")}
+                    onPress={() => router.push({
+                      pathname: "/create-bill/edit-bill",
+                      params: { returnTo: "scan-results" }
+                    })}
                   >
                     <Text style={styles.addManualText}>+ Tambah Item Manual</Text>
                   </Pressable>
@@ -308,7 +335,10 @@ export default function BillResult() {
                 </View>
 
                 <Pressable
-                  onPress={() => router.push("/create-bill/edit-bill")}
+                  onPress={() => router.push({
+                    pathname: "/create-bill/edit-bill",
+                    params: { returnTo: "scan-results" }
+                  })}
                   style={styles.smallEditBtn}
                 >
                   <Ionicons
@@ -379,20 +409,15 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginBottom: 8,
   },
-  inputLike: {
+  input: {
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: SPACING.md,
     paddingVertical: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  inputText: {
     fontSize: FONT_SIZES.base,
-    fontFamily: FONTS.medium,
+    fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
   },
 
@@ -619,5 +644,39 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.bold,
+  },
+  dropdownContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  categoryIcon: {
+    fontSize: 18,
+  },
+  dropdownList: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: 12,
+  },
+  dropdownItemText: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
   },
 });

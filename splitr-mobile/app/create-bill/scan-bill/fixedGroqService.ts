@@ -23,13 +23,16 @@ export interface OCRResult {
 }
 
 export class FixedGroqService {
-  static readonly API_KEY = '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';
+  static readonly API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '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';
   static readonly API_URL = 'https://api.groq.com/openai/v1/chat/completions';
   static lastRequestTime = 0;
   static readonly MIN_REQUEST_INTERVAL = 2000;
 
   static async processReceipt(imageUri: string): Promise<OCRResult> {
     console.log('Fixed Groq: Starting receipt OCR processing:', imageUri);
+    console.log('Fixed Groq: API Key length:', this.API_KEY?.length);
+    console.log('Fixed Groq: API Key preview:', this.API_KEY ? `${this.API_KEY.substring(0, 15)}...` : 'NOT FOUND');
+    console.log('Fixed Groq: API URL:', this.API_URL);
     
     const startTime = Date.now();
     
@@ -189,6 +192,16 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
       if (jsonMatch) {
         jsonText = jsonMatch[0];
       }
+
+      // Fix mathematical expressions in JSON
+      jsonText = jsonText.replace(/"subtotal":\s*([0-9+\s*-]+),/g, (match, expr) => {
+        try {
+          const result = eval(expr.replace(/\s/g, ''));
+          return `"subtotal": ${result},`;
+        } catch {
+          return match;
+        }
+      });
 
       console.log('Fixed Groq: Parsing JSON:', jsonText);
       const parsed = JSON.parse(jsonText);
