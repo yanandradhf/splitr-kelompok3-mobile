@@ -18,7 +18,7 @@ import { useProfileStore } from "../../../store";
 import { useFriends, useGroups, useNotifications } from "../../../hooks/useApi";
 import { useGroupsStore } from "../../../store";
 import { useNotificationsStore } from "../../../store";
-
+import UserAvatar from "../../../components/ui/UserAvatar";
 
 import { COLORS, FONTS } from "../../../constants/theme";
 
@@ -34,26 +34,15 @@ const LOCAL_COLORS = {
   gray: COLORS.gray,
 };
 
-const personImages = [
-  require("../../../assets/images/person1.png"),
-  require("../../../assets/images/person2.png"),
-  require("../../../assets/images/person3.png"),
-  require("../../../assets/images/person4.png"),
-];
-
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const { user: storeUser, stats: storeStats } = useProfileStore();
-  const [forceLoading, setForceLoading] = useState(true);
-  
   const { fetchProfile } = useProfileStore();
   
   useEffect(() => {
     if (!storeUser) {
       fetchProfile();
     }
-    // Force skeleton to show for 2 seconds
-    setTimeout(() => setForceLoading(false), 2000);
   }, []);
 
 
@@ -80,19 +69,18 @@ export default function HomeScreen() {
   const showNotificationDot = unreadCount > 0;
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showStats, setShowStats] = useState(true);
+
   const [lastNavigationTime, setLastNavigationTime] = useState(0);
   const [lastGroupNavigation, setLastGroupNavigation] = useState<{[key: string]: number}>({});
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([
-        fetchProfile(),
-        refetchFriends(),
-        refetchGroups(),
-        refetchNotifications(),
-      ]);
+      // Sequential loading for better performance
+      await fetchProfile();
+      await refetchFriends();
+      await refetchGroups();
+      await refetchNotifications();
     } catch (error) {
       console.error("Error refreshing data:", error);
     } finally {
@@ -102,7 +90,7 @@ export default function HomeScreen() {
 
   const latestNotification = notifications[0];
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor(
@@ -119,7 +107,7 @@ export default function HomeScreen() {
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays} hari lalu`;
     return date.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
-  };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -144,9 +132,10 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               onPress={() => router.push("/(modals)/profile")}
             >
-              <Image
-                source={require("../../../assets/images/person1.png")}
-                style={styles.profileImage}
+              <UserAvatar
+                photoUrl={user?.profilePhotoUrl || storeUser?.profilePhotoUrl}
+                name={user?.name || storeUser?.name || 'User'}
+                size={60}
               />
               <View style={styles.welcomeText}>
                 <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
@@ -170,126 +159,59 @@ export default function HomeScreen() {
 
           {/* ACTIVITY SECTION */}
           <View style={styles.activitySection}>
-            <View style={styles.tabSwitcher}>
-              <TouchableOpacity
-                style={[styles.tabButton, showStats && styles.activeTab]}
-                onPress={() => setShowStats(true)}
-              >
-                <Ionicons
-                  name="stats-chart-outline"
-                  size={16}
-                  color={showStats ? COLORS.white : COLORS.teal}
-                />
-                <Text
-                  style={[styles.tabText, showStats && styles.activeTabText]}
-                >
-                  Stats
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tabButton, !showStats && styles.activeTab]}
-                onPress={() => setShowStats(false)}
-              >
-                <Ionicons
-                  name="card-outline"
-                  size={16}
-                  color={!showStats ? COLORS.white : COLORS.teal}
-                />
-                <Text
-                  style={[styles.tabText, !showStats && styles.activeTabText]}
-                >
-                  Bills
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.unifiedCard}>
-              {showStats ? (
-                !storeStats || forceLoading ? (
-                  <SkeletonStats />
-                ) : (
-                  <View style={styles.statsContainer}>
-                    <View style={styles.statRow}>
-                      <View style={styles.statItem}>
-                        <View style={styles.statIconContainer}>
-                          <Ionicons
-                            name="receipt-outline"
-                            size={20}
-                            color={COLORS.teal}
-                          />
-                        </View>
-                        <Text style={styles.statNumber}>
-                          {storeStats?.totalBills || 0}
-                        </Text>
-                        <Text style={styles.statLabel}>Tagihan</Text>
-                      </View>
-                      <View style={styles.statItem}>
-                        <View style={styles.statIconContainer}>
-                          <Ionicons
-                            name="wallet-outline"
-                            size={20}
-                            color={COLORS.teal}
-                          />
-                        </View>
-                        <Text style={styles.statNumber}>
-                          {storeStats?.totalSpent
-                            ? `${(storeStats.totalSpent / 1000000).toFixed(
-                                1
-                              )}M`
-                            : "0"}
-                        </Text>
-                        <Text style={styles.statLabel}>Terbayar</Text>
-                      </View>
-                      <View style={[styles.statItem, styles.lastStatItem]}>
-                        <View style={styles.statIconContainer}>
-                          <Ionicons
-                            name="time-outline"
-                            size={20}
-                            color={COLORS.teal}
-                          />
-                        </View>
-                        <Text style={styles.statNumber}>
-                          {storeStats?.pendingPayments || 0}
-                        </Text>
-                        <Text style={styles.statLabel}>Belum Dibayar</Text>
-                      </View>
-                    </View>
-                  </View>
-                )
-              ) : notificationsLoading ? (
-                <SkeletonNotification />
-              ) : latestNotification ? (
-                <View style={styles.notifContainer}>
-                  <View style={styles.notificationRow}>
-                    <View style={styles.notifIcon}>
-                      <Ionicons name="card-outline" size={24} color="#76B9BB" />
-                    </View>
-                    <View style={styles.notifContent}>
-                      <Text style={styles.notifTitle} numberOfLines={1}>
-                        {latestNotification.title}
-                      </Text>
-                      <Text style={styles.notifMessage} numberOfLines={2}>
-                        {latestNotification.message}
-                      </Text>
-                      <View style={styles.dateContainer}>
-                        <Text style={styles.notifDate}>
-                          {formatDate(latestNotification.createdAt)}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
+            <TouchableOpacity 
+              style={styles.unifiedCard}
+              onPress={() => router.push("/(tabs)/monitoring")}
+              activeOpacity={0.8}
+            >
+              {!storeStats ? (
+                <SkeletonStats />
               ) : (
-                <View style={styles.emptyContainer}>
-                  <Ionicons
-                    name="notifications-off-outline"
-                    size={24}
-                    color={COLORS.textSecondary}
-                  />
-                  <Text style={styles.emptyText}>Tidak ada notifikasi</Text>
+                <View style={styles.statsContainer}>
+                  <View style={styles.statRow}>
+                    <View style={styles.statItem}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons
+                          name="receipt-outline"
+                          size={20}
+                          color={COLORS.teal}
+                        />
+                      </View>
+                      <Text style={styles.statNumber}>
+                        {storeStats?.totalBills || 0}
+                      </Text>
+                      <Text style={styles.statLabel}>Total Tagihan</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons
+                          name="checkmark-circle-outline"
+                          size={20}
+                          color={COLORS.teal}
+                        />
+                      </View>
+                      <Text style={styles.statNumber}>
+                        {storeStats?.completedBills || 0}
+                      </Text>
+                      <Text style={styles.statLabel}>Selesai</Text>
+                    </View>
+                    <View style={[styles.statItem, styles.lastStatItem]}>
+                      <View style={styles.statIconContainer}>
+                        <Ionicons
+                          name="time-outline"
+                          size={20}
+                          color={COLORS.teal}
+                        />
+                      </View>
+                      <Text style={styles.statNumber}>
+                        {storeStats?.pendingPayments || 0}
+                      </Text>
+                      <Text style={styles.statLabel}>Belum Dibayar</Text>
+                    </View>
+                  </View>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -315,7 +237,7 @@ export default function HomeScreen() {
                 color={LOCAL_COLORS.textPrimary}
               />
             </TouchableOpacity>
-            {groupsLoading || forceLoading ? (
+            {groupsLoading ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -358,20 +280,30 @@ export default function HomeScreen() {
                     </View>
                     <View style={styles.groupContent}>
                       <View style={styles.groupAvatars}>
-                        {[0, 1, 2, 3].map((avatarIndex) => {
-                          const member = group.members?.[avatarIndex];
-                          return (
-                            <Image
-                              key={avatarIndex}
-                              source={personImages[avatarIndex % 4]}
-                              style={[
-                                styles.avatar,
-                                avatarIndex > 0 && styles.avatarOverlap,
-                                !member && { opacity: 0 },
-                              ]}
-                            />
-                          );
-                        })}
+                        {group.members?.slice(0, 4).map((member, avatarIndex) => (
+                          <UserAvatar
+                            key={member.userId || avatarIndex}
+                            photoUrl={member.profilePhotoUrl || member.profilePhoto || member.avatar}
+                            name={member.name || 'User'}
+                            size={32}
+                            style={[
+                              styles.avatar,
+                              avatarIndex > 0 && styles.avatarOverlap,
+                            ]}
+                          />
+                        )) || 
+                        Array.from({ length: Math.min(group.memberCount || 1, 4) }, (_, avatarIndex) => (
+                          <UserAvatar
+                            key={avatarIndex}
+                            photoUrl={undefined}
+                            name="User"
+                            size={32}
+                            style={[
+                              styles.avatar,
+                              avatarIndex > 0 && styles.avatarOverlap,
+                            ]}
+                          />
+                        ))}
                       </View>
                       <View style={styles.groupInfo}>
                         <Text style={styles.groupName}>{group.groupName}</Text>
@@ -432,7 +364,7 @@ export default function HomeScreen() {
                 color={COLORS.textSecondary}
               />
             </TouchableOpacity>
-            {friendsLoading || forceLoading ? (
+            {friendsLoading ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -457,9 +389,10 @@ export default function HomeScreen() {
                     style={styles.friendItem}
                     activeOpacity={0.7}
                   >
-                    <Image
-                      source={personImages[index % 4]}
-                      style={styles.friendImage}
+                    <UserAvatar
+                      photoUrl={friendData.friend.profilePhotoUrl || friendData.friend.profilePhoto || friendData.friend.avatar}
+                      name={friendData.friend.name}
+                      size={60}
                     />
                     <Text style={styles.friendName}>
                       {friendData.friend.name}
@@ -590,38 +523,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  tabSwitcher: {
-    flexDirection: "row",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 20,
-    padding: 2,
-    alignSelf: "flex-start",
-    marginBottom: 12,
-  },
-  tabButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 18,
-    gap: 4,
-  },
-  activeTab: {
-    backgroundColor: COLORS.teal,
-    shadowColor: COLORS.teal,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tabText: {
-    fontSize: 12,
-    fontFamily: FONTS.medium,
-    color: COLORS.teal,
-  },
-  activeTabText: {
-    color: COLORS.white,
-  },
+
   modalSection: {
     marginTop: 5,
     marginBottom: 24,

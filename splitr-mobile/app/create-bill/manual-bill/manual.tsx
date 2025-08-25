@@ -3,9 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { COLORS, FONTS } from '../../constants/theme';
-import { useBillStore } from '../../store/billStore';
-import { getCategories, Category } from '../../services/categoryApi';
+import { COLORS, FONTS } from '../../../constants/theme';
+import { useBillStore } from '../../../store/billStore';
+import { getCategories, Category } from '../../../services/categoryApi';
+import type { BillCategory } from '../../../types/bill';
 
 export default function ManualScreen() {
   const { draft, setHeader, addItem, updateItem, removeItem, setFees, recalcTotals, reset } = useBillStore();
@@ -48,7 +49,7 @@ export default function ManualScreen() {
     fetchCategories();
   }, []);
 
-  const canConfirm = useMemo(() => name.trim().length > 0 && !!category && draft.items.length > 0, [name, category, draft.items.length]);
+  const canConfirm = useMemo(() => name.trim().length > 0 && category && draft.items.length > 0, [name, category, draft.items.length]);
 
   const onAddItem = () => {
     const item = {
@@ -61,11 +62,12 @@ export default function ManualScreen() {
   };
 
   const handleConfirm = () => {
-    setHeader(name.trim(), category?.categoryName || null);
+    // Use categoryId instead of mapping categoryName
+    setHeader(name.trim(), category?.categoryId || null);
     router.push('/create-bill/bill-detail');
   };
 
-  const formatRp = (amount) => {
+  const formatRp = (amount: number) => {
     return `Rp ${amount.toLocaleString('id-ID')}`;
   };
 
@@ -88,7 +90,7 @@ export default function ManualScreen() {
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
-                placeholder="Warung Cak Ilhem"
+                placeholder="Masukkan nama tagihan"
                 placeholderTextColor={COLORS.placeholder}
               />
             </View>
@@ -140,14 +142,21 @@ export default function ManualScreen() {
                 {draft.items.length === 0 ? (
                   <Text style={styles.emptyText}>Belum ada item. Tekan "+ Tambah Item" untuk mulai.</Text>
                 ) : (
-                  draft.items.map((it) => (
+                  draft.items.map((it: any) => (
                     <View key={it.id} style={styles.itemSummary}>
                       <Text style={styles.itemName}>{it.name} × {it.qty}</Text>
                       <Text style={styles.itemPrice}>{formatRp(it.qty * it.price)}</Text>
                     </View>
                   ))
                 )}
-                <TouchableOpacity onPress={() => router.push('/create-bill/edit-bill')} style={styles.addButton} activeOpacity={0.7}>
+                <TouchableOpacity 
+                  onPress={() => router.push({
+                    pathname: '/create-bill/edit-bill',
+                    params: { returnTo: 'manual' }
+                  })} 
+                  style={styles.addButton} 
+                  activeOpacity={0.7}
+                >
                   <Text style={styles.addText}>+ Tambah Item</Text>
                 </TouchableOpacity>
               </View>

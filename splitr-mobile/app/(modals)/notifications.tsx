@@ -34,14 +34,11 @@ export default function NotificationsScreen() {
     handleNotificationAction,
     fetchNotifications 
   } = useNotificationsStore();
-  const [forceLoading, setForceLoading] = useState(true);
-
   const markAsReadOptimistic = async (notificationId) => {
     await markAsRead(notificationId);
   };
   
   useEffect(() => {
-    setTimeout(() => setForceLoading(false), 1500);
     fetchNotifications(true);
   }, []);
 
@@ -264,7 +261,7 @@ export default function NotificationsScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            {loading || forceLoading ? (
+            {loading ? (
               <SkeletonList />
             ) : notifications.length === 0 ? (
               <View style={styles.emptyContainer}>

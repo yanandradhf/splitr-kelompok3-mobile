@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { useBillStore } from "@/store/billStore";
-import { toISODate } from "@/lib/date";
+import { useBillStore } from "../../store/billStore";
+import { toISODate } from "../../lib/date";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function PaymentMethod() {

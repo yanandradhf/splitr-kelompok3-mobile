@@ -1,17 +1,11 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Modal, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
 import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { useFriends } from '../../hooks/useApi';
+import UserAvatar from '../../components/ui/UserAvatar';
 import api from '../../services/api';
-
-const personImages = [
-  require("../../assets/images/person1.png"),
-  require("../../assets/images/person2.png"),
-  require("../../assets/images/person3.png"),
-  require("../../assets/images/person4.png"),
-];
 
 interface Friend {
   id: string;
@@ -43,7 +37,6 @@ export default function TambahTeman() {
   const [isAddingFriend, setIsAddingFriend] = useState(false);
   const [isDeletingFriend, setIsDeletingFriend] = useState(false);
   const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
-  const [forceLoading, setForceLoading] = useState(true);
   
   const { friends: apiFriends, loading: isLoadingFriends, refetch } = useFriends();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -59,7 +52,7 @@ export default function TambahTeman() {
       id: friendData.friend.userId,
       name: friendData.friend.name,
       username: friendData.friend.username || friendData.friend.name.toLowerCase().replace(/\s+/g, ''),
-      profilePhoto: friendData.friend.profilePhoto
+      profilePhoto: friendData.friend.profilePhotoUrl || friendData.friend.profilePhoto || friendData.friend.avatar
     })), [apiFriends]
   );
 
@@ -74,9 +67,7 @@ export default function TambahTeman() {
     }
   }, [friendSearch, addedFriends]);
 
-  useEffect(() => {
-    setTimeout(() => setForceLoading(false), 1700);
-  }, []);
+
 
 
 
@@ -279,17 +270,11 @@ export default function TambahTeman() {
                     <Text style={styles.resultsTitle}>Hasil Pencarian ({searchResults.length})</Text>
                     {searchResults.map((user) => (
                       <View key={user.id} style={styles.searchResultCard}>
-                        {user.profilePhoto ? (
-                          <Image 
-                            source={{ uri: user.profilePhoto }} 
-                            style={styles.profileImage}
-                            onError={() => {}}
-                          />
-                        ) : (
-                          <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
-                          </View>
-                        )}
+                        <UserAvatar 
+                          photoUrl={user.profilePhoto}
+                          name={user.name}
+                          size={50}
+                        />
                         <View style={styles.userInfo}>
                           <Text style={styles.friendName}>{user.name}</Text>
                           <Text style={styles.friendUsername}>@{user.username}</Text>
@@ -343,9 +328,10 @@ export default function TambahTeman() {
           <View style={styles.friendsListContainer}>
             <ScrollView 
               style={styles.friendsListScroll}
+              contentContainerStyle={styles.friendsListContent}
               showsVerticalScrollIndicator={false}
             >
-              {isLoadingFriends || forceLoading ? (
+              {isLoadingFriends ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color={COLORS.teal} />
                   <Text style={styles.loadingText}>Memuat daftar teman...</Text>
@@ -355,9 +341,10 @@ export default function TambahTeman() {
               ) : (
                 filteredFriends.map((friend, index) => (
                   <View key={friend.id} style={styles.friendCard}>
-                    <Image
-                      source={personImages[index % 4]}
-                      style={styles.profileImage}
+                    <UserAvatar 
+                      photoUrl={friend.profilePhoto}
+                      name={friend.name}
+                      size={50}
                     />
                     <View style={styles.friendInfo}>
                       <Text style={styles.friendName}>{friend.name}</Text>
@@ -390,11 +377,12 @@ export default function TambahTeman() {
               <Text style={styles.successMessage}>Teman berhasil ditambahkan</Text>
               {addedFriend && (
                 <View style={styles.friendPreview}>
-                  <Image
-                    source={personImages[0]}
-                    style={styles.previewImage}
+                  <UserAvatar 
+                    photoUrl={addedFriend.profilePhoto}
+                    name={addedFriend.name}
+                    size={40}
                   />
-                  <View>
+                  <View style={styles.friendPreviewInfo}>
                     <Text style={styles.previewName}>{addedFriend.name}</Text>
                     <Text style={styles.previewUsername}>@{addedFriend.username}</Text>
                   </View>
@@ -557,7 +545,9 @@ const styles = StyleSheet.create({
   friendsListScroll: {
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 20,
+  },
+  friendsListContent: {
+    paddingBottom: 100,
   },
   sectionTitle: {
     fontSize: 18,
@@ -631,19 +621,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F0F0F0',
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.teal,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: COLORS.white,
-  },
+
   friendInfo: {
     flex: 1,
     marginLeft: 12,
@@ -659,11 +637,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
+
   deleteButton: {
     padding: 8,
   },
@@ -745,15 +719,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
   },
-  previewAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.teal,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
+
   previewName: {
     fontSize: 16,
     fontFamily: FONTS.semiBold,
@@ -765,11 +731,8 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  previewImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
+  friendPreviewInfo: {
+    marginLeft: 12,
   },
   deleteModal: {
     backgroundColor: COLORS.white,

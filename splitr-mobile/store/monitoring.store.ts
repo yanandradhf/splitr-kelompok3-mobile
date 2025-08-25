@@ -2,9 +2,67 @@ import { create } from 'zustand';
 import api from '../services/api';
 import { API_CONFIG } from '../constants/config';
 
+interface BillActivity {
+  billId: string;
+  billCode: string;
+  billName: string;
+  totalBillAmount: number;
+  yourShare: number;
+  paymentStatus: string;
+  paidAt?: string;
+  scheduledDate?: string;
+  paymentType?: string;
+  hostName: string;
+  hostAccount?: string;
+  paymentDeadline?: string;
+  isExpired?: boolean;
+  canSchedule?: boolean;
+  showPayNow?: boolean;
+  isHost: boolean;
+  role: string;
+  participantCount?: number;
+  participantsStatus?: Array<{
+    participantId: string;
+    userId: string;
+    name: string;
+    account: string;
+    amountShare: number;
+    paymentStatus: string;
+    paidAt?: string;
+    scheduledDate?: string;
+    paymentType?: string;
+  }>;
+  paymentSummary?: {
+    totalParticipants: number;
+    paidCount: number;
+    pendingCount: number;
+    totalPaid: number;
+    totalPending: number;
+  };
+  actions?: {
+    canPay: boolean;
+    canSchedule?: boolean;
+    showDeadline?: boolean;
+    isPaid: boolean;
+    isFailed?: boolean;
+  };
+  status: string;
+  createdAt: string;
+}
+
+interface PaymentHistory {
+  paymentId: string;
+  billName: string;
+  amount: number;
+  status: string;
+  paymentType: string;
+  paidAt: string;
+  hostName: string;
+}
+
 interface MonitoringState {
-  billActivities: any[];
-  paymentHistory: any[];
+  billActivities: BillActivity[];
+  paymentHistory: PaymentHistory[];
   loading: boolean;
   historyLoading: boolean;
   lastRefresh: number;
@@ -22,6 +80,9 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   lastRefresh: 0,
 
   fetchMyActivity: async () => {
+    const { loading } = get();
+    if (loading) return; // Prevent duplicate calls
+    
     try {
       set({ loading: true });
       const timestamp = Date.now();
@@ -31,6 +92,29 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
       
       if (response.data.success) {
         const activities = response.data.myActivity || [];
+        console.log('🔄 Store updated with', activities.length, 'activities');
+        
+        // Debug scheduled payments
+        activities.forEach(activity => {
+          if (activity.paymentStatus === 'scheduled' || activity.paymentStatus === 'completed_scheduled') {
+            console.log('📅 Scheduled payment found:', {
+              billName: activity.billName,
+              paymentStatus: activity.paymentStatus,
+              paidAt: activity.paidAt,
+              scheduledDate: activity.scheduledDate,
+              paymentType: activity.paymentType,
+              hasScheduledDate: !!activity.scheduledDate
+            });
+          }
+        });
+        
+        // Debug all activities
+        console.log('📊 All activities:', activities.map(a => ({
+          billName: a.billName,
+          paymentStatus: a.paymentStatus,
+          scheduledDate: a.scheduledDate
+        })));
+        
         set({ 
           billActivities: activities,
           lastRefresh: timestamp,

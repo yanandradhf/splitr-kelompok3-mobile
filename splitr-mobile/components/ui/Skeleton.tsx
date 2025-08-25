@@ -148,6 +148,69 @@ export function SkeletonForm() {
   );
 }
 
+export function SkeletonBillCard() {
+  return (
+    <View style={styles.billCard}>
+      <View style={styles.billHeader}>
+        <View style={styles.billLeft}>
+          <Skeleton width={150} height={18} style={{ marginBottom: 4 }} />
+          <Skeleton width={80} height={14} style={{ marginBottom: 4 }} />
+          <Skeleton width={100} height={14} />
+        </View>
+        <View style={styles.billRight}>
+          <Skeleton width={80} height={18} style={{ marginBottom: 8 }} />
+          <Skeleton width={60} height={20} borderRadius={10} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function SkeletonHistoryCard() {
+  return (
+    <View style={styles.historyCard}>
+      <View style={styles.historyHeader}>
+        <View style={styles.historyLeft}>
+          <Skeleton width={40} height={40} borderRadius={20} style={{ marginRight: 12 }} />
+          <View>
+            <Skeleton width={140} height={16} style={{ marginBottom: 4 }} />
+            <Skeleton width={120} height={14} />
+          </View>
+        </View>
+        <Skeleton width={80} height={18} />
+      </View>
+      <View style={styles.historyDetails}>
+        {[1, 2, 3, 4].map((i) => (
+          <View key={i} style={styles.historyDetailRow}>
+            <Skeleton width={80} height={12} />
+            <Skeleton width={100} height={12} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function SkeletonMonitoringList() {
+  return (
+    <View>
+      {[1, 2, 3].map((i) => (
+        <SkeletonBillCard key={i} />
+      ))}
+    </View>
+  );
+}
+
+export function SkeletonHistoryList() {
+  return (
+    <View>
+      {[1, 2, 3].map((i) => (
+        <SkeletonHistoryCard key={i} />
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
@@ -225,5 +288,55 @@ const styles = StyleSheet.create({
   },
   formGroup: {
     marginBottom: 20,
+  },
+  billCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  billHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  billLeft: {
+    flex: 1,
+    marginRight: 16,
+  },
+  billRight: {
+    alignItems: 'flex-end',
+  },
+  historyCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  historyLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  historyDetails: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  historyDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });

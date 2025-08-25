@@ -1,5 +1,61 @@
 import api from './api';
-import { BillDraft } from '@/types/bill';
+import { BillDraft } from '../types/bill';
+import * as ImageManipulator from 'expo-image-manipulator';
+
+export interface UploadReceiptResponse {
+  success: boolean;
+  receiptPath: string;
+}
+
+import { ENDPOINTS } from '../config/apiConfig';
+
+export const uploadReceipt = async (imageUri: string): Promise<UploadReceiptResponse> => {
+  console.log('📤 Uploading receipt image:', {
+    endpoint: ENDPOINTS.UPLOAD_RECEIPT,
+    imageUri,
+    uriType: typeof imageUri
+  });
+  
+  try {
+    // Compress image before upload
+    console.log('🗜 Compressing image...');
+    const compressedImage = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ resize: { width: 1024 } }], // Resize to max width 1024px
+      { 
+        compress: 0.7, // 70% quality
+        format: ImageManipulator.SaveFormat.JPEG 
+      }
+    );
+    
+    console.log('✅ Image compressed:', {
+      originalUri: imageUri,
+      compressedUri: compressedImage.uri,
+      width: compressedImage.width,
+      height: compressedImage.height
+    });
+    
+    const formData = new FormData();
+    const fileName = `receipt_${Date.now()}.jpg`;
+    
+    formData.append('receipt', {
+      uri: compressedImage.uri,
+      type: 'image/jpeg',
+      name: fileName,
+    } as any);
+    
+    const response = await api.post(ENDPOINTS.UPLOAD_RECEIPT, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000 // 30 seconds timeout
+    });
+    
+    console.log('✅ Receipt upload response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Upload error:', error);
+    throw error;
+  }
+};
 
 export interface CreateBillRequest {
   billName: string;
@@ -116,6 +172,39 @@ function getUserIdFromMemberId(memberId: string, userMap: Map<string, any>, curr
   return user?.userId || user?.id || memberId;
 }
 
+export async function createBillWithReceipt(draft: BillDraft, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]): Promise<CreateBillResponse> {
+  let receiptImageUrl = null;
+  
+  // 1. Upload receipt image if exists
+  if (draft.receiptImage) {
+    try {
+      console.log('📤 Starting receipt upload for URI:', draft.receiptImage);
+      const uploadResponse = await uploadReceipt(draft.receiptImage);
+      receiptImageUrl = uploadResponse.receiptPath;
+      console.log('✅ Receipt uploaded successfully:', receiptImageUrl);
+    } catch (error) {
+      console.error('❌ Receipt upload failed:', error);
+      throw new Error('Failed to upload receipt image');
+    }
+  } else {
+    console.log('📷 No receipt image to upload');
+  }
+  
+  // 2. Create bill with receipt URL
+  const billData = transformDraftToCreateBillRequest(draft, categoryId, userMap, currentUser, categories);
+  billData.receiptImageUrl = receiptImageUrl;
+  
+  console.log('📦 Creating bill with data:', {
+    billName: billData.billName,
+    receiptImageUrl: billData.receiptImageUrl,
+    endpoint: ENDPOINTS.CREATE_BILL
+  });
+  
+  const response = await api.post(ENDPOINTS.CREATE_BILL, billData);
+  console.log('✅ Bill created successfully:', response.data);
+  return response.data;
+}
+
 export function transformDraftToCreateBillRequest(draft: BillDraft, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]): CreateBillRequest {
   const now = new Date();
   const maxPaymentDate = draft.paymentMethod === 'PAY_NOW' 
@@ -188,14 +277,14 @@ export function transformDraftToCreateBillRequest(draft: BillDraft, categoryId: 
   const hasSharedItems = draft.items.some(item => item.isSharing);
   const splitMethod = hasSharedItems ? 'custom' : 'equal';
   
-  // Find category ID from categories list based on selected category
-  const selectedCategory = categories?.find(cat => cat.categoryName === draft.category);
-  const finalCategoryId = selectedCategory?.categoryId || categoryId;
+  // Use the category ID directly from draft
+  const finalCategoryId = draft.category || categoryId;
   
   return {
     billName: draft.name,
     categoryId: finalCategoryId,
     totalAmount: draft.totals.grandTotal,
+    receiptImageUrl: undefined, // Will be set by createBillWithReceipt
     maxPaymentDate,
     allowScheduledPayment: draft.paymentMethod === 'PAY_LATER',
     splitMethod,

@@ -18,11 +18,9 @@ import { authAPI } from "../../../services/api";
 export default function BankAccountScreen() {
   const [accountData, setAccountData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [forceLoading, setForceLoading] = useState(true);
 
   useEffect(() => {
     fetchAccountData();
-    setTimeout(() => setForceLoading(false), 1300);
   }, []);
 
   const fetchAccountData = async () => {
@@ -40,7 +38,7 @@ export default function BankAccountScreen() {
     return `Rp ${amount.toLocaleString("id-ID")}`;
   };
 
-  if (isLoading || forceLoading) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>

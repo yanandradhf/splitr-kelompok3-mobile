@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useBillStore } from "@/store/billStore";
-import type { BillItem } from "@/types/bill";
-import { formatRp } from "@/lib/currency";
+import { useBillStore } from "../../store/billStore";
+import type { BillItem } from "../../types/bill";
+import { formatRp } from "../../lib/currency";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function EditBill() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { draft, addItem, updateItem, removeItem, setFees, recalcTotals } = useBillStore();
   const [name, setName] = useState("");
   const [qty, setQty] = useState("1");
   const [price, setPrice] = useState("");
-  const [showTax, setShowTax] = useState(false);
-  const [showService, setShowService] = useState(false);
-  const [showDiscount, setShowDiscount] = useState(false);
+  const [showTax, setShowTax] = useState(draft.fees.taxPct > 0);
+  const [showService, setShowService] = useState(draft.fees.servicePct > 0);
+  const [showDiscount, setShowDiscount] = useState(draft.fees.discountPct > 0 || draft.fees.discountNominal > 0);
   const [discountType, setDiscountType] = useState<'percent' | 'nominal'>('percent');
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -410,7 +411,17 @@ export default function EditBill() {
               </View>
             </View>
 
-            <Pressable onPress={() => router.back()} style={styles.confirmButton}>
+            <Pressable 
+              onPress={() => {
+                // Navigate back to appropriate screen based on returnTo param
+                if (returnTo === "scan-results") {
+                  router.back();
+                } else {
+                  router.back();
+                }
+              }} 
+              style={styles.confirmButton}
+            >
               <Text style={styles.confirmText}>Simpan Tagihan</Text>
             </Pressable>
           </ScrollView>

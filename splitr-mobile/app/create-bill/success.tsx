@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
 // Removed unused imports
-import { formatRp } from "@/lib/currency";
+import { formatRp } from "../../lib/currency";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function BillSuccess() {

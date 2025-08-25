@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Image, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -8,6 +8,7 @@ import api from '@/services/api';
 import { API_CONFIG } from '@/constants/config';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { getBillEndpoint } from '../../utils/billEndpoints';
+import { getImageUrl } from '../../utils/imageHelper';
 
 interface MasterBillData {
   billId: string;
@@ -15,6 +16,7 @@ interface MasterBillData {
   billName: string;
   totalAmount: number;
   status: string;
+  receiptImageUrl?: string;
   host: {
     name: string;
     account: string;
@@ -44,6 +46,8 @@ interface MasterBillData {
     amountShare: number;
     paymentStatus: string;
     paidAt?: string;
+    scheduledDate?: string;
+    paymentType?: string;
     isHost: boolean;
     breakdown: {
       subtotal: number;
@@ -77,6 +81,7 @@ export default function MasterBillDetail() {
   const [billData, setBillData] = useState<MasterBillData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   useEffect(() => {
     if (identifier) {
@@ -122,6 +127,8 @@ export default function MasterBillDetail() {
     switch (status) {
       case 'active': return COLORS.teal;
       case 'completed': return COLORS.success;
+      case 'completed_scheduled': return COLORS.teal;
+      case 'completed_late': return '#D97706';
       case 'cancelled': return COLORS.red;
       case 'pending': return COLORS.warning;
       case 'expired': return COLORS.red;
@@ -133,6 +140,8 @@ export default function MasterBillDetail() {
     switch (status) {
       case 'active': return 'Aktif';
       case 'completed': return 'Selesai';
+      case 'completed_scheduled': return 'Terjadwal Selesai';
+      case 'completed_late': return 'Terlambat';
       case 'cancelled': return 'Dibatalkan';
       case 'pending': return 'Belum Bayar';
       case 'expired': return 'Kadaluarsa';
@@ -200,6 +209,20 @@ export default function MasterBillDetail() {
 
         <View style={styles.whiteContainer}>
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Receipt Info */}
+            {billData.receiptImageUrl && (
+              <TouchableOpacity style={styles.receiptInfoCard} onPress={() => setShowFullImage(true)}>
+                <View style={styles.receiptInfoContent}>
+                  <Ionicons name="receipt-outline" size={24} color={COLORS.teal} />
+                  <View style={styles.receiptInfoText}>
+                    <Text style={styles.receiptInfoTitle}>Struk Tersedia</Text>
+                    <Text style={styles.receiptInfoSubtitle}>Tap untuk melihat struk pembayaran</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+                </View>
+              </TouchableOpacity>
+            )}
+
             {/* Bill Overview */}
             <View style={styles.overviewCard}>
               <View style={styles.billHeader}>
@@ -215,11 +238,13 @@ export default function MasterBillDetail() {
                       backgroundColor: getStatusColor(billData.status) === COLORS.teal ? '#E6FFFA' :
                                      getStatusColor(billData.status) === COLORS.success ? '#F0FDF4' :
                                      getStatusColor(billData.status) === COLORS.red ? '#FEF2F2' :
-                                     getStatusColor(billData.status) === COLORS.warning ? '#FFFBEB' : '#F8F9FA',
+                                     getStatusColor(billData.status) === COLORS.warning ? '#FFFBEB' :
+                                     getStatusColor(billData.status) === '#D97706' ? '#FEF3C7' : '#F8F9FA',
                       borderColor: getStatusColor(billData.status) === COLORS.teal ? '#B2F5EA' :
                                  getStatusColor(billData.status) === COLORS.success ? '#BBF7D0' :
                                  getStatusColor(billData.status) === COLORS.red ? '#FECACA' :
-                                 getStatusColor(billData.status) === COLORS.warning ? '#FDE68A' : '#E5E7EB'
+                                 getStatusColor(billData.status) === COLORS.warning ? '#FDE68A' :
+                                 getStatusColor(billData.status) === '#D97706' ? '#FDE68A' : '#E5E7EB'
                     }
                   ]}>
                     <Text style={[styles.statusText, { color: getStatusColor(billData.status) }]}>{getStatusText(billData.status)}</Text>
@@ -285,7 +310,13 @@ export default function MasterBillDetail() {
                       {getStatusText(participant.paymentStatus)}
                     </Text>
                     {participant.paidAt && (
-                      <Text style={styles.paidDate}>{formatDate(participant.paidAt)}</Text>
+                      <Text style={styles.paidDate}>Dibayar: {formatDate(participant.paidAt)}</Text>
+                    )}
+                    {participant.paymentStatus === 'completed_scheduled' && participant.scheduledDate && (
+                      <Text style={styles.scheduledDate}>Dijadwalkan: {formatDate(participant.scheduledDate)}</Text>
+                    )}
+                    {participant.paymentStatus === 'completed_late' && participant.paidAt && (
+                      <Text style={styles.lateDate}>Terlambat: {formatDate(participant.paidAt)}</Text>
                     )}
                   </View>
                 </View>
@@ -358,6 +389,40 @@ export default function MasterBillDetail() {
             </View>
           </ScrollView>
         </View>
+        
+        {/* Full Screen Image Modal */}
+        <Modal visible={showFullImage} transparent animationType="fade">
+          <View style={styles.fullImageModal}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowFullImage(false)}
+            >
+              <Ionicons name="close" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+            <Image 
+              source={{ uri: getImageUrl(billData?.receiptImageUrl) }}
+              style={styles.fullImage}
+              resizeMode="contain"
+              onLoad={() => {
+                if (__DEV__) {
+                  console.log('📸 Receipt Image Loaded:', {
+                    originalUrl: billData?.receiptImageUrl,
+                    processedUrl: getImageUrl(billData?.receiptImageUrl)
+                  });
+                }
+              }}
+              onError={(error) => {
+                if (__DEV__) {
+                  console.log('❌ Receipt Image Error:', {
+                    originalUrl: billData?.receiptImageUrl,
+                    processedUrl: getImageUrl(billData?.receiptImageUrl),
+                    error
+                  });
+                }
+              }}
+            />
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -663,6 +728,16 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
+  scheduledDate: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: COLORS.teal,
+  },
+  lateDate: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: '#D97706',
+  },
   itemsSection: {
     marginBottom: SPACING.lg,
   },
@@ -796,5 +871,56 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.lg,
     fontFamily: FONTS.bold,
     color: COLORS.teal,
+  },
+  receiptInfoCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E6FFFA',
+  },
+  receiptInfoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  receiptInfoText: {
+    flex: 1,
+  },
+  receiptInfoTitle: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
+  },
+  receiptInfoSubtitle: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  fullImageModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 10,
+  },
+  fullImage: {
+    width: '90%',
+    height: '80%',
   },
 });

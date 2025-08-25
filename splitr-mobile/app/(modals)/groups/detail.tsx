@@ -16,6 +16,7 @@ import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
+import UserAvatar from "../../../components/ui/UserAvatar";
 import {
   wp,
   hp,
@@ -156,7 +157,7 @@ export default function GroupDetailScreen() {
         id: member.userId || member.id || `member-${index}`,
         name: member.name || member.username || `Member ${index + 1}`,
         status: member.status || "active",
-        avatar: member.avatar || personImages[index % 4],
+        avatar: member.profilePhotoUrl || member.avatar,
         isCreator: member.isCreator || false,
         isFriend: member.isFriend || false,
         canAddFriend: member.canAddFriend || false,
@@ -432,7 +433,12 @@ export default function GroupDetailScreen() {
 
   const renderMember = ({ item }: { item: any }) => (
     <View style={styles.memberItem}>
-      <Image source={item.avatar} style={styles.memberAvatar} />
+      <UserAvatar
+        photoUrl={typeof item.avatar === 'string' ? item.avatar : undefined}
+        name={item.name}
+        size={40}
+        style={styles.memberAvatar}
+      />
       <View style={styles.memberInfo}>
         <View style={styles.memberNameContainer}>
           <Text style={styles.memberName}>{item.name}</Text>
@@ -634,22 +640,7 @@ export default function GroupDetailScreen() {
             <View style={styles.actionButtons}>
             {displayGroup?.isCreator ? (
               <>
-                {/* Create Bill Button */}
-                <TouchableOpacity
-                  style={styles.createBillButton}
-                  onPress={() => {
-                    console.log("Create bill for group:", displayGroup?.groupId);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="receipt-outline"
-                    size={getIconSize(20)}
-                    color={COLORS.white}
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.createBillButtonText}>Buat Bill</Text>
-                </TouchableOpacity>
+
 
                 {/* Add Member Button */}
                 <TouchableOpacity
@@ -681,22 +672,7 @@ export default function GroupDetailScreen() {
               </>
             ) : (
               <>
-                {/* Create Bill Button for Members */}
-                <TouchableOpacity
-                  style={styles.createBillButtonMember}
-                  onPress={() => {
-                    console.log("Create bill for group:", displayGroup?.groupId);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="receipt-outline"
-                    size={getIconSize(20)}
-                    color={COLORS.white}
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.createBillButtonText}>Buat Bill</Text>
-                </TouchableOpacity>
+
 
                 {/* Leave Group Button */}
                 <TouchableOpacity
@@ -929,7 +905,12 @@ export default function GroupDetailScreen() {
                       onPress={() => setSelectedFriendToAdd(item)}
                       activeOpacity={0.7}
                     >
-                      <Image source={item.friend.avatar || personImages[0]} style={styles.friendAvatar} />
+                      <UserAvatar
+                        photoUrl={item.friend.profilePhotoUrl || item.friend.avatar}
+                        name={item.friend.name}
+                        size={40}
+                        style={styles.friendAvatar}
+                      />
                       <Text style={styles.friendName}>{item.friend.name}</Text>
                       {selectedFriendToAdd?.friend.userId === item.friend.userId && (
                         <Ionicons name="checkmark-circle" size={20} color="#00897B" />

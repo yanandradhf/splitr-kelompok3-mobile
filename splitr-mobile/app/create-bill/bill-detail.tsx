@@ -3,8 +3,8 @@ import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useBillStore } from "@/store/billStore";
-import { formatRp } from "@/lib/currency";
+import { useBillStore } from "../../store/billStore";
+import { formatRp } from "../../lib/currency";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function BillDetail() {
@@ -14,7 +14,7 @@ export default function BillDetail() {
     recalcTotals();
   }, [draft.items, draft.fees]);
   
-  const canConfirm = draft.name.trim().length > 0 && !!draft.category && draft.items.length > 0;
+  const canConfirm = draft.name.trim().length > 0 && draft.category && draft.items.length > 0;
   
   return (
     <View style={styles.container}>
@@ -38,7 +38,7 @@ export default function BillDetail() {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Kategori</Text>
-                  <Text style={styles.infoValue}>{draft.category ?? "-"}</Text>
+                  <Text style={styles.infoValue}>{draft.category ? 'Terpilih' : "-"}</Text>
                 </View>
                 <Pressable onPress={() => router.push("/create-bill/edit-bill")} style={styles.editButton}>
                   <Ionicons name="create-outline" size={16} color={COLORS.teal} />

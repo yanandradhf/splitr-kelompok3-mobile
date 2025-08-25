@@ -11,26 +11,33 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useProfileStore } from "../../../store";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { SkeletonProfile, SkeletonForm } from "../../../components/ui/Skeleton";
+import UserAvatar from "../../../components/ui/UserAvatar";
 import { COLORS, FONTS } from "../../../constants/theme";
 
 const EditProfileScreen = () => {
-  const { user, isLoading, isUpdating, updateProfile, fetchProfile } = useProfileStore();
+  const { user, isLoading, isUpdating, isUploadingPhoto, updateProfile, uploadProfilePhoto, fetchProfile } = useProfileStore();
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [originalData, setOriginalData] = useState({ name: "", phone: "", email: "" });
-  const [forceLoading, setForceLoading] = useState(true);
 
   React.useEffect(() => {
     if (!user) fetchProfile();
-    setTimeout(() => setForceLoading(false), 1400);
   }, []);
+
+  // Debug profile photo URL changes
+  React.useEffect(() => {
+    console.log('Profile photo URL updated:', user?.profilePhotoUrl);
+  }, [user?.profilePhotoUrl]);
 
   React.useEffect(() => {
     if (user) {
@@ -65,7 +72,95 @@ const EditProfileScreen = () => {
     }
   };
 
-  if (isLoading || forceLoading) {
+  const handlePhotoUpload = async () => {
+    Alert.alert(
+      'Pilih Foto Profil',
+      'Pilih sumber foto untuk profil Anda',
+      [
+        { text: 'Batal', style: 'cancel' },
+        { text: 'Kamera', onPress: () => openCamera() },
+        { text: 'Galeri', onPress: () => openGallery() },
+      ]
+    );
+  };
+
+  const openCamera = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Izin Diperlukan', 'Aplikasi memerlukan izin kamera untuk mengambil foto profil.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadPhoto(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Error opening camera:', error);
+      Alert.alert('Error', 'Gagal membuka kamera');
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Izin Diperlukan', 'Aplikasi memerlukan izin galeri untuk memilih foto profil.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadPhoto(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Error opening gallery:', error);
+      Alert.alert('Error', 'Gagal membuka galeri');
+    }
+  };
+
+  const uploadPhoto = async (asset: any) => {
+    try {
+      // Resize image to max 800x800 and compress to 80% quality
+      const resizedImage = await manipulateAsync(
+        asset.uri,
+        [{ resize: { width: 800, height: 800 } }],
+        { compress: 0.8, format: SaveFormat.JPEG }
+      );
+
+      const imageFile = {
+        uri: resizedImage.uri,
+        type: 'image/jpeg',
+        name: 'profile.jpg',
+      };
+      
+      const success = await uploadProfilePhoto(imageFile);
+      if (success) {
+        Alert.alert('Berhasil', 'Foto profil berhasil diperbarui!');
+        setTimeout(() => {
+          fetchProfile();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      Alert.alert('Error', 'Gagal memproses gambar');
+    }
+  };
+
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
@@ -110,13 +205,12 @@ const EditProfileScreen = () => {
           {/* Profile Image */}
           <View style={styles.profileSection}>
             <View style={styles.profileImageContainer}>
-              <Image
-                source={{
-                  uri: "https://picsum.photos/id/64/120/120",
-                }}
-                style={styles.profileImage}
+              <UserAvatar
+                photoUrl={user?.profilePhotoUrl}
+                name={user?.name || 'User'}
+                size={100}
               />
-              <TouchableOpacity style={styles.editIconContainer}>
+              <TouchableOpacity style={styles.editIconContainer} onPress={handlePhotoUpload}>
                 <Ionicons name="camera" size={16} color={COLORS.teal} />
               </TouchableOpacity>
             </View>
@@ -184,7 +278,7 @@ const EditProfileScreen = () => {
             </ScrollView>
           </KeyboardAvoidingView>
         </View>
-        {isUpdating && <LoadingScreen />}
+        {(isUpdating || isUploadingPhoto) && <LoadingScreen />}
       </SafeAreaView>
     </View>
   );

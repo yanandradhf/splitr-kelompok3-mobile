@@ -3,12 +3,12 @@ import { View, Text, Pressable, StyleSheet, TextInput, ActivityIndicator, Keyboa
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useBillStore } from "@/store/billStore";
-import { useFriends, useGroups } from "@/hooks/useApi";
+import { useBillStore } from "../../store/billStore";
+import { useFriends, useGroups } from "../../hooks/useApi";
 import { useAuthStore } from "../../features/auth/auth.store";
-import { formatRp } from "@/lib/currency";
-import { getCategories, Category } from "@/services/categoryApi";
-import api from "@/services/api";
+import { formatRp } from "../../lib/currency";
+import { getCategories, Category } from "../../services/categoryApi";
+import api from "../../services/api";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function PinVerification() {
@@ -128,12 +128,11 @@ export default function PinVerification() {
         memberNames[memberId] = memberSummary[memberId].name;
       });
 
-      // Find categoryId
-      const selectedCategory = categories.find(cat => cat.categoryName === draft.category);
-      const categoryId = selectedCategory?.categoryId;
+      // Use categoryId directly from draft
+      const categoryId = draft.category;
       
       if (!categoryId) {
-        alert('Error: Category not found. Please try again.');
+        alert('Error: Category not selected. Please try again.');
         setIsCreating(false);
         return;
       }

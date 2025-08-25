@@ -17,6 +17,7 @@ import { COLORS, FONTS } from "../../../constants/theme";
 import { useProfileStore } from "../../../store";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { SkeletonProfile } from "../../../components/ui/Skeleton";
+import UserAvatar from "../../../components/ui/UserAvatar";
 import { authAPI } from "../../../services/api";
 import * as SecureStore from "expo-secure-store";
 
@@ -24,16 +25,15 @@ export default function ProfileScreen() {
   const { user, stats, isLoading, fetchProfile } = useProfileStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [forceLoading, setForceLoading] = useState(true);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   React.useEffect(() => {
     if (!user) fetchProfile();
-    setTimeout(() => setForceLoading(false), 1600);
   }, []);
 
 
 
-  if (isLoading || forceLoading) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
@@ -90,19 +90,18 @@ export default function ProfileScreen() {
 
           {/* Profile Info */}
           <View style={styles.profileSection}>
-            <View style={styles.profileImageContainer}>
-              <Image
-                source={{
-                  uri: "https://picsum.photos/id/64/120/120",
-                }}
-                style={styles.profileImage}
+            <TouchableOpacity style={styles.profileImageContainer} onPress={() => setShowFullImage(true)}>
+              <UserAvatar
+                photoUrl={user?.profilePhotoUrl}
+                name={user?.name || 'User'}
+                size={100}
               />
               {user?.isVerified && (
                 <View style={styles.verifiedBadge}>
                   <Ionicons name="checkmark" size={16} color={COLORS.white} />
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
             <Text style={styles.profileName}>
               {user?.name || "User"}
             </Text>
@@ -271,6 +270,24 @@ export default function ProfileScreen() {
             </View>
 
             {isLoggingOut && <LoadingScreen />}
+          </View>
+        </Modal>
+
+        {/* Full Screen Image Modal */}
+        <Modal visible={showFullImage} transparent animationType="fade">
+          <View style={styles.fullImageModal}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => setShowFullImage(false)}
+            >
+              <Ionicons name="close" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+            <UserAvatar
+              photoUrl={user?.profilePhotoUrl}
+              name={user?.name || 'User'}
+              size={300}
+              style={{ borderRadius: 0 }}
+            />
           </View>
         </Modal>
       </SafeAreaView>
@@ -555,5 +572,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONTS.semiBold,
     color: COLORS.white,
+  },
+  fullImageModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 10,
+  },
+  fullImage: {
+    width: '90%',
+    height: '80%',
   },
 });

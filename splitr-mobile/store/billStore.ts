@@ -5,7 +5,6 @@ import type {
   BillFees,
   SplitAssignment,
   Totals,
-  BillCategory,
 } from "@/types/bill";
 
 const emptyTotals: Totals = { subTotal: 0, tax: 0, service: 0, discount: 0, grandTotal: 0 };
@@ -21,12 +20,13 @@ const newDraft = (): BillDraft => ({
   paymentMethod: undefined,
   dueDate: undefined,
   totals: emptyTotals,
+  receiptImage: undefined,
 });
 
 interface BillState {
   draft: BillDraft;
   reset: () => void;
-  setHeader: (name: string, category: BillCategory | null) => void;
+  setHeader: (name: string, category: string | null) => void;
   addItem: (item: BillItem) => void;
   updateItem: (item: BillItem) => void;
   removeItem: (id: string) => void;
@@ -38,6 +38,7 @@ interface BillState {
   markPaidUpfront: (itemId: string, memberId: string | null) => void;
   setPaymentMethod: (p: "PAY_NOW" | "PAY_LATER") => void;
   setDueDate: (iso: string) => void;
+  setReceiptImage: (uri: string) => void;
   finalize: (memberNames: {[id: string]: string}, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]) => void;
 }
 
@@ -111,19 +112,21 @@ export const useBillStore = create<BillState>((set, get) => ({
     })),
   setPaymentMethod: (p) => set((s) => ({ draft: { ...s.draft, paymentMethod: p } })),
   setDueDate: (iso) => set((s) => ({ draft: { ...s.draft, dueDate: iso } })),
+  setReceiptImage: (uri) => set((s) => ({ draft: { ...s.draft, receiptImage: uri } })),
   finalize: async (memberNames: {[id: string]: string}, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]) => {
     const { draft } = get();
-    console.log('Finalizing bill:', draft);
+    console.log('📦 Finalizing bill with receipt:', {
+      billName: draft.name,
+      hasReceipt: !!draft.receiptImage,
+      receiptImage: draft.receiptImage
+    });
     
     try {
-      // Create bill via API
-      const { createBill, transformDraftToCreateBillRequest } = require('@/services/billApi');
-      const requestData = transformDraftToCreateBillRequest(draft, categoryId, userMap, currentUser, categories);
-      console.log('🚀 Sending bill data to API:', JSON.stringify(requestData, null, 2));
-      const response = await require('@/services/api').default.post('/api/mobile/bills/create', requestData);
-      const billResponse = response.data;
+      // Use createBillWithReceipt to handle receipt upload
+      const { createBillWithReceipt } = require('@/services/billApi');
+      const billResponse = await createBillWithReceipt(draft, categoryId, userMap, currentUser, categories);
       
-      console.log('Bill created:', billResponse);
+      console.log('✅ Bill created successfully:', billResponse);
       
       // Save to created bills store
       const { addCreatedBill } = require('@/store/createdBillsStore').useCreatedBillsStore.getState();
@@ -134,7 +137,7 @@ export const useBillStore = create<BillState>((set, get) => ({
       
       return billResponse;
     } catch (error) {
-      console.error('Failed to create bill:', error);
+      console.error('❌ Failed to create bill:', error);
       throw error;
     }
   },

@@ -3,11 +3,11 @@ import { View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useBillStore } from "@/store/billStore";
-import { useFriends, useGroups } from "@/hooks/useApi";
+import { useBillStore } from "../../store/billStore";
+import { useFriends, useGroups } from "../../hooks/useApi";
 import { useAuthStore } from "../../features/auth/auth.store";
-import { formatRp } from "@/lib/currency";
-import { getCategories, Category } from "@/services/categoryApi";
+import { formatRp } from "../../lib/currency";
+import { getCategories, Category } from "../../services/categoryApi";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function BillSummary() {

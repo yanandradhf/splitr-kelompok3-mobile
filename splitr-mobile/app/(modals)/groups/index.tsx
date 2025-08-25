@@ -16,6 +16,7 @@ import { router, useFocusEffect } from "expo-router";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
 import { useApi } from "../../../hooks/useApi";
 import { useGroupsStore } from "../../../store";
+import UserAvatar from "../../../components/ui/UserAvatar";
 import {
   wp,
   hp,
@@ -35,7 +36,6 @@ const personImages = [
 export default function GroupsScreen() {
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [forceLoading, setForceLoading] = useState(true);
   const { 
     groups, 
     isLoading: loading, 
@@ -46,7 +46,6 @@ export default function GroupsScreen() {
 
   useEffect(() => {
     fetchGroups();
-    setTimeout(() => setForceLoading(false), 1800);
   }, []);
 
   useFocusEffect(
@@ -139,7 +138,7 @@ export default function GroupsScreen() {
           >
             {/* Groups List */}
             <View style={styles.listContainer}>
-              {loading || forceLoading ? (
+              {loading ? (
                 <View>
                   {[1, 2, 3].map((i) => (
                     <View key={i} style={styles.groupCard}>
@@ -194,9 +193,11 @@ export default function GroupsScreen() {
                           
                           if (displayMembers.length === 0 && group.memberCount > 0) {
                             return Array.from({ length: Math.min(group.memberCount, 4) }, (_, index) => (
-                              <Image
+                              <UserAvatar
                                 key={`placeholder-${index}`}
-                                source={personImages[index % 4]}
+                                photoUrl={undefined}
+                                name={`User ${index + 1}`}
+                                size={40}
                                 style={[
                                   styles.avatar,
                                   index > 0 && styles.avatarOverlap,
@@ -206,11 +207,13 @@ export default function GroupsScreen() {
                           }
                           
                           return displayMembers.map((member, index) => {
-                            const avatarSource = member.avatar || member.profilePicture || personImages[index % 4];
+                            const avatarSource = member.profilePhotoUrl || member.avatar || member.profilePicture;
                             return (
-                              <Image
+                              <UserAvatar
                                 key={member.id || member.userId || index}
-                                source={typeof avatarSource === 'string' ? { uri: avatarSource } : avatarSource}
+                                photoUrl={avatarSource}
+                                name={member.name || `User ${index + 1}`}
+                                size={40}
                                 style={[
                                   styles.avatar,
                                   index > 0 && styles.avatarOverlap,

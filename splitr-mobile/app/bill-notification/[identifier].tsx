@@ -16,6 +16,9 @@ interface BillData {
   totalBillAmount: number;
   yourShare: number;
   paymentStatus: string;
+  paidAt?: string;
+  scheduledDate?: string;
+  paymentType?: string;
   hostName: string;
   hostAccount: string;
   category: string;
@@ -148,12 +151,15 @@ export default function BillNotificationDetail() {
   };
 
   const getStatusText = (status: string, isOverdue?: boolean) => {
-    if (isOverdue) return 'Belum Bayar\nKadaluarsa';
+    if (status === 'completed_late') return 'Terlambat';
+    if (isOverdue && status === 'pending') return 'Kadaluarsa';
     
     switch (status) {
       case 'pending': return 'Belum Bayar';
       case 'overdue': return 'Terlambat';
       case 'completed': return 'Selesai';
+      case 'completed_scheduled': return 'Terjadwal Selesai';
+      case 'completed_late': return 'Terlambat';
       case 'paid': return 'Selesai';
       case 'scheduled': return 'Belum Bayar';
       case 'expired': return 'Kadaluarsa';
@@ -163,7 +169,16 @@ export default function BillNotificationDetail() {
 
   const StatusBadge = ({ status }: { status: string }) => {
     const getStatusStyle = (status: string) => {
-      if (billData?.isExpired) {
+      if (status === 'completed_late') {
+        return {
+          backgroundColor: '#FEF3C7',
+          borderWidth: 1,
+          borderColor: '#FDE68A',
+          textColor: '#D97706'
+        };
+      }
+      
+      if (billData?.isExpired && status === 'pending') {
         return {
           backgroundColor: '#FEF2F2',
           borderWidth: 1,
@@ -189,9 +204,10 @@ export default function BillNotificationDetail() {
             textColor: COLORS.red
           };
         case 'completed':
+        case 'completed_scheduled':
         case 'paid':
           return {
-            backgroundColor: COLORS.success,
+            backgroundColor: status === 'completed_scheduled' ? COLORS.teal : COLORS.success,
             textColor: COLORS.white
           };
         case 'expired':
@@ -420,8 +436,28 @@ export default function BillNotificationDetail() {
               <Ionicons name="chevron-forward" size={16} color={COLORS.teal} />
             </Pressable>
 
+            {/* Scheduled Payment Info */}
+            {billData.paymentStatus === 'completed_scheduled' && (
+              <View style={styles.scheduledPaymentCard}>
+                <View style={styles.scheduledHeader}>
+                  <Ionicons name="calendar" size={20} color={COLORS.teal} />
+                  <Text style={styles.scheduledTitle}>Pembayaran Terjadwal</Text>
+                </View>
+                {billData.paidAt && (
+                  <Text style={styles.scheduledDetail}>
+                    Dibayar pada: {formatDate(billData.paidAt)}
+                  </Text>
+                )}
+                {billData.scheduledDate && (
+                  <Text style={styles.scheduledDetail}>
+                    Dijadwalkan untuk: {formatDate(billData.scheduledDate)}
+                  </Text>
+                )}
+              </View>
+            )}
+
             {/* Action Button */}
-            {billData.paymentStatus !== 'completed' && (
+            {billData.paymentStatus !== 'completed' && billData.paymentStatus !== 'completed_scheduled' && billData.paymentStatus !== 'completed_late' && (
               <Pressable 
                 onPress={handlePayment} 
                 style={[
@@ -441,10 +477,13 @@ export default function BillNotificationDetail() {
               </Pressable>
             )}
 
-            {billData.paymentStatus === 'completed' && (
-              <View style={styles.paidIndicator}>
-                <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
-                <Text style={styles.paidText}>Pembayaran Berhasil</Text>
+            {(billData.paymentStatus === 'completed' || billData.paymentStatus === 'completed_scheduled' || billData.paymentStatus === 'completed_late') && (
+              <View style={[styles.paidIndicator, billData.paymentStatus === 'completed_late' && styles.lateIndicator]}>
+                <Ionicons name="checkmark-circle" size={24} color={billData.paymentStatus === 'completed_late' ? '#D97706' : COLORS.success} />
+                <Text style={[styles.paidText, billData.paymentStatus === 'completed_late' && styles.lateText]}>
+                  {billData.paymentStatus === 'completed_late' ? 'Pembayaran Terlambat Berhasil' :
+                   billData.paymentStatus === 'completed_scheduled' ? 'Pembayaran Terjadwal Berhasil' : 'Pembayaran Berhasil'}
+                </Text>
               </View>
             )}
 
@@ -1186,6 +1225,12 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.semiBold,
   },
+  lateIndicator: {
+    backgroundColor: '#FFFBEB',
+  },
+  lateText: {
+    color: '#D97706',
+  },
   expiredIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1233,5 +1278,30 @@ const styles = StyleSheet.create({
   },
   scheduledButtonText: {
     color: '#0369A1',
+  },
+  scheduledPaymentCard: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  scheduledHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  scheduledTitle: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.teal,
+  },
+  scheduledDetail: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
   },
 });
