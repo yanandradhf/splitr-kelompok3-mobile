@@ -1195,13 +1195,7 @@ export default function MonitoringIndex() {
         )}
       </ScrollView>
 
-      {/* Single Create FAB */}
-      <Pressable
-        style={styles.createFab}
-        onPress={() => router.push("/create-bill")}
-      >
-        <Ionicons name="add" size={24} color={COLORS.white} />
-      </Pressable>
+
     </SafeAreaView>
   );
 }
