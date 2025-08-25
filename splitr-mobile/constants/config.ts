@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: "https://fce870ee0878.ngrok-free.app",
+  BASE_URL: "https://c520ce759f72.ngrok-free.app",
   ENDPOINTS: {
     // Auth
     LOGIN: "/api/mobile/auth/login",
@@ -31,6 +31,17 @@ export const API_CONFIG = {
     NOTIFICATIONS: "/api/mobile/notifications",
     NOTIFICATION_ACTION: "/api/mobile/notifications/group-action",
     MARK_ALL_READ: "/api/mobile/notifications/read-all",
+
+    // Bills
+    BILL_DETAIL: "/api/mobile/bills",
+    MY_ACTIVITY: "/api/mobile/bills/my-activity",
+    PERSONAL: "/api/mobile/bills/personal",
+    MASTER: "/api/mobile/bills/master",
+
+    // Payment
+    PAYMENT_CREATE: "/api/mobile/payments/create",
+    PAYMENT_HISTORY: "/api/mobile/payments/history",
+    PAYMENT_RECEIPT: "/api/mobile/payments/:paymentId/receipt",
   },
   TIMEOUT: 10000,
 };

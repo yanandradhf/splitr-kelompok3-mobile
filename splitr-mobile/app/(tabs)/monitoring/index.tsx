@@ -1,46 +1,125 @@
-// app/(tabs)/monitoring/index-final.tsx
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { COLORS } from "../../../constants/theme";
-import { UI_STATE_PAYLOAD } from "../../../constants/config";
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  SPACING,
+  BORDER_RADIUS,
+} from "../../../constants/theme";
+import { API_CONFIG } from "../../../constants/config";
+import api from "../../../services/api";
+import { formatRp } from "../../../lib/currency";
 import { useTransactionStore } from "../../../store/transaction.store";
+import { useMonitoringStore } from "../../../store/monitoring.store";
+import { getBillNavigationPath } from "../../../utils/billEndpoints";
 
-type TransactionType = "income" | "expense";
-type TransactionStatus = "completed" | "pending";
+interface BillActivity {
+  billId: string;
+  billCode: string;
+  billName: string;
+  totalBillAmount: number;
+  yourShare: number;
+  displayAmount?: number;
+  paymentStatus: string;
+  paidAt?: string;
+  scheduledDate?: string;
+  paymentType?: string;
+  hostName: string;
+  hostAccount?: string;
+  paymentDeadline?: string;
+  isExpired?: boolean;
+  canSchedule?: boolean;
+  showPayNow?: boolean;
+  isHost: boolean;
+  role: string;
+  participantCount?: number;
+  participantsStatus?: Array<{
+    participantId?: string;
+    userId?: string;
+    name: string;
+    account?: string;
+    amountShare: number;
+    paymentStatus: string;
+    paidAt?: string;
+    scheduledDate?: string;
+    paymentType?: string;
+  }>;
+  paymentSummary?: {
+    totalParticipants: number;
+    paidCount: number;
+    pendingCount: number;
+    totalPaid: number;
+    totalPending: number;
+  };
+  hostFinancialSummary?: {
+    hostAdvanced: number;
+    totalOwedByOthers: number;
+    totalPaidByOthers: number;
+    stillOwedToHost: number;
+  };
+  actions?: {
+    canPay: boolean;
+    canSchedule?: boolean;
+    showDeadline?: boolean;
+    isPaid: boolean;
+    isFailed?: boolean;
+  };
+  status: string;
+  createdAt: string;
+}
 
-type SimpleTransaction = {
-  id: string;
-  title: string;
-  amount: string;
-  type: TransactionType;
-  status: TransactionStatus;
-  from?: string;
-  method?: string;
-  date: string;
-};
-
-type SortOption = "date-newest" | "date-oldest" | "amount-highest" | "amount-lowest";
-type CategoryFilter = "semua" | "dibuat" | "tagihan";
+type SortOption =
+  | "date-newest"
+  | "date-oldest"
+  | "amount-highest"
+  | "amount-lowest"
+  | "deadline-nearest"
+  | "deadline-farthest";
+type CategoryFilter = "semua" | "dibuat" | "berjalan" | "selesai" | "expired";
 
 export default function MonitoringIndex() {
   const [activeTab, setActiveTab] = useState<"tagihan" | "riwayat">("tagihan");
   const [sortBy, setSortBy] = useState<SortOption>("date-newest");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("semua");
+
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<{[key: string]: Set<string>}>({
+  const [expandedItems, setExpandedItems] = useState<{
+    [key: string]: Set<string>;
+  }>({
     tagihan: new Set(),
-    riwayat: new Set()
+    riwayat: new Set(),
   });
-  const { runningTransactions, completedPayments, initializeTransactions, isInitialized } = useTransactionStore();
+  const { 
+    billActivities, 
+    paymentHistory: storePaymentHistory, 
+    loading, 
+    historyLoading, 
+    fetchMyActivity, 
+    fetchPaymentHistory 
+  } = useMonitoringStore();
 
   useEffect(() => {
-    if (!isInitialized) {
-      initializeTransactions();
-    }
-  }, [isInitialized, initializeTransactions]);
+    fetchMyActivity();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = router.addListener?.('focus', () => {
+      console.log('🔄 Monitoring screen focused - refreshing data');
+      fetchMyActivity();
+      if (activeTab === 'riwayat') {
+        fetchPaymentHistory();
+      }
+    });
+    return unsubscribe;
+  }, [activeTab]);
+
+
+
+
 
   const toggleExpanded = (id: string) => {
     const currentTabExpanded = new Set(expandedItems[activeTab]);
@@ -51,190 +130,294 @@ export default function MonitoringIndex() {
     }
     setExpandedItems({
       ...expandedItems,
-      [activeTab]: currentTabExpanded
+      [activeTab]: currentTabExpanded,
     });
   };
 
-  // Process data into simple format
-  const processTransactions = (): SimpleTransaction[] => {
-    // Pending transactions (tagihan yang harus dibayar)
-    const pending: SimpleTransaction[] = runningTransactions.map(t => ({
-      id: t.id,
-      title: t.title,
-      amount: t.amount.formatted,
-      type: "expense",
-      status: "pending",
-      from: t.from,
-      method: `${t.status.charAt(0).toUpperCase() + t.status.slice(1)}`,
-      date: t.dueDate
-    }));
+  const getFilteredBills = () => {
+    if (activeTab !== "tagihan") return [];
 
-    // Completed transactions (pembayaran selesai)
-    const completed: SimpleTransaction[] = completedPayments.map(p => ({
-      id: p.id,
-      title: p.title,
-      amount: p.amount.formatted,
-      type: "expense",
-      status: "completed",
-      from: p.hostName,
-      method: p.method === "bayar-sekarang" ? "Bayar Sekarang" : "Auto-Transfer",
-      date: p.methodDate || new Date().toLocaleDateString("id-ID")
-    }));
+    // Force fresh data from store
+    let filtered = [...billActivities];
+    console.log('🔄 Using fresh bill data:', filtered.length, 'bills');
 
-    // Created bills (tagihan yang dibuat) from mock data
-    const createdBills: SimpleTransaction[] = UI_STATE_PAYLOAD.screens.running.myBills.items.map(bill => ({
-      id: bill.id,
-      title: bill.title,
-      amount: bill.total.formatted,
-      type: "income",
-      status: bill.progress.percent === 100 ? "completed" : "pending",
-      method: bill.progress.label,
-      date: bill.date
-    }));
-
-    return [...createdBills, ...pending, ...completed];
-  };
-
-  const allTransactions = processTransactions();
-  
-  // Filter and sort transactions
-  const getFilteredAndSortedTransactions = () => {
-    let filtered = allTransactions;
-    
-    // Filter by tab
-    switch (activeTab) {
-      case "tagihan":
-        // Show created bills (income) and pending payments (expense + pending)
-        filtered = allTransactions.filter(t => 
-          t.type === "income" || (t.type === "expense" && t.status === "pending")
+    // Apply category filter with smart prioritization
+    switch (categoryFilter) {
+      case "berjalan":
+        // Prioritas utama: tagihan yang harus dibayar
+        filtered = filtered.filter(
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            const isScheduled = bill.paymentStatus === "scheduled";
+            return !bill.isHost && !isPaid && !bill.isExpired || isScheduled;
+          }
         );
         break;
-      case "riwayat":
-        // Show only completed transactions
-        filtered = allTransactions.filter(t => t.status === "completed");
+      case "dibuat":
+        filtered = filtered.filter((bill) => bill.isHost);
+        break;
+      case "selesai":
+        filtered = filtered.filter(
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return isPaid;
+          }
+        );
+        break;
+      case "expired":
+        filtered = filtered.filter(
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return bill.isExpired && !isPaid;
+          }
+        );
+        break;
+      case "semua":
+      default:
+        // When showing all, prioritize actionable bills first
+        filtered = filtered.sort((a, b) => {
+          // Prioritas 1: Tagihan yang harus dibayar (paling urgent)
+          const aIsPaid = a.paymentStatus === "completed" || a.paymentStatus === "completed_scheduled" || a.paymentStatus === "paid" || a.actions?.isPaid;
+          const bIsPaid = b.paymentStatus === "completed" || b.paymentStatus === "completed_scheduled" || b.paymentStatus === "paid" || b.actions?.isPaid;
+          const aUrgent = !a.isHost && !aIsPaid && !a.isExpired;
+          const bUrgent = !b.isHost && !bIsPaid && !b.isExpired;
+          if (aUrgent && !bUrgent) return -1;
+          if (!aUrgent && bUrgent) return 1;
+
+          // Prioritas 2: Host bills (yang saya buat)
+          if (a.isHost && !b.isHost) return -1;
+          if (!a.isHost && b.isHost) return 1;
+
+          return 0;
+        });
         break;
     }
-    
-    // Apply category filter (only for tagihan tab)
-    if (activeTab === "tagihan" && categoryFilter !== "semua") {
-      switch (categoryFilter) {
-        case "dibuat":
-          filtered = filtered.filter(t => t.type === "income");
-          break;
-        case "tagihan":
-          filtered = filtered.filter(t => t.type === "expense" && t.status === "pending");
-          break;
-      }
-    }
-    
-    // Sort transactions
+
+    // Apply user's sort preference
     return filtered.sort((a, b) => {
-      // For tagihan tab with default sorting, prioritize by due date (closest first)
-      if (activeTab === "tagihan" && sortBy === "date-newest") {
-        // Pending payments (with due dates) should come first, sorted by due date
-        if (a.status === "pending" && b.status === "pending") {
-          return new Date(a.date).getTime() - new Date(b.date).getTime(); // Closest due date first
-        }
-        if (a.status === "pending" && b.status !== "pending") return -1;
-        if (a.status !== "pending" && b.status === "pending") return 1;
-        // For created bills, sort by creation date (newest first)
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      }
-      
-      // Regular sorting for other cases
       switch (sortBy) {
         case "date-newest":
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         case "date-oldest":
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
         case "amount-highest":
-          return parseInt(b.amount.replace(/[^\d]/g, '')) - parseInt(a.amount.replace(/[^\d]/g, ''));
+          return b.yourShare - a.yourShare;
         case "amount-lowest":
-          return parseInt(a.amount.replace(/[^\d]/g, '')) - parseInt(b.amount.replace(/[^\d]/g, ''));
+          return a.yourShare - b.yourShare;
+        case "deadline-nearest":
+          if (!a.paymentDeadline && !b.paymentDeadline) return 0;
+          if (!a.paymentDeadline) return 1;
+          if (!b.paymentDeadline) return -1;
+          return (
+            new Date(a.paymentDeadline).getTime() -
+            new Date(b.paymentDeadline).getTime()
+          );
+        case "deadline-farthest":
+          if (!a.paymentDeadline && !b.paymentDeadline) return 0;
+          if (!a.paymentDeadline) return 1;
+          if (!b.paymentDeadline) return -1;
+          return (
+            new Date(b.paymentDeadline).getTime() -
+            new Date(a.paymentDeadline).getTime()
+          );
         default:
           return 0;
       }
     });
   };
 
-  // Helper functions for styling
-  const getIconBgColor = (transaction: SimpleTransaction) => {
-    // Tagihan dibuat (created bills) - yellow/orange
-    if (transaction.type === "income") {
-      return "#FEF3C7"; // Always yellow for created bills
-    }
-    // Pembayaran selesai (completed payments) - green
-    if (transaction.status === "completed") {
-      return "#DCFCE7"; // Green for completed payments
-    }
-    // Pending payments - red
-    return "#FFEBEE";
+  // Payment history state
+  const [paymentHistory, setPaymentHistory] = useState(storePaymentHistory);
+
+  useEffect(() => {
+    setPaymentHistory(storePaymentHistory);
+  }, [storePaymentHistory]);
+
+  const fetchPaymentHistoryLocal = async () => {
+    if (activeTab !== "riwayat") return;
+    await fetchPaymentHistory();
   };
 
-  const getIconColor = (transaction: SimpleTransaction) => {
-    // Tagihan dibuat (created bills) - orange
-    if (transaction.type === "income") {
-      return COLORS.orange; // Always orange for created bills
+  useEffect(() => {
+    if (activeTab === "riwayat") {
+      fetchPaymentHistoryLocal();
     }
-    // Pembayaran selesai (completed payments) - green
-    if (transaction.status === "completed") {
-      return COLORS.success; // Green for completed payments
+  }, [activeTab]);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchMyActivity();
+      if (activeTab === 'riwayat') {
+        await fetchPaymentHistory();
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
     }
-    // Pending payments - red
-    return COLORS.red;
+  }, [activeTab, fetchMyActivity, fetchPaymentHistory]);
+
+  const getStatusBadgeHistory = (status, paymentType) => {
+    if (status === "completed" && paymentType === "instant") {
+      return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
+    }
+    if (status === "completed_scheduled") {
+      return { text: "Terjadwal Selesai", color: COLORS.teal, bg: "#F0F9FF" };
+    }
+    if (status === "pending") {
+      return { text: "Menunggu", color: COLORS.warning, bg: "#FEF3C7" };
+    }
+    return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
   };
 
-  const getTransactionIcon = (transaction: SimpleTransaction) => {
-    // Tagihan dibuat (created bills) - restaurant icon
-    if (transaction.type === "income") {
-      return "restaurant-outline"; // Always restaurant icon for created bills
+  const getStatusBadgeActivity = (bill: BillActivity) => {
+    // For host: check if all participants have paid
+    if (bill.isHost && bill.paymentSummary) {
+      const { paidCount, totalParticipants } = bill.paymentSummary;
+      if (paidCount < totalParticipants) {
+        return { text: "Belum selesai", color: COLORS.warning, bg: "#FFF7ED" };
+      }
+      return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
     }
-    // Pembayaran selesai (completed payments) - checkmark
-    if (transaction.status === "completed") {
-      return "checkmark-circle"; // Checkmark for completed payments
+
+    // For participants - check new API response format
+    if (bill.paymentStatus === "scheduled") {
+      return { text: "Dijadwalkan", color: COLORS.teal, bg: "#F0F9FF" };
     }
-    // Pending payments - card icon
-    return "card-outline";
+    if (bill.paymentStatus === "completed_scheduled") {
+      return { text: "Terjadwal Selesai", color: COLORS.teal, bg: "#F0F9FF" };
+    }
+    if (bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid) {
+      return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
+    }
+
+    if (bill.isExpired) {
+      return {
+        text: "Belum bayar dan kadaluarsa",
+        color: COLORS.red,
+        bg: "#FEF2F2",
+      };
+    }
+
+    // Default pending status
+    return { text: "Belum Bayar", color: "#EF4444", bg: "#FEF2F2" };
   };
 
-  const getAmountColor = (transaction: SimpleTransaction) => {
-    // Match amount color with card/icon color
-    if (transaction.type === "income") {
-      return COLORS.orange; // Orange for created bills
+  const handleHistoryCardPress = async (paymentId) => {
+    try {
+      const response = await api.get(
+        `${API_CONFIG.ENDPOINTS.PAYMENT_RECEIPT.replace(':paymentId', paymentId)}`
+      );
+      if (response.data.success) {
+        router.push({
+          pathname: "/payment-receipt",
+          params: {
+            receiptData: JSON.stringify(response.data.receipt),
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching receipt:", error);
     }
-    if (transaction.status === "completed") {
-      return COLORS.success; // Green for completed payments
-    }
-    return COLORS.red; // Red for pending payments
   };
 
-  const handleTransactionPress = (transaction: SimpleTransaction) => {
-    if (transaction.status === "pending") {
-      router.push({
-        pathname: "/monitoring/transaction/pembayaran",
-        params: {
-          transactionId: transaction.id,
-          title: transaction.title,
-          amount: transaction.amount,
-        },
-      });
+  const handleBillPress = (bill: BillActivity, event?: any) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
+
+    console.log('🔍 Bill press - Role check:', {
+      billId: bill.billId,
+      billName: bill.billName,
+      isHost: bill.isHost,
+      role: bill.role
+    });
+
+    // Use utility function for correct navigation
+    const navigationPath = getBillNavigationPath(bill.billId, bill.isHost);
+    console.log(`📍 Navigating to: ${navigationPath.pathname} (${bill.isHost ? 'HOST' : 'PARTICIPANT'})`);
+    
+    router.push(navigationPath);
+  };
+
+  const handlePaymentPress = (bill: BillActivity) => {
+    router.push({
+      pathname: "/payment-new",
+      params: {
+        billId: bill.billId,
+        billName: bill.billName,
+        amount: bill.yourShare.toString(),
+        hostName: bill.hostName,
+        hostAccount: bill.hostAccount || "",
+        paymentDeadline: bill.paymentDeadline,
+        canSchedule: bill.canSchedule ? "true" : "false",
+        isOverdue: bill.isExpired.toString(),
+      },
+    });
+  };
+
+  const getStatusBadge = getStatusBadgeActivity;
+
+  const getHostStatusText = (bill: BillActivity) => {
+    if (!bill.paymentSummary) {
+      // For bills without paymentSummary, calculate from participantsStatus
+      if (bill.participantsStatus && bill.participantsStatus.length > 0) {
+        const paidCount = bill.participantsStatus.filter(
+          (p) => p.paymentStatus === "completed"
+        ).length;
+        return `${paidCount}/${bill.participantsStatus.length} bayar`;
+      }
+      return "0/0 bayar";
+    }
+    const { paidCount, totalParticipants } = bill.paymentSummary;
+    return `${paidCount}/${totalParticipants} bayar`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
-      case "date-newest": return "Terbaru";
-      case "date-oldest": return "Terlama";
-      case "amount-highest": return "Terbesar";
-      case "amount-lowest": return "Terkecil";
+      case "amount-highest":
+        return "Nominal Terbesar";
+      case "date-newest":
+        return "Terbaru";
+      case "amount-lowest":
+        return "Nominal Terkecil";
+      case "date-oldest":
+        return "Terlama";
+      case "deadline-nearest":
+        return "Deadline Terdekat";
+      case "deadline-farthest":
+        return "Deadline Terjauh";
     }
   };
 
   const getCategoryLabel = (category: CategoryFilter) => {
     switch (category) {
-      case "semua": return "Semua";
-      case "dibuat": return "Dibuat";
-      case "tagihan": return "Tagihan";
+      case "semua":
+        return "Semua";
+      case "dibuat":
+        return "Saya Buat";
+      case "berjalan":
+        return "Berjalan";
+      case "selesai":
+        return "Selesai";
+      case "expired":
+        return "Kadaluarsa";
     }
   };
 
@@ -243,82 +426,246 @@ export default function MonitoringIndex() {
     setSortBy("date-newest");
   };
 
-  const hasActiveFilters = categoryFilter !== "semua" || sortBy !== "date-newest";
+  const hasActiveFilters =
+    categoryFilter !== "semua" || sortBy !== "date-newest";
 
-  const sortedTransactions = getFilteredAndSortedTransactions();
+  const filteredBills = getFilteredBills();
 
-  // Calculate total based on currently filtered and displayed transactions
-  const getTabTotal = () => {
+  // Calculate comprehensive dashboard info
+  const getDashboardInfo = () => {
     if (activeTab !== "tagihan") return null;
-    
-    // Only calculate total for pending payments (red cards) that are currently displayed
-    const displayedPendingPayments = sortedTransactions
-      .filter(t => t.status === "pending" && t.type === "expense");
-    
-    if (displayedPendingPayments.length === 0) return null;
-    
-    const total = displayedPendingPayments
-      .reduce((sum, t) => sum + parseInt(t.amount.replace(/[^\d]/g, '')), 0);
-    
-    return `Rp ${total.toLocaleString("id-ID")}`;
-  };
 
-  const getTotalLabel = () => {
-    return "Total Tagihan Tertunda";
+    const allBills = billActivities; // Use all bills, not filtered
+    const now = new Date();
+
+    // Participant bills (money I need to pay)
+    const participantBills = allBills.filter((bill) => !bill.isHost);
+    const ongoingParticipant = participantBills.filter(
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return !isPaid && !bill.isExpired;
+      }
+    );
+    const expiredParticipant = participantBills.filter(
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return bill.isExpired && !isPaid;
+      }
+    );
+    const completedParticipant = participantBills.filter(
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return isPaid;
+      }
+    );
+
+    // Host bills (money coming to me)
+    const hostBills = allBills.filter((bill) => bill.isHost);
+    console.log(
+      "🏠 Host bills:",
+      hostBills.map((b) => ({
+        name: b.billName,
+        paymentSummary: b.paymentSummary,
+      }))
+    );
+
+    const ongoingHost = hostBills.filter((bill) => {
+      if (bill.paymentSummary) {
+        const isOngoing =
+          bill.paymentSummary.paidCount < bill.paymentSummary.totalParticipants;
+        console.log(
+          `  📊 ${bill.billName}: ${bill.paymentSummary.paidCount}/${
+            bill.paymentSummary.totalParticipants
+          } = ${isOngoing ? "ongoing" : "completed"}`
+        );
+        return isOngoing;
+      }
+      console.log(`  ⚠️ ${bill.billName}: no paymentSummary, assuming ongoing`);
+      return true; // Assume ongoing if no summary
+    });
+
+    const completedHost = hostBills.filter((bill) => {
+      if (bill.paymentSummary) {
+        return (
+          bill.paymentSummary.paidCount >= bill.paymentSummary.totalParticipants
+        );
+      }
+      return false;
+    });
+
+    console.log("📈 Stats:", {
+      ongoingHost: ongoingHost.length,
+      completedHost: completedHost.length,
+      totalHost: hostBills.length,
+    });
+
+    // Calculate totals
+    const totalToPay = ongoingParticipant.reduce(
+      (sum, bill) => sum + bill.yourShare,
+      0
+    );
+    const totalToReceive = ongoingHost.reduce((sum, bill) => {
+      return sum + (bill.paymentSummary?.totalPending || 0);
+    }, 0);
+
+    // Urgent bills (deadline within 24 hours)
+    const urgentBills = ongoingParticipant.filter((bill) => {
+      if (!bill.paymentDeadline) return false;
+      const deadline = new Date(bill.paymentDeadline);
+      const hoursLeft = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+      return hoursLeft <= 24 && hoursLeft > 0;
+    });
+
+    // Always show dashboard card, even with empty data
+
+    return {
+      // Financial overview
+      totalToPay: formatRp(totalToPay),
+      totalToReceive: formatRp(totalToReceive),
+
+      // Bill counts
+      stats: {
+        ongoingParticipant: ongoingParticipant.length,
+        ongoingHost: ongoingHost.length,
+        completedParticipant: completedParticipant.length,
+        completedHost: completedHost.length,
+        expiredParticipant: expiredParticipant.length,
+        urgentCount: urgentBills.length,
+      },
+
+      // Show states
+      hasData: allBills.length > 0,
+      hasPayments: ongoingParticipant.length > 0,
+      hasHost: hostBills.length > 0,
+    };
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with Back Button */}
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Aktivitas</Text>
-        <Pressable 
-          style={[styles.headerFilterButton, hasActiveFilters && styles.headerFilterButtonActive]}
-          onPress={() => setShowFilterModal(true)}
-        >
-          <Ionicons 
-            name="options-outline" 
-            size={20} 
-            color={hasActiveFilters ? COLORS.white : COLORS.textPrimary} 
-          />
-          {hasActiveFilters && (
-            <View style={styles.headerFilterBadge} />
-          )}
-        </Pressable>
-      </View>
-
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <Pressable
           style={[styles.tab, activeTab === "tagihan" && styles.activeTab]}
-          onPress={() => setActiveTab("tagihan")}
+          onPress={() => {
+            setActiveTab("tagihan");
+            fetchMyActivity();
+          }}
         >
-          <Text style={[styles.tabText, activeTab === "tagihan" && styles.activeTabText]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "tagihan" && styles.activeTabText,
+            ]}
+          >
             Tagihan
           </Text>
         </Pressable>
         <Pressable
           style={[styles.tab, activeTab === "riwayat" && styles.activeTab]}
-          onPress={() => setActiveTab("riwayat")}
+          onPress={() => {
+            setActiveTab("riwayat");
+            fetchPaymentHistoryLocal();
+          }}
         >
-          <Text style={[styles.tabText, activeTab === "riwayat" && styles.activeTabText]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "riwayat" && styles.activeTabText,
+            ]}
+          >
             Riwayat
           </Text>
         </Pressable>
       </View>
 
-      {/* Conditional Total Card */}
-      {getTabTotal() && (
-        <View style={styles.totalCard}>
-          <Text style={styles.totalAmount}>{getTabTotal()}</Text>
-          <Text style={styles.totalLabel}>{getTotalLabel()}</Text>
+      {/* Compact Summary Card */}
+      {activeTab === "tagihan" && (
+        <View style={styles.compactCard}>
+          {/* Complex Chart Effect */}
+          <View style={styles.chartEffect}>
+            {/* Grid Lines */}
+            <View style={styles.gridLines}>
+              <View style={styles.gridLine1} />
+              <View style={styles.gridLine2} />
+              <View style={styles.gridLine3} />
+            </View>
+
+            {/* Bar Chart */}
+            <View style={styles.barChart}>
+              <View style={styles.bar1} />
+              <View style={styles.bar2} />
+              <View style={styles.bar3} />
+              <View style={styles.bar4} />
+              <View style={styles.bar5} />
+            </View>
+
+            {/* Trend Line */}
+            <View style={styles.trendLine} />
+            <View style={styles.trendArrow} />
+
+            {/* Data Points */}
+            <View style={styles.dataPoints}>
+              <View style={styles.point1} />
+              <View style={styles.point2} />
+              <View style={styles.point3} />
+              <View style={styles.point4} />
+              <View style={styles.point5} />
+            </View>
+
+            {/* Percentage Indicator */}
+            <View style={styles.percentageUp}>
+              <View style={styles.percentArrow} />
+            </View>
+          </View>
+
+          {/* Filter Button - Top Right */}
+          <View style={styles.filterContainer}>
+            <Pressable
+              style={[
+                styles.compactFilter,
+                hasActiveFilters && styles.compactFilterActive,
+              ]}
+              onPress={() => setShowFilterModal(true)}
+            >
+              <Ionicons
+                name="funnel"
+                size={16}
+                color={hasActiveFilters ? COLORS.teal : COLORS.white}
+              />
+              {hasActiveFilters && <View style={styles.compactFilterDot} />}
+            </Pressable>
+          </View>
+
+          {/* Main Content - Centered */}
+          <View style={styles.compactContent}>
+            {(() => {
+              const totalToPay = getDashboardInfo()?.totalToPay || "Rp 0";
+              const isZero = totalToPay === "Rp 0";
+              return (
+                <>
+                  {!isZero && (
+                    <Text style={styles.compactAmount}>
+                      {totalToPay}
+                    </Text>
+                  )}
+                  <View style={styles.compactLabelRow}>
+                    <Text style={styles.compactLabel}>
+                      {isZero ? "Anda tidak memiliki tagihan untuk dibayar" : "Total Harus Dibayar"}
+                    </Text>
+                    {!isZero && (getDashboardInfo()?.stats?.urgentCount || 0) > 0 && (
+                      <View style={styles.compactUrgent}>
+                        <Text style={styles.compactUrgentText}>
+                          {getDashboardInfo()?.stats?.urgentCount} urgent
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </>
+              );
+            })()}
+          </View>
         </View>
       )}
-
-
 
       {/* Filter Modal */}
       {showFilterModal && (
@@ -326,26 +673,50 @@ export default function MonitoringIndex() {
           <View style={styles.filterModal}>
             <View style={styles.filterHeader}>
               <Pressable onPress={() => setShowFilterModal(false)}>
-                <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+                <Ionicons
+                  name="arrow-back"
+                  size={24}
+                  color={COLORS.textPrimary}
+                />
               </Pressable>
               <Text style={styles.filterTitle}>Filter</Text>
               <Pressable onPress={resetFilters}>
                 <Text style={styles.resetText}>Reset</Text>
               </Pressable>
             </View>
-            
-            {/* Category Filter (only for tagihan tab) */}
+
+            {/* Category Filter - Urutan berdasarkan prioritas kebutuhan:
+                1. Harus Bayar (tagihan) - paling urgent
+                2. Selesai - untuk tracking pembayaran
+                3. Saya Buat (dibuat) - untuk host
+                4. Semua - overview lengkap */}
             {activeTab === "tagihan" && (
               <View style={styles.filterSection}>
                 <Text style={styles.filterSectionTitle}>Kategori</Text>
                 <View style={styles.filterOptions}>
-                  {(["semua", "dibuat", "tagihan"] as CategoryFilter[]).map((option) => (
+                  {(
+                    [
+                      "berjalan",
+                      "selesai",
+                      "dibuat",
+                      "semua",
+                    ] as CategoryFilter[]
+                  ).map((option) => (
                     <Pressable
                       key={option}
-                      style={[styles.filterChip, categoryFilter === option && styles.filterChipActive]}
+                      style={[
+                        styles.filterChip,
+                        categoryFilter === option && styles.filterChipActive,
+                      ]}
                       onPress={() => setCategoryFilter(option)}
                     >
-                      <Text style={[styles.filterChipText, categoryFilter === option && styles.filterChipTextActive]}>
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          categoryFilter === option &&
+                            styles.filterChipTextActive,
+                        ]}
+                      >
                         {getCategoryLabel(option)}
                       </Text>
                     </Pressable>
@@ -353,26 +724,47 @@ export default function MonitoringIndex() {
                 </View>
               </View>
             )}
-            
-            {/* Sort Filter */}
+
+            {/* Sort Filter - Urutan berdasarkan kebutuhan praktis:
+                1. Nominal Terbesar - untuk prioritas pembayaran
+                2. Terbaru - untuk melihat aktivitas terkini
+                3. Nominal Terkecil - untuk pembayaran ringan dulu
+                4. Terlama - untuk melihat tagihan lama */}
             <View style={styles.filterSection}>
               <Text style={styles.filterSectionTitle}>Urutkan</Text>
               <View style={styles.filterOptions}>
-                {(["date-newest", "date-oldest", "amount-highest", "amount-lowest"] as SortOption[]).map((option) => (
+                {(
+                  [
+                    "deadline-nearest",
+                    "amount-highest",
+                    "date-newest",
+                    "amount-lowest",
+                    "date-oldest",
+                    "deadline-farthest",
+                  ] as SortOption[]
+                ).map((option) => (
                   <Pressable
                     key={option}
-                    style={[styles.filterChip, sortBy === option && styles.filterChipActive]}
+                    style={[
+                      styles.filterChip,
+                      sortBy === option && styles.filterChipActive,
+                    ]}
                     onPress={() => setSortBy(option)}
                   >
-                    <Text style={[styles.filterChipText, sortBy === option && styles.filterChipTextActive]}>
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        sortBy === option && styles.filterChipTextActive,
+                      ]}
+                    >
                       {getSortLabel(option)}
                     </Text>
                   </Pressable>
                 ))}
               </View>
             </View>
-            
-            <Pressable 
+
+            <Pressable
               style={styles.applyButton}
               onPress={() => setShowFilterModal(false)}
             >
@@ -382,107 +774,428 @@ export default function MonitoringIndex() {
         </View>
       )}
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.teal}
+            colors={[COLORS.teal]}
+          />
+        }
       >
-        {/* Transaction List */}
-        {sortedTransactions.map((transaction) => (
-          <View key={transaction.id} style={[styles.transactionCard, { borderLeftColor: getIconColor(transaction) }]}>
-            <View style={styles.transactionItem}>
-              <Pressable
-                style={styles.transactionContent}
-                onPress={() => (transaction.type === "income" && activeTab === "tagihan") ? toggleExpanded(transaction.id) : null}
-              >
-                <View style={[styles.iconContainer, { backgroundColor: getIconBgColor(transaction) }]}>
-                  <Ionicons 
-                    name={getTransactionIcon(transaction)} 
-                    size={20} 
-                    color={getIconColor(transaction)} 
-                  />
-                </View>
-                <View style={styles.transactionInfo}>
-                  <Text style={styles.transactionTitle}>{transaction.title}</Text>
-                  <Text style={styles.transactionSubtitle}>
-                    {transaction.from && `${transaction.from} • `}
-                    {transaction.method}
-                  </Text>
-                  {transaction.status === "pending" && (
-                    <Text style={styles.dueDateText}>
-                      Jatuh tempo: {transaction.date}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.transactionRight}>
-                  <Text style={[styles.transactionAmount, { color: getAmountColor(transaction) }]}>
-                    {transaction.amount}
-                  </Text>
-                  {transaction.type === "income" && activeTab === "tagihan" && (
-                    <Pressable onPress={() => toggleExpanded(transaction.id)}>
-                      <Ionicons
-                        name={expandedItems[activeTab].has(transaction.id) ? "chevron-up" : "chevron-down"}
-                        size={20}
-                        color={COLORS.textSecondary}
-                      />
-                    </Pressable>
-                  )}
-                </View>
-              </Pressable>
-              
-              {/* Payment Button for Pending Transactions */}
-              {transaction.status === "pending" && (
-                <View style={styles.paymentButtonContainer}>
-                  <Pressable 
-                    style={styles.payTagihanButton}
-                    onPress={() => handleTransactionPress(transaction)}
-                  >
-                    <Text style={styles.payTagihanText}>Bayar Tagihan</Text>
-                  </Pressable>
-                </View>
-              )}
+        {/* Tab Tagihan - New API */}
+        {activeTab === "tagihan" &&
+          (loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Memuat aktivitas...</Text>
             </View>
-            
-            {/* Expanded Content for Income (Created Bills) */}
-            {transaction.type === "income" && expandedItems[activeTab].has(transaction.id) && activeTab === "tagihan" && (
-              <View style={styles.expandedContent}>
-                <Text style={styles.expandedTitle}>Detail Pembayaran</Text>
-                <View style={styles.payerItem}>
-                  <Text style={styles.payerName}>John Doe</Text>
-                  <View style={styles.payerRight}>
-                    <Text style={styles.payerAmount}>Rp 90.000</Text>
-                    <View style={styles.statusBadgeSuccess}>
-                      <Text style={styles.statusTextSuccess}>Lunas</Text>
+          ) : (
+            filteredBills.map((bill) => {
+              const statusBadge = getStatusBadge(bill);
+              const isExpanded = expandedItems[activeTab].has(bill.billId);
+
+              const getCardStyle = () => {
+                const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+                
+                if (bill.isExpired && !isPaid) {
+                  return styles.expiredCard;
+                }
+
+                // For host: check if all participants have paid
+                if (bill.isHost && bill.paymentSummary) {
+                  const { paidCount, totalParticipants } = bill.paymentSummary;
+                  if (paidCount >= totalParticipants) {
+                    return styles.completedCard;
+                  }
+                  return styles.hostCard;
+                }
+
+                if (isPaid) {
+                  return bill.paymentStatus === "completed_scheduled" ? styles.scheduledCard : styles.completedCard;
+                }
+                if (bill.paymentStatus === "scheduled") {
+                  return styles.scheduledCard;
+                }
+                if (bill.isHost) {
+                  return styles.hostCard;
+                }
+                return styles.participantCard;
+              };
+
+              return (
+                <View
+                  key={bill.billId}
+                  style={[styles.billCard, getCardStyle()]}
+                >
+                  <Pressable
+                    style={[
+                      styles.billContent,
+                      bill.isExpired &&
+                        bill.paymentStatus !== "completed" &&
+                        styles.expiredContent,
+                    ]}
+                    onPress={(event) => handleBillPress(bill, event)}
+                    delayPressIn={0}
+                    delayPressOut={100}
+                  >
+                    {/* Bill Header */}
+                    <View style={styles.billHeader}>
+                      <View style={styles.billInfo}>
+                        <Text style={styles.billTitle}>{bill.billName}</Text>
+                        <Text style={styles.billCode}>{bill.billCode}</Text>
+                        {!bill.isHost ? (
+                          <Text style={styles.hostName}>
+                            dari {bill.hostName}
+                          </Text>
+                        ) : (
+                          <View style={styles.hostBadge}>
+                            <Ionicons
+                              name="person"
+                              size={10}
+                              color={COLORS.white}
+                            />
+                            <Text style={styles.hostBadgeText}>Host</Text>
+                          </View>
+                        )}
+                        {bill.isHost && (
+                          <Text style={styles.statusText}>
+                            Status: {getHostStatusText(bill)}
+                          </Text>
+                        )}
+                      </View>
+
+                      <View style={styles.billRight}>
+                        {bill.isHost ? (
+                          <View style={styles.hostAmountContainer}>
+                            <Text style={styles.totalBillAmount}>
+                              {formatRp(bill.displayAmount || bill.totalBillAmount)}
+                            </Text>
+                            <Text style={styles.hostShareAmount}>
+                              Anda bayar: {formatRp(bill.yourShare)}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.billAmount}>
+                            {formatRp(bill.yourShare)}
+                          </Text>
+                        )}
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            { backgroundColor: statusBadge.bg },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusBadgeText,
+                              { color: statusBadge.color },
+                            ]}
+                          >
+                            {statusBadge.text}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Deadline for participants */}
+                    {!bill.isHost &&
+                      bill.paymentDeadline &&
+                      !bill.isExpired && (
+                        <Text style={styles.deadlineText}>
+                          Jatuh tempo: {formatDate(bill.paymentDeadline)}
+                        </Text>
+                      )}
+                    
+                    {/* Scheduled payment info */}
+                    {(bill.paymentStatus === "scheduled" || bill.paymentStatus === "completed_scheduled") && (
+                      <View style={styles.scheduledInfo}>
+                        <Ionicons name="calendar" size={14} color={COLORS.teal} />
+                        <Text style={styles.scheduledText}>
+                          {bill.scheduledDate ? (
+                            bill.paymentStatus === "scheduled" ? 
+                              `Akan dibayar: ${formatDate(bill.scheduledDate)}` : 
+                              `Dijadwalkan: ${formatDate(bill.scheduledDate)}`
+                          ) : (
+                            bill.paymentStatus === "scheduled" ? 'Pembayaran dijadwalkan' : 'Terjadwal selesai'
+                          )}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+
+                  {/* Payment Button for Participants */}
+                  {(() => {
+                    const shouldShowButton =
+                      !bill.isHost &&
+                      bill.paymentStatus !== "completed" &&
+                      !bill.isExpired;
+                    console.log(`🔍 Button Debug - ${bill.billName}:`, {
+                      isHost: bill.isHost,
+                      canPay: bill.actions?.canPay,
+                      canSchedule: bill.canSchedule,
+                      showPayNow: bill.showPayNow,
+                      paymentStatus: bill.paymentStatus,
+                      isExpired: bill.isExpired,
+                      allowScheduledPayment: bill.allowScheduledPayment,
+                      shouldShowButton: shouldShowButton,
+                      actions: bill.actions,
+                    });
+                    return null;
+                  })()}
+                  {(() => {
+                    const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "completed_scheduled" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+                    const isScheduled = bill.paymentStatus === "scheduled";
+                    const canPay = bill.actions?.canPay !== false && !isPaid && !isScheduled;
+                    
+                    return !bill.isHost && canPay && (
+                      <View style={styles.paymentButtonContainer}>
+                        <Pressable
+                          style={[
+                            styles.payButton,
+                            bill.isExpired
+                              ? styles.overdueButton
+                              : bill.canSchedule
+                              ? styles.scheduledButton
+                              : styles.instantButton,
+                          ]}
+                          onPress={() => handlePaymentPress(bill)}
+                        >
+                          <Ionicons
+                            name={
+                              bill.isExpired
+                                ? "flash"
+                                : bill.canSchedule
+                                ? "calendar"
+                                : "flash"
+                            }
+                            size={14}
+                            color={
+                              bill.isExpired
+                                ? COLORS.red
+                                : bill.canSchedule
+                                ? "#0369A1"
+                                : COLORS.teal
+                            }
+                            style={styles.buttonIcon}
+                          />
+                          <Text
+                            style={[
+                              styles.payButtonText,
+                              {
+                                color: bill.isExpired
+                                  ? COLORS.red
+                                  : bill.canSchedule
+                                  ? "#0369A1"
+                                  : COLORS.teal,
+                              },
+                            ]}
+                          >
+                            {bill.isExpired
+                              ? "Bayar Walau Terlambat"
+                              : bill.canSchedule
+                              ? "Bayar atau Jadwalkan"
+                              : "Bayar Sekarang"}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    );
+                  })()}
+
+                  {/* Host Dropdown - Show participants status */}
+                  {bill.isHost &&
+                    bill.participantsStatus &&
+                    bill.participantsStatus.length > 0 && (
+                      <Pressable
+                        style={styles.dropdownToggle}
+                        onPress={() => toggleExpanded(bill.billId)}
+                      >
+                        <Text style={styles.dropdownText}>
+                          Status Pembayaran
+                        </Text>
+                        <Ionicons
+                          name={isExpanded ? "chevron-up" : "chevron-down"}
+                          size={20}
+                          color={COLORS.textSecondary}
+                        />
+                      </Pressable>
+                    )}
+
+                  {/* Expanded Content for Host */}
+                  {bill.isHost && isExpanded && bill.participantsStatus && (
+                    <View style={styles.expandedContent}>
+                      {bill.participantsStatus.map((participant) => {
+                        const getParticipantStatus = () => {
+                          if (participant.paymentStatus === "completed") {
+                            return {
+                              text: "Selesai",
+                              color: COLORS.success,
+                              bg: "#DCFCE7",
+                            };
+                          }
+                          if (participant.paymentStatus === "scheduled") {
+                            return {
+                              text: "Dijadwalkan",
+                              color: COLORS.teal,
+                              bg: "#F0F9FF",
+                            };
+                          }
+                          if (participant.paymentStatus === "completed_scheduled") {
+                            return {
+                              text: "Terjadwal Selesai",
+                              color: COLORS.teal,
+                              bg: "#F0F9FF",
+                            };
+                          }
+                          return {
+                            text: "Belum bayar",
+                            color: "#EF4444",
+                            bg: "#FEF2F2",
+                          };
+                        };
+
+                        const participantStatus = getParticipantStatus();
+
+                        return (
+                          <View
+                            key={participant.participantId}
+                            style={styles.participantItem}
+                          >
+                            <View style={styles.participantInfo}>
+                              <Text style={styles.participantName}>
+                                {participant.name}
+                              </Text>
+                              <Text style={styles.participantAmount}>
+                                {formatRp(participant.amountShare)}
+                              </Text>
+                              {(participant.paymentStatus === "scheduled" || participant.paymentStatus === "completed_scheduled") && participant.scheduledDate && (
+                                <Text style={styles.scheduledDateText}>
+                                  {participant.paymentStatus === "scheduled" ? 
+                                    `Akan dibayar: ${formatDate(participant.scheduledDate)}` : 
+                                    `Dijadwalkan: ${formatDate(participant.scheduledDate)}`}
+                                </Text>
+                              )}
+                            </View>
+                            <View
+                              style={[
+                                styles.participantStatusBadge,
+                                { backgroundColor: participantStatus.bg },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.participantStatusText,
+                                  { color: participantStatus.color },
+                                ]}
+                              >
+                                {participantStatus.text}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              );
+            })
+          ))}
+
+        {/* Tab Riwayat - Redesigned */}
+        {activeTab === "riwayat" &&
+          (historyLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Memuat riwayat...</Text>
+            </View>
+          ) : (
+            paymentHistory.map((payment) => {
+              const statusBadge = getStatusBadgeHistory(
+                payment.status,
+                payment.paymentType
+              );
+              const paymentDate = new Date(payment.paidAt).toLocaleDateString(
+                "id-ID",
+                {
+                  day: "numeric",
+                  month: "short",
+                }
+              );
+              const paymentTime = new Date(payment.paidAt).toLocaleTimeString(
+                "id-ID",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }
+              );
+
+              return (
+                <Pressable
+                  key={payment.paymentId}
+                  style={styles.newHistoryCard}
+                  onPress={() => handleHistoryCardPress(payment.paymentId)}
+                >
+                  <View style={styles.newHistoryHeader}>
+                    <View style={styles.newHistoryLeft}>
+                      <View style={styles.newHistoryIcon}>
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={COLORS.success}
+                        />
+                      </View>
+                      <View style={styles.newHistoryInfo}>
+                        <Text style={styles.newHistoryTitle}>Pembayaran Berhasil</Text>
+                        <Text style={styles.newHistoryBill}>{payment.billName}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.newHistoryAmount}>
+                      <Text style={styles.newAmountText}>{formatRp(payment.amount)}</Text>
                     </View>
                   </View>
-                </View>
-                <View style={[styles.payerItem, styles.lastPayerItem]}>
-                  <Text style={styles.payerName}>Jane Smith</Text>
-                  <View style={styles.payerRight}>
-                    <Text style={styles.payerAmount}>Rp 90.000</Text>
-                    <View style={styles.statusBadgePending}>
-                      <Text style={styles.statusTextPending}>Tertunda</Text>
+                  
+                  <View style={styles.newHistoryDetails}>
+                    <View style={styles.newDetailRow}>
+                      <Text style={styles.newDetailLabel}>Kepada</Text>
+                      <Text style={styles.newDetailValue}>{payment.hostName}</Text>
+                    </View>
+                    <View style={styles.newDetailRow}>
+                      <Text style={styles.newDetailLabel}>Waktu</Text>
+                      <Text style={styles.newDetailValue}>{paymentDate} • {paymentTime}</Text>
+                    </View>
+                    <View style={styles.newDetailRow}>
+                      <Text style={styles.newDetailLabel}>Status</Text>
+                      <View style={[styles.newStatusBadge, { backgroundColor: statusBadge.bg }]}>
+                        <Text style={[styles.newStatusText, { color: statusBadge.color }]}>
+                          {statusBadge.text}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              </View>
-            )}
-          </View>
-        ))}
+                </Pressable>
+              );
+            })
+          ))}
 
         {/* Empty State */}
-        {sortedTransactions.length === 0 && (
+        {((activeTab === "tagihan" && !loading && filteredBills.length === 0) ||
+          (activeTab === "riwayat" &&
+            !historyLoading &&
+            paymentHistory.length === 0)) && (
           <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={48} color={COLORS.textSecondary} />
-            <Text style={styles.emptyText}>Tidak ada transaksi</Text>
+            <Ionicons
+              name="receipt-outline"
+              size={48}
+              color={COLORS.textSecondary}
+            />
+            <Text style={styles.emptyText}>Tidak ada aktivitas</Text>
           </View>
         )}
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <Pressable style={styles.fab} onPress={() => router.push("/create-bill")}>
-        <Ionicons name="add" size={24} color={COLORS.white} />
-      </Pressable>
+
     </SafeAreaView>
   );
 }
@@ -490,88 +1203,280 @@ export default function MonitoringIndex() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundLight,
+    backgroundColor: COLORS.backgroundMain,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  backButton: {
-    padding: 8,
-    marginLeft: -8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.textPrimary,
-  },
-  headerFilterButton: {
-    padding: 8,
-    borderRadius: 20,
-    position: "relative",
-  },
-  headerFilterButtonActive: {
-    backgroundColor: COLORS.teal,
-  },
-  headerFilterBadge: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.orange,
-  },
+
   tabContainer: {
     flexDirection: "row",
-    margin: 16,
-    marginTop: 16,
+    margin: SPACING.lg,
+    marginTop: SPACING.sm,
     backgroundColor: COLORS.white,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.lg,
     padding: 4,
-    shadowColor: COLORS.shadow,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  totalCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
+  compactCard: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
     backgroundColor: COLORS.teal,
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: COLORS.teal,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    position: "relative",
+    overflow: "hidden",
+  },
+  filterContainer: {
+    position: "absolute",
+    top: SPACING.sm,
+    right: SPACING.sm,
+    zIndex: 2,
+  },
+  compactContent: {
     alignItems: "center",
+    paddingTop: SPACING.sm,
   },
-  totalAmount: {
-    fontSize: 18,
-    fontWeight: "bold",
+
+  compactAmount: {
+    fontSize: 28,
+    fontFamily: FONTS.bold,
     color: COLORS.white,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
+    textAlign: "center",
   },
-  totalLabel: {
-    fontSize: 13,
+  compactLabelRow: {
+    alignItems: "center",
+    gap: SPACING.sm,
+  },
+  compactLabel: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
     color: COLORS.white,
-    opacity: 0.9,
+    textAlign: "center",
   },
+  compactUrgent: {
+    backgroundColor: COLORS.danger,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  compactUrgentText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
+  },
+  compactFilter: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    position: "relative",
+  },
+  compactFilterActive: {
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.white,
+    shadowColor: COLORS.white,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  compactFilterDot: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.warning,
+  },
+  chartEffect: {
+    position: "absolute",
+    bottom: 10,
+    left: 10,
+    right: 10,
+    height: 60,
+    opacity: 0.3,
+  },
+  gridLines: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+  gridLine1: {
+    position: "absolute",
+    bottom: 15,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "#FFE4B5",
+  },
+  gridLine2: {
+    position: "absolute",
+    bottom: 30,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "#FFE4B5",
+  },
+  gridLine3: {
+    position: "absolute",
+    bottom: 45,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "#FFE4B5",
+  },
+  barChart: {
+    position: "absolute",
+    bottom: 0,
+    left: 20,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+  },
+  bar1: {
+    width: 6,
+    height: 20,
+    backgroundColor: "#FFE4B5",
+    borderRadius: 3,
+  },
+  bar2: {
+    width: 6,
+    height: 28,
+    backgroundColor: "#FFE4B5",
+    borderRadius: 3,
+  },
+  bar3: {
+    width: 6,
+    height: 35,
+    backgroundColor: "#FFE4B5",
+    borderRadius: 3,
+  },
+  bar4: {
+    width: 6,
+    height: 42,
+    backgroundColor: "#FFE4B5",
+    borderRadius: 3,
+  },
+  bar5: {
+    width: 6,
+    height: 50,
+    backgroundColor: "#FFE4B5",
+    borderRadius: 3,
+  },
+  trendLine: {
+    position: "absolute",
+    bottom: 25,
+    left: 20,
+    width: 80,
+    height: 2,
+    backgroundColor: "#FFA500",
+    transform: [{ rotate: "20deg" }],
+  },
+  trendArrow: {
+    position: "absolute",
+    bottom: 40,
+    right: 15,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 10,
+    borderTopWidth: 0,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#FFA500",
+    borderTopColor: "transparent",
+  },
+  dataPoints: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "100%",
+  },
+  point1: {
+    position: "absolute",
+    bottom: 18,
+    left: 22,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#FFA500",
+  },
+  point2: {
+    position: "absolute",
+    bottom: 26,
+    left: 36,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#FFA500",
+  },
+  point3: {
+    position: "absolute",
+    bottom: 33,
+    left: 50,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#FFA500",
+  },
+  point4: {
+    position: "absolute",
+    bottom: 40,
+    left: 64,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#FFA500",
+  },
+  point5: {
+    position: "absolute",
+    bottom: 48,
+    left: 78,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#FFA500",
+  },
+  percentageUp: {
+    position: "absolute",
+    top: 5,
+    right: 15,
+  },
+  percentArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderBottomWidth: 8,
+    borderTopWidth: 0,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#32CD32",
+    borderTopColor: "transparent",
+  },
+
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: SPACING.sm,
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.sm,
   },
   activeTab: {
     backgroundColor: COLORS.teal,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
     color: COLORS.textSecondary,
   },
   activeTabText: {
@@ -579,7 +1484,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
   },
   scrollContent: {
     paddingBottom: 100,
@@ -598,36 +1503,36 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     margin: 0,
     marginTop: 60,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderTopRightRadius: BORDER_RADIUS.xl,
     flex: 1,
   },
   filterHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    padding: SPACING.lg,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   filterTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: FONT_SIZES.xl,
+    fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
   },
   resetText: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.base,
     color: COLORS.teal,
-    fontWeight: "600",
+    fontFamily: FONTS.semiBold,
   },
   filterSection: {
-    padding: 16,
+    padding: SPACING.lg,
   },
   filterSectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.semiBold,
     color: COLORS.textPrimary,
-    marginBottom: 12,
+    marginBottom: SPACING.sm,
   },
   filterOptions: {
     flexDirection: "row",
@@ -635,9 +1540,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: COLORS.white,
@@ -647,26 +1552,283 @@ const styles = StyleSheet.create({
     borderColor: COLORS.teal,
   },
   filterChipText: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
   filterChipTextActive: {
     color: COLORS.white,
-    fontWeight: "600",
+    fontFamily: FONTS.semiBold,
   },
   applyButton: {
-    margin: 16,
+    margin: SPACING.lg,
     backgroundColor: COLORS.teal,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
     alignItems: "center",
   },
   applyButtonText: {
     color: COLORS.white,
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.semiBold,
   },
-  transactionCard: {
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  billCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    position: "relative",
+  },
+  participantCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.teal,
+  },
+  hostCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.teal,
+    backgroundColor: "#F8FFFE",
+  },
+  completedCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.success,
+    backgroundColor: "#F0FDF4",
+  },
+  scheduledCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.teal,
+    backgroundColor: "#F0F9FF",
+  },
+  expiredCard: {
+    borderColor: "#FCA5A5",
+    borderWidth: 2,
+    backgroundColor: "#FEF2F2",
+    opacity: 0.8,
+  },
+  billContent: {
+    padding: SPACING.lg,
+  },
+  expiredContent: {
+    opacity: 0.7,
+  },
+  hostBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.teal,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+    gap: 2,
+    alignSelf: "flex-start",
+    marginTop: 2,
+  },
+  hostBadgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
+  },
+  billHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: SPACING.sm,
+  },
+  billInfo: {
+    flex: 1,
+    marginRight: SPACING.md,
+  },
+  billTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  billCode: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  hostName: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  statusText: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.teal,
+  },
+  hostFinancialText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  billRight: {
+    alignItems: "flex-end",
+    gap: SPACING.xs,
+  },
+  billAmount: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.teal,
+  },
+  hostAmountContainer: {
+    alignItems: "flex-end",
+  },
+  totalBillAmount: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.teal,
+  },
+  hostShareAmount: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  statusBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  statusBadgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.semiBold,
+  },
+  deadlineText: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.warning,
+    marginTop: SPACING.xs,
+  },
+  scheduledInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
+  },
+  scheduledText: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.medium,
+    color: COLORS.teal,
+  },
+  scheduledDateText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: COLORS.teal,
+    marginTop: 2,
+  },
+  paymentButtonContainer: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.lg,
+  },
+  payButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  instantButton: {
+    backgroundColor: "#E0F2F1",
+    borderWidth: 1,
+    borderColor: "#B2DFDB",
+  },
+  scheduledButton: {
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+  },
+  overdueButton: {
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
+  payButtonText: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.semiBold,
+  },
+  dropdownToggle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  dropdownText: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+  },
+  expandedContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  participantItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  participantInfo: {
+    flex: 1,
+  },
+  participantName: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.medium,
+    color: COLORS.textPrimary,
+    marginBottom: 2,
+  },
+  participantAmount: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  participantStatusBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  participantStatusText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.semiBold,
+  },
+  oldTransactionCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     marginBottom: 12,
@@ -675,51 +1837,40 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
-    borderLeftWidth: 4,
+    padding: 12,
   },
-  transactionItem: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  transactionContent: {
+  oldTransactionContent: {
     flexDirection: "row",
     alignItems: "center",
   },
-  transactionRight: {
-    alignItems: "flex-end",
-  },
-  iconContainer: {
+  oldIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
+    backgroundColor: "#DCFCE7",
   },
-  transactionInfo: {
+  oldTransactionInfo: {
     flex: 1,
     justifyContent: "center",
   },
-  transactionTitle: {
+  oldTransactionTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: COLORS.textPrimary,
-    marginBottom: 0,
+    marginBottom: 2,
   },
-  transactionSubtitle: {
+  oldTransactionSubtitle: {
     fontSize: 13,
     color: COLORS.textSecondary,
     lineHeight: 16,
   },
-  dueDateText: {
-    fontSize: 12,
-    color: COLORS.orange,
-    fontWeight: "bold",
-    lineHeight: 14,
-  },
-  transactionAmount: {
+  oldTransactionAmount: {
     fontSize: 16,
     fontWeight: "bold",
+    color: COLORS.success,
   },
   emptyState: {
     alignItems: "center",
@@ -785,12 +1936,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: "#FEF3C7",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
   statusTextPending: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#D97706",
+    color: "#EF4444",
   },
   paymentButtonContainer: {
     marginTop: 8,
@@ -807,7 +1960,93 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-  fab: {
+
+  newHistoryCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.md,
+    padding: SPACING.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  newHistoryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: SPACING.md,
+  },
+  newHistoryLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  newHistoryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#DCFCE7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: SPACING.sm,
+  },
+  newHistoryInfo: {
+    flex: 1,
+  },
+  newHistoryTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontFamily: FONTS.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 2,
+  },
+  newHistoryBill: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.medium,
+    color: COLORS.textSecondary,
+  },
+  newHistoryAmount: {
+    alignItems: "flex-end",
+  },
+  newAmountText: {
+    fontSize: FONT_SIZES.xl,
+    fontFamily: FONTS.bold,
+    color: COLORS.teal,
+  },
+  newHistoryDetails: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
+  newDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  newDetailLabel: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+  },
+  newDetailValue: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  newStatusBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  newStatusText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.semiBold,
+  },
+  createFab: {
     position: "absolute",
     bottom: 24,
     right: 24,
@@ -817,7 +2056,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.success,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: COLORS.shadow,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

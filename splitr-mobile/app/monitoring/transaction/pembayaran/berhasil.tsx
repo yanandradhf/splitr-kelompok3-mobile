@@ -1,21 +1,14 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { formatRp } from '@/lib/currency';
-import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../../../../constants/theme';
-import { useMonitoringStore } from '../../../../../store/monitoring.store';
+import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../../../constants/theme';
 
 export default function PaymentSuccessScreen() {
   const params = useLocalSearchParams();
   const { receiptData, paymentType } = params;
-  const { refreshAll } = useMonitoringStore();
-
-  useEffect(() => {
-    // Refresh monitoring data after successful payment
-    refreshAll();
-  }, []);
 
   let receipt = null;
   try {
@@ -24,35 +17,12 @@ export default function PaymentSuccessScreen() {
     console.error('Error parsing receipt data:', error);
   }
 
-  console.log('=== SUCCESS SCREEN DEBUG ===');
-  console.log('receiptData:', receiptData);
-  console.log('parsed receipt:', receipt);
-
   const isScheduled = paymentType === 'scheduled';
-
-  if (!receipt) {
-    return (
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.content}>
-            <Text style={styles.errorText}>Data pembayaran tidak ditemukan</Text>
-            <Pressable style={styles.backButton} onPress={() => {
-              refreshAll();
-              router.push('/monitoring');
-            }}>
-              <Text style={styles.backButtonText}>Kembali ke Beranda</Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header Section */}
-        <View style={styles.headerSection}>
+        <View style={styles.content}>
           <View style={styles.iconContainer}>
             <View style={styles.successIcon}>
               <Ionicons 
@@ -72,20 +42,12 @@ export default function PaymentSuccessScreen() {
               : 'Transaksi Anda telah berhasil diproses'
             }
           </Text>
-        </View>
 
-        {/* White Modal Container */}
-        <View style={styles.whiteModalContainer}>
-          <ScrollView 
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
+          {receipt && (
             <View style={styles.receiptCard}>
               <View style={styles.receiptHeader}>
                 <Text style={styles.receiptTitle}>Detail Pembayaran</Text>
                 <Text style={styles.transactionId}>ID: {receipt.transactionId}</Text>
-                <Text style={styles.bniReference}>Ref BNI: {receipt.bniReferenceNumber}</Text>
               </View>
 
               <View style={styles.receiptBody}>
@@ -100,55 +62,36 @@ export default function PaymentSuccessScreen() {
                 </View>
 
                 <View style={styles.receiptRow}>
-                  <Text style={styles.receiptLabel}>Rekening Tujuan</Text>
-                  <Text style={styles.receiptValue}>BNI - {receipt.bill?.hostAccount}</Text>
-                </View>
-
-                <View style={styles.receiptRow}>
                   <Text style={styles.receiptLabel}>Jumlah Tagihan</Text>
-                  <Text style={styles.receiptValue}>{formatRp(receipt.breakdown?.yourShare)}</Text>
+                  <Text style={styles.receiptValue}>{formatRp(receipt.breakdown?.yourShare || receipt.amount)}</Text>
                 </View>
 
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptLabel}>Biaya Admin</Text>
-                  <Text style={styles.receiptValue}>{formatRp(receipt.breakdown?.adminFee)}</Text>
-                </View>
-
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptLabel}>Biaya Transfer</Text>
-                  <Text style={styles.receiptValue}>{formatRp(receipt.breakdown?.transferFee)}</Text>
-                </View>
+                {receipt.breakdown?.adminFee > 0 && (
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptLabel}>Biaya Admin</Text>
+                    <Text style={styles.receiptValue}>{formatRp(receipt.breakdown.adminFee)}</Text>
+                  </View>
+                )}
 
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>Total Dibayar</Text>
-                  <Text style={styles.totalValue}>{formatRp(receipt.breakdown?.totalPaid)}</Text>
+                  <Text style={styles.totalValue}>{formatRp(receipt.breakdown?.totalPaid || receipt.amount)}</Text>
                 </View>
 
                 <View style={styles.receiptRow}>
                   <Text style={styles.receiptLabel}>Status</Text>
                   <Text style={[styles.receiptValue, styles.statusText]}>
-                    {receipt.status === 'completed' ? 'Berhasil' : receipt.status}
-                  </Text>
-                </View>
-
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptLabel}>Waktu Pembayaran</Text>
-                  <Text style={styles.receiptValue}>
-                    {new Date(receipt.paidAt).toLocaleString('id-ID')}
+                    {isScheduled ? 'Dijadwalkan' : 'Berhasil'}
                   </Text>
                 </View>
               </View>
             </View>
-          </ScrollView>
+          )}
 
-          {/* Fixed Button at Bottom */}
           <View style={styles.buttonContainer}>
             <Pressable 
               style={styles.primaryButton}
-              onPress={() => {
-                refreshAll();
-                router.push('/monitoring');
-              }}
+              onPress={() => router.push('/monitoring')}
             >
               <Text style={styles.primaryButtonText}>Kembali ke Beranda</Text>
             </Pressable>
@@ -167,19 +110,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  headerSection: {
+  content: {
+    flex: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xl,
-    paddingBottom: SPACING.lg,
     alignItems: 'center',
   },
   iconContainer: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
   successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: COLORS.success,
     alignItems: 'center',
     justifyContent: 'center',
@@ -190,7 +133,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xxl,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
     textAlign: 'center',
@@ -201,32 +144,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-  },
-  whiteModalContainer: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    marginBottom: SPACING.xl,
+    lineHeight: 24,
   },
   receiptCard: {
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    marginBottom: SPACING.xl,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   receiptHeader: {
     borderBottomWidth: 1,
@@ -241,12 +172,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   transactionId: {
-    fontSize: FONT_SIZES.sm,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  bniReference: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
@@ -295,9 +220,8 @@ const styles = StyleSheet.create({
     color: COLORS.success,
   },
   buttonContainer: {
-    padding: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    width: '100%',
+    gap: SPACING.md,
   },
   primaryButton: {
     backgroundColor: COLORS.teal,
@@ -306,25 +230,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.base,
-    fontFamily: FONTS.bold,
-  },
-  errorText: {
-    fontSize: FONT_SIZES.lg,
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
-  },
-  backButton: {
-    backgroundColor: COLORS.teal,
-    borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    alignItems: 'center',
-  },
-  backButtonText: {
     color: COLORS.white,
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.bold,

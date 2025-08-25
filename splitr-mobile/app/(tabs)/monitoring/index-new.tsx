@@ -110,11 +110,15 @@ export default function ModernMonitoringIndex() {
   const handleTransactionPress = (transaction: SimpleTransaction) => {
     if (transaction.status === "pending") {
       router.push({
-        pathname: "/monitoring/transaction/pembayaran",
+        pathname: "/payment-new",
         params: {
-          transactionId: transaction.id,
-          title: transaction.title,
-          amount: transaction.amount,
+          billId: transaction.id,
+          billName: transaction.title,
+          amount: transaction.amount.replace(/[^\d]/g, ''),
+          hostName: transaction.from || 'Host',
+          hostAccount: '1234567890',
+          canSchedule: 'true',
+          isOverdue: 'false'
         },
       });
     }

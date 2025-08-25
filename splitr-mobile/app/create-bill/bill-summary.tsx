@@ -78,22 +78,28 @@ export default function BillSummary() {
     }
     
     const itemTotal = item.isSharing ? assignment.shareQty : (item.price * assignment.shareQty);
-    const itemService = Math.floor(itemTotal * (draft.fees.servicePct / 100));
-    const itemTax = Math.floor((itemTotal + itemService) * (draft.fees.taxPct / 100));
     
-    // Calculate proportional discount for this member's share
+    // 1. Hitung diskon per item dulu
     let itemDiscount = 0;
-    const itemSubtotalWithFees = itemTotal + itemService + itemTax;
-    
     if (draft.fees.discountPct > 0) {
-      itemDiscount = Math.floor(itemSubtotalWithFees * (draft.fees.discountPct / 100));
+      itemDiscount = Math.floor(itemTotal * (draft.fees.discountPct / 100));
     } else if (draft.fees.discountNominal > 0) {
-      // Distribute nominal discount proportionally based on member's share vs total bill
-      const memberShareRatio = itemSubtotalWithFees / (draft.totals.subTotal + draft.totals.service + draft.totals.tax);
+      // Distribute nominal discount proportionally
+      const memberShareRatio = itemTotal / draft.totals.subTotal;
       itemDiscount = Math.floor(draft.fees.discountNominal * memberShareRatio);
     }
     
-    const itemGrandTotal = Math.max(0, itemSubtotalWithFees - itemDiscount);
+    // 2. Harga setelah diskon
+    const itemAfterDiscount = Math.max(0, itemTotal - itemDiscount);
+    
+    // 3. Hitung service dari harga setelah diskon
+    const itemService = Math.floor(itemAfterDiscount * (draft.fees.servicePct / 100));
+    
+    // 4. Hitung pajak dari harga setelah diskon
+    const itemTax = Math.floor(itemAfterDiscount * (draft.fees.taxPct / 100));
+    
+    // 5. Total akhir per item
+    const itemGrandTotal = itemAfterDiscount + itemService + itemTax;
     
     memberSummary[assignment.memberId].items.push({
       name: item.name,

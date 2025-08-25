@@ -7,13 +7,16 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useNotifications } from '../../hooks/useApi';
+
 import { useNotificationsStore } from '../../store';
 import { COLORS, FONTS } from '../../constants/theme';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import api from '../../services/api';
+import { getBillNavigationFromNotification, getIsHostFromNotification } from '../../utils/billEndpoints';
 
 const LOCAL_COLORS = {
   background: COLORS.backgroundMain,
@@ -24,44 +27,108 @@ const LOCAL_COLORS = {
 };
 
 export default function NotificationsScreen() {
-  const { notifications, loading } = useNotifications();
-  const { handleNotificationAction, markAsRead } = useNotificationsStore();
+  const { 
+    notifications, 
+    loading, 
+    markAsRead, 
+    handleNotificationAction,
+    fetchNotifications 
+  } = useNotificationsStore();
   const [forceLoading, setForceLoading] = useState(true);
+
+  const markAsReadOptimistic = async (notificationId) => {
+    await markAsRead(notificationId);
+  };
   
   useEffect(() => {
     setTimeout(() => setForceLoading(false), 1500);
+    fetchNotifications(true);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = router.addListener?.('focus', () => {
+      fetchNotifications(true);
+    });
+    return unsubscribe;
   }, []);
 
   const handleNotificationPress = async (notification: any) => {
     console.log('🔔 Notification pressed:', JSON.stringify(notification, null, 2));
     
     try {
-      // Get identifier from billId or billCode
-      const identifier = notification.billId || notification.metadata?.billCode;
+      // Get identifier from billId or billCode or data object
+      let identifier = notification.billId || 
+                      notification.metadata?.billCode || 
+                      notification.data?.billId;
+      
+      // Fallback: extract from message if no identifier found
+      if (!identifier && (notification.type === 'payment_received' || notification.type === 'payment_complete')) {
+        // Try to extract bill name from message and use it as fallback
+        const messageMatch = notification.message.match(/'([^']+)'/); 
+        if (messageMatch) {
+          identifier = messageMatch[1]; // Use bill name as identifier
+        }
+      }
       
       console.log('🔍 Checking notification data:');
       console.log('  - Type:', notification.type);
       console.log('  - BillId:', notification.billId);
+      console.log('  - Data BillId:', notification.data?.billId);
       console.log('  - BillCode:', notification.metadata?.billCode);
+      console.log('  - Message:', notification.message);
       console.log('  - Identifier:', identifier);
       
-      // Handle bill-related notifications
-      const isBillRelated = 
-        notification.type === 'bill_assignment' ||
-        notification.type === 'payment_reminder' ||
-        notification.type === 'payment_received' ||
-        notification.billId ||
-        notification.metadata?.billCode;
+      // Handle bill-related notifications with smart routing
+      const billRelatedTypes = [
+        'bill_created', 'payment_received', 'participant_joined',
+        'bill_assignment', 'bill_invitation', 'payment_reminder'
+      ];
       
-      if (isBillRelated && identifier) {
-        console.log('💰 Bill notification detected with identifier:', identifier);
-        await markAsRead(notification.notificationId);
-        router.push(`/bill-notification/${identifier}`);
+      if (billRelatedTypes.includes(notification.type) && identifier) {
+        const isHost = getIsHostFromNotification(notification.type);
+        console.log(`💰 ${isHost ? 'HOST' : 'PARTICIPANT'} notification detected:`, {
+          type: notification.type,
+          identifier,
+          isHost
+        });
+        
+        await markAsReadOptimistic(notification.notificationId);
+        const navigationPath = getBillNavigationFromNotification(identifier, notification.type);
+        router.push(navigationPath);
         return;
       }
       
-      // Only group_invitation needs API call to navigate to group detail
+      // Handle group notifications with pre-validation
       if (notification.type === 'group_invitation') {
+        const groupId = notification.groupId || notification.metadata?.groupId;
+        
+        if (groupId) {
+          // Pre-validate group exists before navigation
+          try {
+            const response = await api.get(`/api/mobile/groups/${groupId}`);
+            if (response.data) {
+              await markAsReadOptimistic(notification.notificationId);
+              router.push({
+                pathname: '/(modals)/groups/detail',
+                params: { groupId }
+              });
+              return;
+            }
+          } catch (error) {
+            console.error('Group validation failed:', error);
+            if (error.response?.status === 404) {
+              await markAsReadOptimistic(notification.notificationId);
+              Alert.alert(
+                'Grup Tidak Ditemukan',
+                'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+                [{ text: 'OK' }]
+              );
+              return;
+            }
+          }
+        }
+        
+        // Fallback to API action if direct validation fails
         try {
           const result = await handleNotificationAction(notification.notificationId, 'view_group');
           if (result?.groupId) {
@@ -73,30 +140,59 @@ export default function NotificationsScreen() {
           }
         } catch (error) {
           console.error('API failed for group invitation:', error);
-        }
-        
-        // Fallback: use groupId from notification
-        const groupId = notification.groupId || notification.metadata?.groupId;
-        if (groupId) {
-          await markAsRead(notification.notificationId);
-          router.push({
-            pathname: '/(modals)/groups/detail',
-            params: { groupId }
-          });
+          await markAsReadOptimistic(notification.notificationId);
+          Alert.alert(
+            'Grup Tidak Ditemukan',
+            'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+            [{ text: 'OK' }]
+          );
           return;
         }
       }
       
-      // For all other notifications (removed, left, deleted, etc), just mark as read
-      await markAsRead(notification.notificationId);
+      // Handle other group notifications
+      if (notification.type.startsWith('group_') && notification.type !== 'group_invitation') {
+        const groupId = notification.groupId || notification.metadata?.groupId;
+        
+        // For notifications that should navigate to group detail (like added to group)
+        const navigableTypes = ['group_member_added'];
+        
+        if (navigableTypes.includes(notification.type) && groupId) {
+          // Pre-validate group exists before navigation
+          try {
+            const response = await api.get(`/api/mobile/groups/${groupId}`);
+            if (response.data) {
+              await markAsReadOptimistic(notification.notificationId);
+              router.push({
+                pathname: '/(modals)/groups/detail',
+                params: { groupId }
+              });
+              return;
+            }
+          } catch (error) {
+            console.error('Group validation failed:', error);
+            if (error.response?.status === 404) {
+              await markAsReadOptimistic(notification.notificationId);
+              Alert.alert(
+                'Grup Tidak Ditemukan',
+                'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
+                [{ text: 'OK' }]
+              );
+              return;
+            }
+          }
+        }
+        
+        // For non-navigable group notifications, just mark as read silently
+        await markAsReadOptimistic(notification.notificationId);
+        return;
+      }
+      
+      // For all other notifications, just mark as read
+      await markAsReadOptimistic(notification.notificationId);
     } catch (error) {
       console.error('Error handling notification:', error);
-      // Always try to mark as read
-      try {
-        await markAsRead(notification.notificationId);
-      } catch (readError) {
-        console.error('Failed to mark as read:', readError);
-      }
+      await markAsReadOptimistic(notification.notificationId);
     }
   };
 
@@ -148,6 +244,7 @@ export default function NotificationsScreen() {
         <View style={styles.purpleSection}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => {
+              fetchNotifications(true);
               if (router.canGoBack()) {
                 router.back();
               } else {
@@ -300,11 +397,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 16,
-    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 8,
+    elevation: 3,
     borderWidth: 1,
     borderColor: '#F0F0F0',
   },
@@ -314,13 +411,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   notificationIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F8F9FA',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0F9FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
   },
   notificationContent: {
     flex: 1,
@@ -339,33 +438,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dateContainer: {
-    backgroundColor: '#76B9BB',
-    paddingHorizontal: 8,
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
   },
   notificationDate: {
     fontSize: 11,
     fontFamily: FONTS.medium,
-    color: LOCAL_COLORS.textPrimary,
+    color: '#0369A1',
     textAlign: 'center',
   },
   unreadNotification: {
     borderLeftWidth: 4,
-    borderLeftColor: '#00897B',
-    backgroundColor: '#F8FFFF',
+    borderLeftColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
   },
   unreadText: {
     fontFamily: FONTS.bold,
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#00897B',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#EF4444',
     position: 'absolute',
     top: 16,
     right: 16,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
