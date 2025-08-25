@@ -7,6 +7,7 @@ import { formatRp } from '@/lib/currency';
 import api from '@/services/api';
 import { API_CONFIG } from '@/constants/config';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
+import { getBillEndpoint } from '../../utils/billEndpoints';
 
 interface BillData {
   billId: string;
@@ -94,15 +95,9 @@ export default function BillNotificationDetail() {
       // Always fetch fresh data from API for latest status
       // Determine endpoint based on isHost parameter
       const isHostUser = isHost === 'true';
-      let endpoint: string;
+      const endpoint = getBillEndpoint(identifier, isHostUser);
       
-      if (isHostUser) {
-        endpoint = `${API_CONFIG.ENDPOINTS.MASTER}/${identifier}`;
-        console.log('🔍 [HOST] Fetching master bill data:', endpoint);
-      } else {
-        endpoint = `${API_CONFIG.ENDPOINTS.PERSONAL}/${identifier}`;
-        console.log('🔍 [PARTICIPANT] Fetching personal bill data:', endpoint);
-      }
+      console.log(`🔍 [${isHostUser ? 'HOST' : 'PARTICIPANT'}] Fetching bill data:`, endpoint);
       
       console.log('📡 Making API call to:', endpoint);
       const response = await api.get(endpoint);

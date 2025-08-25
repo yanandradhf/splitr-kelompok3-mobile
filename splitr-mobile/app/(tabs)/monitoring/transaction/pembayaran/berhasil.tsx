@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { formatRp } from '@/lib/currency';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../../../../constants/theme';
+import { useMonitoringStore } from '../../../../../store/monitoring.store';
 
 export default function PaymentSuccessScreen() {
   const params = useLocalSearchParams();
   const { receiptData, paymentType } = params;
+  const { refreshAll } = useMonitoringStore();
+
+  useEffect(() => {
+    // Refresh monitoring data after successful payment
+    refreshAll();
+  }, []);
 
   let receipt = null;
   try {
@@ -29,7 +36,10 @@ export default function PaymentSuccessScreen() {
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.content}>
             <Text style={styles.errorText}>Data pembayaran tidak ditemukan</Text>
-            <Pressable style={styles.backButton} onPress={() => router.push('/monitoring')}>
+            <Pressable style={styles.backButton} onPress={() => {
+              refreshAll();
+              router.push('/monitoring');
+            }}>
               <Text style={styles.backButtonText}>Kembali ke Beranda</Text>
             </Pressable>
           </View>
@@ -135,7 +145,10 @@ export default function PaymentSuccessScreen() {
           <View style={styles.buttonContainer}>
             <Pressable 
               style={styles.primaryButton}
-              onPress={() => router.push('/monitoring')}
+              onPress={() => {
+                refreshAll();
+                router.push('/monitoring');
+              }}
             >
               <Text style={styles.primaryButtonText}>Kembali ke Beranda</Text>
             </Pressable>

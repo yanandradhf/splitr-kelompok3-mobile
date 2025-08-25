@@ -14,6 +14,8 @@ import { API_CONFIG } from "../../../constants/config";
 import api from "../../../services/api";
 import { formatRp } from "../../../lib/currency";
 import { useTransactionStore } from "../../../store/transaction.store";
+import { useMonitoringStore } from "../../../store/monitoring.store";
+import { getBillNavigationPath } from "../../../utils/billEndpoints";
 
 interface BillActivity {
   billId: string;
@@ -80,44 +82,33 @@ export default function MonitoringIndex() {
     tagihan: new Set(),
     riwayat: new Set(),
   });
-  const [billActivities, setBillActivities] = useState<BillActivity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    billActivities, 
+    paymentHistory: storePaymentHistory, 
+    loading, 
+    historyLoading, 
+    fetchMyActivity, 
+    fetchPaymentHistory 
+  } = useMonitoringStore();
 
   useEffect(() => {
     fetchMyActivity();
   }, []);
 
-  const fetchMyActivity = async () => {
-    try {
-      setLoading(true);
-      const timestamp = Date.now();
-      const response = await api.get(
-        `${API_CONFIG.ENDPOINTS.MY_ACTIVITY}?limit=10&_t=${timestamp}`
-      );
-      console.log(
-        "🔍 MY_ACTIVITY API Response:",
-        JSON.stringify(response.data, null, 2)
-      );
-      if (response.data.success) {
-        const activities = response.data.myActivity || [];
-        console.log("📋 Bill Activities:", activities);
-        // Debug each bill's button properties
-        activities.forEach((bill: BillActivity) => {
-          console.log(`🔘 ${bill.billName}:`, {
-            showPayNow: bill.showPayNow,
-            canSchedule: bill.canSchedule,
-            isHost: bill.isHost,
-            paymentStatus: bill.paymentStatus,
-          });
-        });
-        setBillActivities(activities);
+  useEffect(() => {
+    const unsubscribe = router.addListener?.('focus', () => {
+      console.log('🔄 Monitoring screen focused - refreshing data');
+      fetchMyActivity();
+      if (activeTab === 'riwayat') {
+        fetchPaymentHistory();
       }
-    } catch (error) {
-      console.error("Error fetching my activity:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    return unsubscribe;
+  }, [activeTab]);
+
+
+
+
 
   const toggleExpanded = (id: string) => {
     const currentTabExpanded = new Set(expandedItems[activeTab]);
@@ -135,18 +126,19 @@ export default function MonitoringIndex() {
   const getFilteredBills = () => {
     if (activeTab !== "tagihan") return [];
 
-    let filtered = billActivities;
+    // Force fresh data from store
+    let filtered = [...billActivities];
+    console.log('🔄 Using fresh bill data:', filtered.length, 'bills');
 
     // Apply category filter with smart prioritization
     switch (categoryFilter) {
       case "berjalan":
         // Prioritas utama: tagihan yang harus dibayar
         filtered = filtered.filter(
-          (bill) =>
-            !bill.isHost &&
-            (bill.paymentStatus === "pending" ||
-              bill.paymentStatus === "scheduled") &&
-            !bill.isExpired
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return !bill.isHost && !isPaid && !bill.isExpired;
+          }
         );
         break;
       case "dibuat":
@@ -154,12 +146,18 @@ export default function MonitoringIndex() {
         break;
       case "selesai":
         filtered = filtered.filter(
-          (bill) => bill.paymentStatus === "completed"
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return isPaid;
+          }
         );
         break;
       case "expired":
         filtered = filtered.filter(
-          (bill) => bill.isExpired && bill.paymentStatus !== "completed"
+          (bill) => {
+            const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+            return bill.isExpired && !isPaid;
+          }
         );
         break;
       case "semua":
@@ -167,16 +165,10 @@ export default function MonitoringIndex() {
         // When showing all, prioritize actionable bills first
         filtered = filtered.sort((a, b) => {
           // Prioritas 1: Tagihan yang harus dibayar (paling urgent)
-          const aUrgent =
-            !a.isHost &&
-            (a.paymentStatus === "pending" ||
-              a.paymentStatus === "scheduled") &&
-            !a.isExpired;
-          const bUrgent =
-            !b.isHost &&
-            (b.paymentStatus === "pending" ||
-              b.paymentStatus === "scheduled") &&
-            !b.isExpired;
+          const aIsPaid = a.paymentStatus === "completed" || a.paymentStatus === "paid" || a.actions?.isPaid;
+          const bIsPaid = b.paymentStatus === "completed" || b.paymentStatus === "paid" || b.actions?.isPaid;
+          const aUrgent = !a.isHost && !aIsPaid && !a.isExpired;
+          const bUrgent = !b.isHost && !bIsPaid && !b.isExpired;
           if (aUrgent && !bUrgent) return -1;
           if (!aUrgent && bUrgent) return 1;
 
@@ -227,33 +219,29 @@ export default function MonitoringIndex() {
   };
 
   // Payment history state
-  const [paymentHistory, setPaymentHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState(storePaymentHistory);
 
-  const fetchPaymentHistory = async () => {
+  useEffect(() => {
+    setPaymentHistory(storePaymentHistory);
+  }, [storePaymentHistory]);
+
+  const fetchPaymentHistoryLocal = async () => {
     if (activeTab !== "riwayat") return;
-
-    try {
-      setHistoryLoading(true);
-      const timestamp = Date.now();
-      const response = await api.get(
-        `${API_CONFIG.ENDPOINTS.PAYMENT_HISTORY}?page=1&limit=20&_t=${timestamp}`
-      );
-      if (response.data.success) {
-        setPaymentHistory(response.data.payments || []);
-      }
-    } catch (error) {
-      console.error("Error fetching payment history:", error);
-    } finally {
-      setHistoryLoading(false);
-    }
+    await fetchPaymentHistory();
   };
 
   useEffect(() => {
     if (activeTab === "riwayat") {
-      fetchPaymentHistory();
+      fetchPaymentHistoryLocal();
     }
   }, [activeTab]);
+
+  const refreshData = () => {
+    fetchMyActivity();
+    if (activeTab === 'riwayat') {
+      fetchPaymentHistory();
+    }
+  };
 
   const getStatusBadgeHistory = (status, paymentType) => {
     if (status === "completed" && paymentType === "instant") {
@@ -292,23 +280,18 @@ export default function MonitoringIndex() {
       event.stopPropagation();
     }
 
-    // Navigate to appropriate page based on user role
-    if (bill.isHost) {
-      router.push({
-        pathname: "/master-bill/[identifier]",
-        params: {
-          identifier: bill.billId,
-        },
-      });
-    } else {
-      router.push({
-        pathname: "/bill-notification/[identifier]",
-        params: {
-          identifier: bill.billId,
-          isHost: "false",
-        },
-      });
-    }
+    console.log('🔍 Bill press - Role check:', {
+      billId: bill.billId,
+      billName: bill.billName,
+      isHost: bill.isHost,
+      role: bill.role
+    });
+
+    // Use utility function for correct navigation
+    const navigationPath = getBillNavigationPath(bill.billId, bill.isHost);
+    console.log(`📍 Navigating to: ${navigationPath.pathname} (${bill.isHost ? 'HOST' : 'PARTICIPANT'})`);
+    
+    router.push(navigationPath);
   };
 
   const handlePaymentPress = (bill: BillActivity) => {
@@ -337,8 +320,8 @@ export default function MonitoringIndex() {
       return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
     }
 
-    // For participants
-    if (bill.paymentStatus === "completed") {
+    // For participants - check new API response format
+    if (bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid) {
       return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
     }
 
@@ -429,16 +412,22 @@ export default function MonitoringIndex() {
     // Participant bills (money I need to pay)
     const participantBills = allBills.filter((bill) => !bill.isHost);
     const ongoingParticipant = participantBills.filter(
-      (bill) =>
-        (bill.paymentStatus === "pending" ||
-          bill.paymentStatus === "scheduled") &&
-        !bill.isExpired
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return !isPaid && !bill.isExpired;
+      }
     );
     const expiredParticipant = participantBills.filter(
-      (bill) => bill.isExpired && bill.paymentStatus !== "completed"
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return bill.isExpired && !isPaid;
+      }
     );
     const completedParticipant = participantBills.filter(
-      (bill) => bill.paymentStatus === "completed"
+      (bill) => {
+        const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+        return isPaid;
+      }
     );
 
     // Host bills (money coming to me)
@@ -528,7 +517,10 @@ export default function MonitoringIndex() {
       <View style={styles.tabContainer}>
         <Pressable
           style={[styles.tab, activeTab === "tagihan" && styles.activeTab]}
-          onPress={() => setActiveTab("tagihan")}
+          onPress={() => {
+            setActiveTab("tagihan");
+            fetchMyActivity();
+          }}
         >
           <Text
             style={[
@@ -541,7 +533,10 @@ export default function MonitoringIndex() {
         </Pressable>
         <Pressable
           style={[styles.tab, activeTab === "riwayat" && styles.activeTab]}
-          onPress={() => setActiveTab("riwayat")}
+          onPress={() => {
+            setActiveTab("riwayat");
+            fetchPaymentHistoryLocal();
+          }}
         >
           <Text
             style={[
@@ -767,7 +762,9 @@ export default function MonitoringIndex() {
               const isExpanded = expandedItems[activeTab].has(bill.billId);
 
               const getCardStyle = () => {
-                if (bill.isExpired && bill.paymentStatus !== "completed") {
+                const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+                
+                if (bill.isExpired && !isPaid) {
                   return styles.expiredCard;
                 }
 
@@ -780,7 +777,7 @@ export default function MonitoringIndex() {
                   return styles.hostCard;
                 }
 
-                if (bill.paymentStatus === "completed") {
+                if (isPaid) {
                   return styles.completedCard;
                 }
                 if (bill.isHost) {
@@ -882,58 +879,63 @@ export default function MonitoringIndex() {
                     });
                     return null;
                   })()}
-                  {!bill.isHost && bill.paymentStatus !== "completed" && (
-                    <View style={styles.paymentButtonContainer}>
-                      <Pressable
-                        style={[
-                          styles.payButton,
-                          bill.isExpired
-                            ? styles.overdueButton
-                            : bill.canSchedule
-                            ? styles.scheduledButton
-                            : styles.instantButton,
-                        ]}
-                        onPress={() => handlePaymentPress(bill)}
-                      >
-                        <Ionicons
-                          name={
-                            bill.isExpired
-                              ? "flash"
-                              : bill.canSchedule
-                              ? "calendar"
-                              : "flash"
-                          }
-                          size={14}
-                          color={
-                            bill.isExpired
-                              ? COLORS.red
-                              : bill.canSchedule
-                              ? "#0369A1"
-                              : COLORS.teal
-                          }
-                          style={styles.buttonIcon}
-                        />
-                        <Text
+                  {(() => {
+                    const isPaid = bill.paymentStatus === "completed" || bill.paymentStatus === "paid" || bill.actions?.isPaid;
+                    const canPay = bill.actions?.canPay !== false && !isPaid;
+                    
+                    return !bill.isHost && canPay && (
+                      <View style={styles.paymentButtonContainer}>
+                        <Pressable
                           style={[
-                            styles.payButtonText,
-                            {
-                              color: bill.isExpired
+                            styles.payButton,
+                            bill.isExpired
+                              ? styles.overdueButton
+                              : bill.canSchedule
+                              ? styles.scheduledButton
+                              : styles.instantButton,
+                          ]}
+                          onPress={() => handlePaymentPress(bill)}
+                        >
+                          <Ionicons
+                            name={
+                              bill.isExpired
+                                ? "flash"
+                                : bill.canSchedule
+                                ? "calendar"
+                                : "flash"
+                            }
+                            size={14}
+                            color={
+                              bill.isExpired
                                 ? COLORS.red
                                 : bill.canSchedule
                                 ? "#0369A1"
-                                : COLORS.teal,
-                            },
-                          ]}
-                        >
-                          {bill.isExpired
-                            ? "Bayar Walau Terlambat"
-                            : bill.canSchedule
-                            ? "Bayar atau Jadwalkan"
-                            : "Bayar Sekarang"}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  )}
+                                : COLORS.teal
+                            }
+                            style={styles.buttonIcon}
+                          />
+                          <Text
+                            style={[
+                              styles.payButtonText,
+                              {
+                                color: bill.isExpired
+                                  ? COLORS.red
+                                  : bill.canSchedule
+                                  ? "#0369A1"
+                                  : COLORS.teal,
+                              },
+                            ]}
+                          >
+                            {bill.isExpired
+                              ? "Bayar Walau Terlambat"
+                              : bill.canSchedule
+                              ? "Bayar atau Jadwalkan"
+                              : "Bayar Sekarang"}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    );
+                  })()}
 
                   {/* Host Dropdown - Show participants status */}
                   {bill.isHost &&
