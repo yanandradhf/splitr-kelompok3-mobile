@@ -173,7 +173,7 @@ export default function HomeScreen() {
                       <View style={styles.statIconContainer}>
                         <Ionicons
                           name="receipt-outline"
-                          size={20}
+                          size={24}
                           color={COLORS.teal}
                         />
                       </View>
@@ -186,7 +186,7 @@ export default function HomeScreen() {
                       <View style={styles.statIconContainer}>
                         <Ionicons
                           name="checkmark-circle-outline"
-                          size={20}
+                          size={24}
                           color={COLORS.teal}
                         />
                       </View>
@@ -199,7 +199,7 @@ export default function HomeScreen() {
                       <View style={styles.statIconContainer}>
                         <Ionicons
                           name="time-outline"
-                          size={20}
+                          size={24}
                           color={COLORS.teal}
                         />
                       </View>
@@ -285,7 +285,7 @@ export default function HomeScreen() {
                             key={member.userId || avatarIndex}
                             photoUrl={member.profilePhotoUrl || member.profilePhoto || member.avatar}
                             name={member.name || 'User'}
-                            size={32}
+                            size={36}
                             style={[
                               styles.avatar,
                               avatarIndex > 0 && styles.avatarOverlap,
@@ -297,7 +297,7 @@ export default function HomeScreen() {
                             key={avatarIndex}
                             photoUrl={undefined}
                             name="User"
-                            size={32}
+                            size={36}
                             style={[
                               styles.avatar,
                               avatarIndex > 0 && styles.avatarOverlap,
@@ -310,7 +310,6 @@ export default function HomeScreen() {
                         <Text style={styles.groupMembers}>
                           {group.memberCount} orang dalam grup ini
                         </Text>
-
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -487,6 +486,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     justifyContent: "center",
+    marginLeft: 10,
   },
   welcomeSubtext: {
     fontSize: 16,
@@ -667,22 +667,22 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
   },
   statIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "rgba(118, 185, 187, 0.1)",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 6,
   },
   statNumber: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: FONTS.bold,
     color: LOCAL_COLORS.textPrimary,
     marginBottom: 2,
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: FONTS.regular,
     color: LOCAL_COLORS.textSecondary,
     textAlign: "center",
