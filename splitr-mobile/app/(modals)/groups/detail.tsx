@@ -635,22 +635,7 @@ export default function GroupDetailScreen() {
             <View style={styles.actionButtons}>
             {displayGroup?.isCreator ? (
               <>
-                {/* Create Bill Button */}
-                <TouchableOpacity
-                  style={styles.createBillButton}
-                  onPress={() => {
-                    console.log("Create bill for group:", displayGroup?.groupId);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="receipt-outline"
-                    size={getIconSize(20)}
-                    color={COLORS.white}
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.createBillButtonText}>Buat Bill</Text>
-                </TouchableOpacity>
+
 
                 {/* Add Member Button */}
                 <TouchableOpacity
@@ -682,22 +667,7 @@ export default function GroupDetailScreen() {
               </>
             ) : (
               <>
-                {/* Create Bill Button for Members */}
-                <TouchableOpacity
-                  style={styles.createBillButtonMember}
-                  onPress={() => {
-                    console.log("Create bill for group:", displayGroup?.groupId);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="receipt-outline"
-                    size={getIconSize(20)}
-                    color={COLORS.white}
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.createBillButtonText}>Buat Bill</Text>
-                </TouchableOpacity>
+
 
                 {/* Leave Group Button */}
                 <TouchableOpacity

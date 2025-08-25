@@ -16,6 +16,9 @@ interface BillData {
   totalBillAmount: number;
   yourShare: number;
   paymentStatus: string;
+  paidAt?: string;
+  scheduledDate?: string;
+  paymentType?: string;
   hostName: string;
   hostAccount: string;
   category: string;
@@ -154,6 +157,7 @@ export default function BillNotificationDetail() {
       case 'pending': return 'Belum Bayar';
       case 'overdue': return 'Terlambat';
       case 'completed': return 'Selesai';
+      case 'completed_scheduled': return 'Terjadwal Selesai';
       case 'paid': return 'Selesai';
       case 'scheduled': return 'Belum Bayar';
       case 'expired': return 'Kadaluarsa';
@@ -189,9 +193,10 @@ export default function BillNotificationDetail() {
             textColor: COLORS.red
           };
         case 'completed':
+        case 'completed_scheduled':
         case 'paid':
           return {
-            backgroundColor: COLORS.success,
+            backgroundColor: status === 'completed_scheduled' ? COLORS.teal : COLORS.success,
             textColor: COLORS.white
           };
         case 'expired':
@@ -420,8 +425,28 @@ export default function BillNotificationDetail() {
               <Ionicons name="chevron-forward" size={16} color={COLORS.teal} />
             </Pressable>
 
+            {/* Scheduled Payment Info */}
+            {billData.paymentStatus === 'completed_scheduled' && (
+              <View style={styles.scheduledPaymentCard}>
+                <View style={styles.scheduledHeader}>
+                  <Ionicons name="calendar" size={20} color={COLORS.teal} />
+                  <Text style={styles.scheduledTitle}>Pembayaran Terjadwal</Text>
+                </View>
+                {billData.paidAt && (
+                  <Text style={styles.scheduledDetail}>
+                    Dibayar pada: {formatDate(billData.paidAt)}
+                  </Text>
+                )}
+                {billData.scheduledDate && (
+                  <Text style={styles.scheduledDetail}>
+                    Dijadwalkan untuk: {formatDate(billData.scheduledDate)}
+                  </Text>
+                )}
+              </View>
+            )}
+
             {/* Action Button */}
-            {billData.paymentStatus !== 'completed' && (
+            {billData.paymentStatus !== 'completed' && billData.paymentStatus !== 'completed_scheduled' && (
               <Pressable 
                 onPress={handlePayment} 
                 style={[
@@ -441,10 +466,12 @@ export default function BillNotificationDetail() {
               </Pressable>
             )}
 
-            {billData.paymentStatus === 'completed' && (
+            {(billData.paymentStatus === 'completed' || billData.paymentStatus === 'completed_scheduled') && (
               <View style={styles.paidIndicator}>
                 <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
-                <Text style={styles.paidText}>Pembayaran Berhasil</Text>
+                <Text style={styles.paidText}>
+                  {billData.paymentStatus === 'completed_scheduled' ? 'Pembayaran Terjadwal Berhasil' : 'Pembayaran Berhasil'}
+                </Text>
               </View>
             )}
 
@@ -1233,5 +1260,30 @@ const styles = StyleSheet.create({
   },
   scheduledButtonText: {
     color: '#0369A1',
+  },
+  scheduledPaymentCard: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  scheduledHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  scheduledTitle: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.teal,
+  },
+  scheduledDetail: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.xs,
   },
 });

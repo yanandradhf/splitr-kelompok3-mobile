@@ -44,6 +44,8 @@ interface MasterBillData {
     amountShare: number;
     paymentStatus: string;
     paidAt?: string;
+    scheduledDate?: string;
+    paymentType?: string;
     isHost: boolean;
     breakdown: {
       subtotal: number;
@@ -122,6 +124,7 @@ export default function MasterBillDetail() {
     switch (status) {
       case 'active': return COLORS.teal;
       case 'completed': return COLORS.success;
+      case 'completed_scheduled': return COLORS.teal;
       case 'cancelled': return COLORS.red;
       case 'pending': return COLORS.warning;
       case 'expired': return COLORS.red;
@@ -133,6 +136,7 @@ export default function MasterBillDetail() {
     switch (status) {
       case 'active': return 'Aktif';
       case 'completed': return 'Selesai';
+      case 'completed_scheduled': return 'Terjadwal Selesai';
       case 'cancelled': return 'Dibatalkan';
       case 'pending': return 'Belum Bayar';
       case 'expired': return 'Kadaluarsa';
@@ -285,7 +289,10 @@ export default function MasterBillDetail() {
                       {getStatusText(participant.paymentStatus)}
                     </Text>
                     {participant.paidAt && (
-                      <Text style={styles.paidDate}>{formatDate(participant.paidAt)}</Text>
+                      <Text style={styles.paidDate}>Dibayar: {formatDate(participant.paidAt)}</Text>
+                    )}
+                    {participant.paymentStatus === 'completed_scheduled' && participant.scheduledDate && (
+                      <Text style={styles.scheduledDate}>Dijadwalkan: {formatDate(participant.scheduledDate)}</Text>
                     )}
                   </View>
                 </View>
@@ -662,6 +669,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xs,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
+  },
+  scheduledDate: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: COLORS.teal,
   },
   itemsSection: {
     marginBottom: SPACING.lg,
