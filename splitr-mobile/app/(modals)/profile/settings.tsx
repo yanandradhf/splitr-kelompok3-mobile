@@ -19,14 +19,12 @@ import { COLORS, FONTS } from "../../../constants/theme";
 const SettingsScreen = () => {
   const { user, isLoading, fetchProfile } = useProfileStore();
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [forceLoading, setForceLoading] = useState(true);
 
   React.useEffect(() => {
     if (!user) fetchProfile();
-    setTimeout(() => setForceLoading(false), 1200);
   }, []);
 
-  if (isLoading || forceLoading) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 

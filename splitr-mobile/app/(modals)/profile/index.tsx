@@ -25,17 +25,15 @@ export default function ProfileScreen() {
   const { user, stats, isLoading, fetchProfile } = useProfileStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [forceLoading, setForceLoading] = useState(true);
   const [showFullImage, setShowFullImage] = useState(false);
 
   React.useEffect(() => {
     if (!user) fetchProfile();
-    setTimeout(() => setForceLoading(false), 1600);
   }, []);
 
 
 
-  if (isLoading || forceLoading) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>

@@ -128,12 +128,11 @@ export default function PinVerification() {
         memberNames[memberId] = memberSummary[memberId].name;
       });
 
-      // Find categoryId
-      const selectedCategory = categories.find(cat => cat.categoryName === draft.category);
-      const categoryId = selectedCategory?.categoryId;
+      // Use categoryId directly from draft
+      const categoryId = draft.category;
       
       if (!categoryId) {
-        alert('Error: Category not found. Please try again.');
+        alert('Error: Category not selected. Please try again.');
         setIsCreating(false);
         return;
       }

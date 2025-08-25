@@ -37,16 +37,12 @@ const LOCAL_COLORS = {
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const { user: storeUser, stats: storeStats } = useProfileStore();
-  const [forceLoading, setForceLoading] = useState(true);
-  
   const { fetchProfile } = useProfileStore();
   
   useEffect(() => {
     if (!storeUser) {
       fetchProfile();
     }
-    // Force skeleton to show for 2 seconds
-    setTimeout(() => setForceLoading(false), 2000);
   }, []);
 
 
@@ -80,12 +76,11 @@ export default function HomeScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([
-        fetchProfile(),
-        refetchFriends(),
-        refetchGroups(),
-        refetchNotifications(),
-      ]);
+      // Sequential loading for better performance
+      await fetchProfile();
+      await refetchFriends();
+      await refetchGroups();
+      await refetchNotifications();
     } catch (error) {
       console.error("Error refreshing data:", error);
     } finally {
@@ -95,7 +90,7 @@ export default function HomeScreen() {
 
   const latestNotification = notifications[0];
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor(
@@ -112,7 +107,7 @@ export default function HomeScreen() {
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays} hari lalu`;
     return date.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
-  };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -169,7 +164,7 @@ export default function HomeScreen() {
               onPress={() => router.push("/(tabs)/monitoring")}
               activeOpacity={0.8}
             >
-              {!storeStats || forceLoading ? (
+              {!storeStats ? (
                 <SkeletonStats />
               ) : (
                 <View style={styles.statsContainer}>
@@ -242,7 +237,7 @@ export default function HomeScreen() {
                 color={LOCAL_COLORS.textPrimary}
               />
             </TouchableOpacity>
-            {groupsLoading || forceLoading ? (
+            {groupsLoading ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -369,7 +364,7 @@ export default function HomeScreen() {
                 color={COLORS.textSecondary}
               />
             </TouchableOpacity>
-            {friendsLoading || forceLoading ? (
+            {friendsLoading ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}

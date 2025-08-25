@@ -20,7 +20,16 @@ export default function PaymentScreen() {
     paymentDeadline,
     canSchedule,
     isOverdue
-  } = params;
+  } = params as {
+    billId: string;
+    billName: string;
+    amount: string;
+    hostName: string;
+    hostAccount: string;
+    paymentDeadline?: string;
+    canSchedule?: string;
+    isOverdue?: string;
+  };
 
   const [paymentMethod, setPaymentMethod] = useState<'instant' | 'scheduled'>('instant');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -177,23 +186,23 @@ export default function PaymentScreen() {
             </View>
 
             {/* Payment Method */}
-            {canActuallySchedule && (
-              <View style={styles.methodCard}>
-                <Text style={styles.cardTitle}>Metode Pembayaran</Text>
-                
-                <Pressable 
-                  style={[styles.methodOption, paymentMethod === 'instant' && styles.methodOptionActive]}
-                  onPress={() => setPaymentMethod('instant')}
-                >
-                  <View style={styles.methodInfo}>
-                    <Ionicons name="flash" size={20} color={paymentMethod === 'instant' ? COLORS.teal : COLORS.textSecondary} />
-                    <Text style={[styles.methodText, paymentMethod === 'instant' && styles.methodTextActive]}>
-                      Bayar Sekarang
-                    </Text>
-                  </View>
-                  <View style={[styles.radio, paymentMethod === 'instant' && styles.radioActive]} />
-                </Pressable>
+            <View style={styles.methodCard}>
+              <Text style={styles.cardTitle}>Metode Pembayaran</Text>
+              
+              <Pressable 
+                style={[styles.methodOption, paymentMethod === 'instant' && styles.methodOptionActive]}
+                onPress={() => setPaymentMethod('instant')}
+              >
+                <View style={styles.methodInfo}>
+                  <Ionicons name="flash" size={20} color={paymentMethod === 'instant' ? COLORS.teal : COLORS.textSecondary} />
+                  <Text style={[styles.methodText, paymentMethod === 'instant' && styles.methodTextActive]}>
+                    Bayar Sekarang
+                  </Text>
+                </View>
+                <View style={[styles.radio, paymentMethod === 'instant' && styles.radioActive]} />
+              </Pressable>
 
+              {canActuallySchedule ? (
                 <Pressable 
                   style={[styles.methodOption, paymentMethod === 'scheduled' && styles.methodOptionActive]}
                   onPress={() => setPaymentMethod('scheduled')}
@@ -206,27 +215,37 @@ export default function PaymentScreen() {
                   </View>
                   <View style={[styles.radio, paymentMethod === 'scheduled' && styles.radioActive]} />
                 </Pressable>
-
-                {paymentMethod === 'scheduled' && (
-                  <View style={styles.dateSection}>
-                    <Text style={styles.dateLabel}>Pilih Tanggal Pembayaran</Text>
-                    <Pressable style={[styles.dateButton, !isDateValid && styles.dateButtonInvalid]} onPress={() => setShowDatePicker(true)}>
-                      <Ionicons name="calendar-outline" size={20} color={isDateValid ? COLORS.teal : COLORS.red} />
-                      <Text style={[styles.dateText, !isDateValid && styles.dateTextInvalid]}>{selectedDate.toLocaleDateString('id-ID')}</Text>
-                      <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
-                    </Pressable>
-                    <Text style={styles.dateHint}>
-                      Maksimal: {maxScheduleDate.toLocaleDateString('id-ID')}
+              ) : canSchedule === 'true' && (
+                <View style={[styles.methodOption, styles.methodOptionDisabled]}>
+                  <View style={styles.methodInfo}>
+                    <Ionicons name="calendar" size={20} color={COLORS.textSecondary} />
+                    <Text style={[styles.methodText, styles.methodTextDisabled]}>
+                      Jadwalkan Pembayaran
                     </Text>
-                    {!isDateValid && (
-                      <Text style={styles.dateError}>
-                        Tanggal tidak boleh melebihi batas waktu pembayaran
-                      </Text>
-                    )}
                   </View>
-                )}
-              </View>
-            )}
+                  <View style={styles.radioDisabled} />
+                </View>
+              )}
+
+              {paymentMethod === 'scheduled' && (
+                <View style={styles.dateSection}>
+                  <Text style={styles.dateLabel}>Pilih Tanggal Pembayaran</Text>
+                  <Pressable style={[styles.dateButton, !isDateValid && styles.dateButtonInvalid]} onPress={() => setShowDatePicker(true)}>
+                    <Ionicons name="calendar-outline" size={20} color={isDateValid ? COLORS.teal : COLORS.red} />
+                    <Text style={[styles.dateText, !isDateValid && styles.dateTextInvalid]}>{selectedDate.toLocaleDateString('id-ID')}</Text>
+                    <Ionicons name="chevron-down" size={16} color={COLORS.textSecondary} />
+                  </Pressable>
+                  <Text style={styles.dateHint}>
+                    Maksimal: {maxScheduleDate.toLocaleDateString('id-ID')}
+                  </Text>
+                  {!isDateValid && (
+                    <Text style={styles.dateError}>
+                      Tanggal tidak boleh melebihi batas waktu pembayaran
+                    </Text>
+                  )}
+                </View>
+              )}
+            </View>
 
             {/* Deadline Expired Warning */}
             {isDeadlineExpired && canSchedule === 'true' && (
@@ -483,6 +502,21 @@ const styles = StyleSheet.create({
   radioActive: {
     borderColor: COLORS.teal,
     backgroundColor: COLORS.teal,
+  },
+  methodOptionDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F8F9FA',
+  },
+  methodTextDisabled: {
+    color: COLORS.textSecondary,
+  },
+  radioDisabled: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: COLORS.textSecondary,
+    backgroundColor: '#F8F9FA',
   },
   dateSection: {
     marginTop: SPACING.md,

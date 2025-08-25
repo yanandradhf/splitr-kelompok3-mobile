@@ -128,6 +128,7 @@ export default function MasterBillDetail() {
       case 'active': return COLORS.teal;
       case 'completed': return COLORS.success;
       case 'completed_scheduled': return COLORS.teal;
+      case 'completed_late': return '#D97706';
       case 'cancelled': return COLORS.red;
       case 'pending': return COLORS.warning;
       case 'expired': return COLORS.red;
@@ -140,6 +141,7 @@ export default function MasterBillDetail() {
       case 'active': return 'Aktif';
       case 'completed': return 'Selesai';
       case 'completed_scheduled': return 'Terjadwal Selesai';
+      case 'completed_late': return 'Terlambat';
       case 'cancelled': return 'Dibatalkan';
       case 'pending': return 'Belum Bayar';
       case 'expired': return 'Kadaluarsa';
@@ -236,11 +238,13 @@ export default function MasterBillDetail() {
                       backgroundColor: getStatusColor(billData.status) === COLORS.teal ? '#E6FFFA' :
                                      getStatusColor(billData.status) === COLORS.success ? '#F0FDF4' :
                                      getStatusColor(billData.status) === COLORS.red ? '#FEF2F2' :
-                                     getStatusColor(billData.status) === COLORS.warning ? '#FFFBEB' : '#F8F9FA',
+                                     getStatusColor(billData.status) === COLORS.warning ? '#FFFBEB' :
+                                     getStatusColor(billData.status) === '#D97706' ? '#FEF3C7' : '#F8F9FA',
                       borderColor: getStatusColor(billData.status) === COLORS.teal ? '#B2F5EA' :
                                  getStatusColor(billData.status) === COLORS.success ? '#BBF7D0' :
                                  getStatusColor(billData.status) === COLORS.red ? '#FECACA' :
-                                 getStatusColor(billData.status) === COLORS.warning ? '#FDE68A' : '#E5E7EB'
+                                 getStatusColor(billData.status) === COLORS.warning ? '#FDE68A' :
+                                 getStatusColor(billData.status) === '#D97706' ? '#FDE68A' : '#E5E7EB'
                     }
                   ]}>
                     <Text style={[styles.statusText, { color: getStatusColor(billData.status) }]}>{getStatusText(billData.status)}</Text>
@@ -310,6 +314,9 @@ export default function MasterBillDetail() {
                     )}
                     {participant.paymentStatus === 'completed_scheduled' && participant.scheduledDate && (
                       <Text style={styles.scheduledDate}>Dijadwalkan: {formatDate(participant.scheduledDate)}</Text>
+                    )}
+                    {participant.paymentStatus === 'completed_late' && participant.paidAt && (
+                      <Text style={styles.lateDate}>Terlambat: {formatDate(participant.paidAt)}</Text>
                     )}
                   </View>
                 </View>
@@ -725,6 +732,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xs,
     fontFamily: FONTS.regular,
     color: COLORS.teal,
+  },
+  lateDate: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
+    color: '#D97706',
   },
   itemsSection: {
     marginBottom: SPACING.lg,

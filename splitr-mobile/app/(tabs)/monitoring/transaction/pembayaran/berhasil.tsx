@@ -64,11 +64,15 @@ export default function PaymentSuccessScreen() {
           </View>
 
           <Text style={styles.title}>
-            {isScheduled ? 'Pembayaran Dijadwalkan!' : 'Pembayaran Berhasil!'}
+            {isScheduled ? 'Pembayaran Dijadwalkan!' : 
+             receipt.isLate ? 'Pembayaran Terlambat Berhasil! ⚠️' : 
+             'Pembayaran Berhasil!'}
           </Text>
           <Text style={styles.subtitle}>
             {isScheduled 
               ? 'Pembayaran Anda telah dijadwalkan dan akan diproses otomatis'
+              : receipt.isLate 
+              ? 'Pembayaran berhasil diproses meskipun melewati batas waktu'
               : 'Transaksi Anda telah berhasil diproses'
             }
           </Text>
@@ -126,8 +130,9 @@ export default function PaymentSuccessScreen() {
 
                 <View style={styles.receiptRow}>
                   <Text style={styles.receiptLabel}>Status</Text>
-                  <Text style={[styles.receiptValue, styles.statusText]}>
-                    {receipt.status === 'completed' ? 'Berhasil' : receipt.status}
+                  <Text style={[styles.receiptValue, receipt.isLate ? styles.lateStatusText : styles.statusText]}>
+                    {receipt.isLate ? 'Berhasil (Terlambat)' : 
+                     receipt.status === 'completed' ? 'Berhasil' : receipt.status}
                   </Text>
                 </View>
 
@@ -293,6 +298,9 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: COLORS.success,
+  },
+  lateStatusText: {
+    color: '#D97706',
   },
   buttonContainer: {
     padding: SPACING.lg,

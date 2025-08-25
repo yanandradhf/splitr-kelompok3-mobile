@@ -151,13 +151,15 @@ export default function BillNotificationDetail() {
   };
 
   const getStatusText = (status: string, isOverdue?: boolean) => {
-    if (isOverdue) return 'Belum Bayar\nKadaluarsa';
+    if (status === 'completed_late') return 'Terlambat';
+    if (isOverdue && status === 'pending') return 'Kadaluarsa';
     
     switch (status) {
       case 'pending': return 'Belum Bayar';
       case 'overdue': return 'Terlambat';
       case 'completed': return 'Selesai';
       case 'completed_scheduled': return 'Terjadwal Selesai';
+      case 'completed_late': return 'Terlambat';
       case 'paid': return 'Selesai';
       case 'scheduled': return 'Belum Bayar';
       case 'expired': return 'Kadaluarsa';
@@ -167,7 +169,16 @@ export default function BillNotificationDetail() {
 
   const StatusBadge = ({ status }: { status: string }) => {
     const getStatusStyle = (status: string) => {
-      if (billData?.isExpired) {
+      if (status === 'completed_late') {
+        return {
+          backgroundColor: '#FEF3C7',
+          borderWidth: 1,
+          borderColor: '#FDE68A',
+          textColor: '#D97706'
+        };
+      }
+      
+      if (billData?.isExpired && status === 'pending') {
         return {
           backgroundColor: '#FEF2F2',
           borderWidth: 1,
@@ -446,7 +457,7 @@ export default function BillNotificationDetail() {
             )}
 
             {/* Action Button */}
-            {billData.paymentStatus !== 'completed' && billData.paymentStatus !== 'completed_scheduled' && (
+            {billData.paymentStatus !== 'completed' && billData.paymentStatus !== 'completed_scheduled' && billData.paymentStatus !== 'completed_late' && (
               <Pressable 
                 onPress={handlePayment} 
                 style={[
@@ -466,11 +477,12 @@ export default function BillNotificationDetail() {
               </Pressable>
             )}
 
-            {(billData.paymentStatus === 'completed' || billData.paymentStatus === 'completed_scheduled') && (
-              <View style={styles.paidIndicator}>
-                <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
-                <Text style={styles.paidText}>
-                  {billData.paymentStatus === 'completed_scheduled' ? 'Pembayaran Terjadwal Berhasil' : 'Pembayaran Berhasil'}
+            {(billData.paymentStatus === 'completed' || billData.paymentStatus === 'completed_scheduled' || billData.paymentStatus === 'completed_late') && (
+              <View style={[styles.paidIndicator, billData.paymentStatus === 'completed_late' && styles.lateIndicator]}>
+                <Ionicons name="checkmark-circle" size={24} color={billData.paymentStatus === 'completed_late' ? '#D97706' : COLORS.success} />
+                <Text style={[styles.paidText, billData.paymentStatus === 'completed_late' && styles.lateText]}>
+                  {billData.paymentStatus === 'completed_late' ? 'Pembayaran Terlambat Berhasil' :
+                   billData.paymentStatus === 'completed_scheduled' ? 'Pembayaran Terjadwal Berhasil' : 'Pembayaran Berhasil'}
                 </Text>
               </View>
             )}
@@ -1212,6 +1224,12 @@ const styles = StyleSheet.create({
     color: COLORS.success,
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.semiBold,
+  },
+  lateIndicator: {
+    backgroundColor: '#FFFBEB',
+  },
+  lateText: {
+    color: '#D97706',
   },
   expiredIndicator: {
     flexDirection: 'row',

@@ -44,7 +44,7 @@ export interface Totals {
 export interface BillDraft {
   id: string;
   name: string;
-  category: BillCategory | null;
+  category: string | null;
   items: BillItem[];
   fees: BillFees;
   assignments: SplitAssignment[];

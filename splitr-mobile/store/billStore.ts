@@ -5,7 +5,6 @@ import type {
   BillFees,
   SplitAssignment,
   Totals,
-  BillCategory,
 } from "@/types/bill";
 
 const emptyTotals: Totals = { subTotal: 0, tax: 0, service: 0, discount: 0, grandTotal: 0 };
@@ -27,7 +26,7 @@ const newDraft = (): BillDraft => ({
 interface BillState {
   draft: BillDraft;
   reset: () => void;
-  setHeader: (name: string, category: BillCategory | null) => void;
+  setHeader: (name: string, category: string | null) => void;
   addItem: (item: BillItem) => void;
   updateItem: (item: BillItem) => void;
   removeItem: (id: string) => void;

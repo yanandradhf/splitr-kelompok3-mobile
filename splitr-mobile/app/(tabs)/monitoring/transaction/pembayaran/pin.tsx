@@ -29,11 +29,15 @@ export default function PinScreen() {
   const handleConfirm = async () => {
     if (pin.length === 6) {
       setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
+      try {
+        // TODO: Replace with actual API call
+        // await api.verifyPin(pin);
         router.push(`/monitoring/transaction/pembayaran/berhasil?nominal=${encodeURIComponent(amount as string)}&transactionId=${transactionId}&title=${encodeURIComponent(title as string)}&from=${encodeURIComponent(from as string)}&paymentMethod=${paymentMethod}&note=${encodeURIComponent(note as string || '')}`);
-      }, 1500);
+      } catch (error) {
+        console.error('PIN verification failed:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 

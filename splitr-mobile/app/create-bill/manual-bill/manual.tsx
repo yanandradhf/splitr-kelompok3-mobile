@@ -49,7 +49,7 @@ export default function ManualScreen() {
     fetchCategories();
   }, []);
 
-  const canConfirm = useMemo(() => name.trim().length > 0 && !!category && draft.items.length > 0, [name, category, draft.items.length]);
+  const canConfirm = useMemo(() => name.trim().length > 0 && category && draft.items.length > 0, [name, category, draft.items.length]);
 
   const onAddItem = () => {
     const item = {
@@ -62,16 +62,8 @@ export default function ManualScreen() {
   };
 
   const handleConfirm = () => {
-    const mapToBillCategory = (categoryName: string): BillCategory | null => {
-      switch (categoryName) {
-        case 'Food and Beverage': return 'Makanan dan Minuman';
-        case 'Entertainment': return 'Hiburan';
-        case 'Shopping': return 'Belanja';
-        default: return 'Lainnya';
-      }
-    };
-    
-    setHeader(name.trim(), category ? mapToBillCategory(category.categoryName) : null);
+    // Use categoryId instead of mapping categoryName
+    setHeader(name.trim(), category?.categoryId || null);
     router.push('/create-bill/bill-detail');
   };
 

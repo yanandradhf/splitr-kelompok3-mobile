@@ -29,11 +29,9 @@ const EditProfileScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [originalData, setOriginalData] = useState({ name: "", phone: "", email: "" });
-  const [forceLoading, setForceLoading] = useState(true);
 
   React.useEffect(() => {
     if (!user) fetchProfile();
-    setTimeout(() => setForceLoading(false), 1400);
   }, []);
 
   // Debug profile photo URL changes
@@ -162,7 +160,7 @@ const EditProfileScreen = () => {
     }
   };
 
-  if (isLoading || forceLoading) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>

@@ -36,7 +36,6 @@ const personImages = [
 export default function GroupsScreen() {
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [forceLoading, setForceLoading] = useState(true);
   const { 
     groups, 
     isLoading: loading, 
@@ -47,7 +46,6 @@ export default function GroupsScreen() {
 
   useEffect(() => {
     fetchGroups();
-    setTimeout(() => setForceLoading(false), 1800);
   }, []);
 
   useFocusEffect(
@@ -140,7 +138,7 @@ export default function GroupsScreen() {
           >
             {/* Groups List */}
             <View style={styles.listContainer}>
-              {loading || forceLoading ? (
+              {loading ? (
                 <View>
                   {[1, 2, 3].map((i) => (
                     <View key={i} style={styles.groupCard}>
