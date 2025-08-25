@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import {
@@ -95,16 +96,15 @@ export default function MonitoringIndex() {
     fetchMyActivity();
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = router.addListener?.('focus', () => {
+  useFocusEffect(
+    useCallback(() => {
       console.log('🔄 Monitoring screen focused - refreshing data');
       fetchMyActivity();
       if (activeTab === 'riwayat') {
         fetchPaymentHistory();
       }
-    });
-    return unsubscribe;
-  }, [activeTab]);
+    }, [activeTab])
+  );
 
 
 
@@ -243,7 +243,7 @@ export default function MonitoringIndex() {
     }
   };
 
-  const getStatusBadgeHistory = (status, paymentType) => {
+  const getStatusBadgeHistory = (status: string, paymentType: string) => {
     if (status === "completed" && paymentType === "instant") {
       return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
     }
@@ -256,7 +256,7 @@ export default function MonitoringIndex() {
     return { text: "Selesai", color: COLORS.success, bg: "#DCFCE7" };
   };
 
-  const handleHistoryCardPress = async (paymentId) => {
+  const handleHistoryCardPress = async (paymentId: string) => {
     try {
       const response = await api.get(
         `${API_CONFIG.ENDPOINTS.PAYMENT_RECEIPT.replace(':paymentId', paymentId)}`
@@ -360,6 +360,8 @@ export default function MonitoringIndex() {
     });
   };
 
+
+
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
       case "amount-highest":
@@ -401,6 +403,51 @@ export default function MonitoringIndex() {
     categoryFilter !== "semua" || sortBy !== "date-newest";
 
   const filteredBills = getFilteredBills();
+
+  // Filter for payment history
+  const getFilteredHistory = () => {
+    if (activeTab !== "riwayat") return [];
+
+    let filtered = [...paymentHistory, ...billActivities.filter(bill => bill.paymentStatus === "completed")];
+    console.log('🔄 Using fresh history data:', filtered.length, 'payments');
+
+    // Apply category filter
+    switch (categoryFilter) {
+      case "selesai":
+        // Already filtered to completed payments
+        break;
+      case "semua":
+      default:
+        // Show all completed payments
+        break;
+    }
+
+    // Apply sort preference
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "date-newest":
+          const aDate = a.paidAt || a.createdAt || new Date().toISOString();
+          const bDate = b.paidAt || b.createdAt || new Date().toISOString();
+          return new Date(bDate).getTime() - new Date(aDate).getTime();
+        case "date-oldest":
+          const aDateOld = a.paidAt || a.createdAt || new Date().toISOString();
+          const bDateOld = b.paidAt || b.createdAt || new Date().toISOString();
+          return new Date(aDateOld).getTime() - new Date(bDateOld).getTime();
+        case "amount-highest":
+          const aAmount = a.amount || a.yourShare || 0;
+          const bAmount = b.amount || b.yourShare || 0;
+          return bAmount - aAmount;
+        case "amount-lowest":
+          const aAmountLow = a.amount || a.yourShare || 0;
+          const bAmountLow = b.amount || b.yourShare || 0;
+          return aAmountLow - bAmountLow;
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const filteredHistory = getFilteredHistory();
 
   // Calculate comprehensive dashboard info
   const getDashboardInfo = () => {
@@ -549,7 +596,7 @@ export default function MonitoringIndex() {
         </Pressable>
       </View>
 
-      {/* Compact Summary Card */}
+      {/* Compact Summary Card - Tagihan */}
       {activeTab === "tagihan" && (
         <View style={styles.compactCard}>
           {/* Complex Chart Effect */}
@@ -638,6 +685,103 @@ export default function MonitoringIndex() {
         </View>
       )}
 
+      {/* Compact Summary Card - Riwayat */}
+      {activeTab === "riwayat" && (
+        <View style={styles.compactCard}>
+          {/* Complex Chart Effect */}
+          <View style={styles.chartEffect}>
+            {/* Grid Lines */}
+            <View style={styles.gridLines}>
+              <View style={styles.gridLine1} />
+              <View style={styles.gridLine2} />
+              <View style={styles.gridLine3} />
+            </View>
+
+            {/* Bar Chart */}
+            <View style={styles.barChart}>
+              <View style={styles.bar1} />
+              <View style={styles.bar2} />
+              <View style={styles.bar3} />
+              <View style={styles.bar4} />
+              <View style={styles.bar5} />
+            </View>
+
+            {/* Trend Line */}
+            <View style={styles.trendLine} />
+            <View style={styles.trendArrow} />
+
+            {/* Data Points */}
+            <View style={styles.dataPoints}>
+              <View style={styles.point1} />
+              <View style={styles.point2} />
+              <View style={styles.point3} />
+              <View style={styles.point4} />
+              <View style={styles.point5} />
+            </View>
+
+            {/* Percentage Indicator */}
+            <View style={styles.percentageUp}>
+              <View style={styles.percentArrow} />
+            </View>
+          </View>
+
+          {/* Filter Button - Top Right */}
+          <View style={styles.filterContainer}>
+            <Pressable
+              style={[
+                styles.compactFilter,
+                hasActiveFilters && styles.compactFilterActive,
+              ]}
+              onPress={() => setShowFilterModal(true)}
+            >
+              <Ionicons
+                name="funnel"
+                size={16}
+                color={hasActiveFilters ? COLORS.teal : COLORS.white}
+              />
+              {hasActiveFilters && <View style={styles.compactFilterDot} />}
+            </Pressable>
+          </View>
+
+          {/* Main Content - Centered */}
+          <View style={styles.compactContent}>
+            {(() => {
+              const totalPaid = filteredHistory
+                .reduce((sum, payment) => {
+                  if (payment.amount) return sum + payment.amount;
+                  if (payment.yourShare) return sum + payment.yourShare;
+                  return sum;
+                }, 0);
+              const formattedTotal = formatRp(totalPaid);
+              const isZero = totalPaid === 0;
+              const historyCount = filteredHistory.length;
+              
+              return (
+                <>
+                  {!isZero && (
+                    <Text style={styles.compactAmount}>
+                      {formattedTotal}
+                    </Text>
+                  )}
+                  <View style={styles.compactLabelRow}>
+                    <Text style={styles.compactLabel}>
+                      {isZero ? "Belum ada riwayat pembayaran" : "Total Sudah Dibayar"}
+                    </Text>
+                    {!isZero && historyCount > 0 && (
+                      <View style={styles.compactHistoryBadge}>
+                        <Text style={styles.compactHistoryBadgeText}>
+                          {historyCount} transaksi
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </>
+              );
+            })()}
+          </View>
+        </View>
+      )}
+
       {/* Filter Modal */}
       {showFilterModal && (
         <View style={styles.modalOverlay}>
@@ -656,11 +800,7 @@ export default function MonitoringIndex() {
               </Pressable>
             </View>
 
-            {/* Category Filter - Urutan berdasarkan prioritas kebutuhan:
-                1. Harus Bayar (tagihan) - paling urgent
-                2. Selesai - untuk tracking pembayaran
-                3. Saya Buat (dibuat) - untuk host
-                4. Semua - overview lengkap */}
+            {/* Category Filter - Tagihan */}
             {activeTab === "tagihan" && (
               <View style={styles.filterSection}>
                 <Text style={styles.filterSectionTitle}>Kategori</Text>
@@ -671,6 +811,40 @@ export default function MonitoringIndex() {
                       "selesai",
                       "dibuat",
                       "semua",
+                    ] as CategoryFilter[]
+                  ).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[
+                        styles.filterChip,
+                        categoryFilter === option && styles.filterChipActive,
+                      ]}
+                      onPress={() => setCategoryFilter(option)}
+                    >
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          categoryFilter === option &&
+                            styles.filterChipTextActive,
+                        ]}
+                      >
+                        {getCategoryLabel(option)}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Category Filter - Riwayat */}
+            {activeTab === "riwayat" && (
+              <View style={styles.filterSection}>
+                <Text style={styles.filterSectionTitle}>Kategori</Text>
+                <View style={styles.filterOptions}>
+                  {(
+                    [
+                      "semua",
+                      "selesai",
                     ] as CategoryFilter[]
                   ).map((option) => (
                     <Pressable
@@ -799,8 +973,6 @@ export default function MonitoringIndex() {
                         styles.expiredContent,
                     ]}
                     onPress={(event) => handleBillPress(bill, event)}
-                    delayPressIn={0}
-                    delayPressOut={100}
                   >
                     {/* Bill Header */}
                     <View style={styles.billHeader}>
@@ -959,7 +1131,15 @@ export default function MonitoringIndex() {
                   {/* Expanded Content for Host */}
                   {bill.isHost && isExpanded && bill.participantsStatus && (
                     <View style={styles.expandedContent}>
-                      {bill.participantsStatus.map((participant) => {
+                      {bill.participantsStatus.map((participant: {
+                        participantId: string;
+                        userId: string;
+                        name: string;
+                        account: string;
+                        amountShare: number;
+                        paymentStatus: string;
+                        paidAt: string | null;
+                      }) => {
                         const getParticipantStatus = () => {
                           if (participant.paymentStatus === "completed") {
                             return {
@@ -1022,7 +1202,7 @@ export default function MonitoringIndex() {
               <Text style={styles.loadingText}>Memuat riwayat...</Text>
             </View>
           ) : (
-            [...paymentHistory, ...filteredBills.filter(bill => bill.paymentStatus === "completed")].map((payment, index) => {
+            filteredHistory.map((payment, index) => {
               // Handle completed bills from filteredBills
               if (!payment.paymentId && payment.billId) {
                 const paymentDate = formatDate(payment.createdAt || new Date().toISOString());
@@ -1045,6 +1225,9 @@ export default function MonitoringIndex() {
                         </View>
                         <View style={styles.billRight}>
                           <Text style={styles.billAmount}>{formatRp(payment.yourShare)}</Text>
+                          <Text style={styles.paymentDateText}>
+                            Dibayar: {paymentDate}
+                          </Text>
                         </View>
                       </View>
                       <View style={styles.historyBottomRow}>
@@ -1080,21 +1263,21 @@ export default function MonitoringIndex() {
                 }
               );
 
-              const getIcon = (billName) => {
+              const getIcon = (billName: string) => {
                 if (billName.toLowerCase().includes('pizza')) return '🍕';
                 if (billName.toLowerCase().includes('coffee') || billName.toLowerCase().includes('cafe')) return '☕';
                 if (billName.toLowerCase().includes('lunch') || billName.toLowerCase().includes('makan')) return '🍔';
                 return '🍽️';
               };
 
-              const getIconBgColor = (billName, index) => {
+              const getIconBgColor = (billName: string, index: number) => {
                 if (billName.toLowerCase().includes('pizza')) return COLORS.orange;
                 if (billName.toLowerCase().includes('coffee') || billName.toLowerCase().includes('cafe')) return COLORS.teal;
                 if (billName.toLowerCase().includes('lunch') || billName.toLowerCase().includes('makan')) return COLORS.warning;
                 return [COLORS.orange, COLORS.teal, COLORS.warning][index % 3];
               };
 
-              const getBorderColor = (billName, index) => {
+              const getBorderColor = (billName: string, index: number) => {
                 if (billName.toLowerCase().includes('pizza')) return COLORS.orange;
                 if (billName.toLowerCase().includes('coffee') || billName.toLowerCase().includes('cafe')) return COLORS.teal;
                 if (billName.toLowerCase().includes('lunch') || billName.toLowerCase().includes('makan')) return COLORS.warning;
@@ -1120,7 +1303,7 @@ export default function MonitoringIndex() {
                       </View>
                       <View style={styles.billRight}>
                         <Text style={styles.billAmount}>{formatRp(payment.amount)}</Text>
-                        <Text style={styles.historyDateText}>
+                        <Text style={styles.paymentDateText}>
                           Dibayar: {paymentDate}
                         </Text>
                       </View>
@@ -1160,7 +1343,7 @@ export default function MonitoringIndex() {
         {((activeTab === "tagihan" && !loading && filteredBills.filter(bill => bill.paymentStatus !== "completed").length === 0) ||
           (activeTab === "riwayat" &&
             !historyLoading &&
-            [...paymentHistory, ...filteredBills.filter(bill => bill.paymentStatus === "completed")].length === 0)) && (
+            filteredHistory.length === 0)) && (
           <View style={styles.emptyState}>
             <Ionicons
               name="receipt-outline"
@@ -1245,12 +1428,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   compactUrgent: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.red,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.sm,
   },
   compactUrgentText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
+  },
+  compactHistoryBadge: {
+    backgroundColor: COLORS.success,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  compactHistoryBadgeText: {
     fontSize: FONT_SIZES.xs,
     fontFamily: FONTS.semiBold,
     color: COLORS.white,
@@ -1610,7 +1804,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.teal,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.xs,
+    borderRadius: BORDER_RADIUS.sm,
     gap: 2,
     alignSelf: "flex-start",
     marginTop: 2,
@@ -1838,13 +2032,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 12,
   },
-  expandedContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
+
   expandedTitle: {
     fontSize: 14,
     fontWeight: "600",
@@ -1901,9 +2089,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#EF4444",
   },
-  paymentButtonContainer: {
-    marginTop: 8,
-  },
+
   payTagihanButton: {
     backgroundColor: COLORS.teal,
     paddingVertical: 10,
@@ -2029,6 +2215,14 @@ const styles = StyleSheet.create({
     color: COLORS.warning,
     textAlign: "right",
   },
+  paymentDateText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.medium,
+    color: COLORS.warning,
+    textAlign: "right",
+    marginTop: 2,
+  },
+
   paymentMethodContainer: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
