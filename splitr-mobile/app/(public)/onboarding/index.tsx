@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans';
 import { COLORS as THEME_COLORS } from '../../../constants/theme';
@@ -71,8 +71,10 @@ export default function OnboardingSwiper() {
   };
 
   const handleSudahPunyaPress = () => {
-    router.replace('/(auth)/login');
+    router.push('/(public)/terms');
   };
+
+
 
   if (!fontsLoaded) {
     return null;
@@ -288,4 +290,5 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     textAlign: 'center',
   },
+
 });

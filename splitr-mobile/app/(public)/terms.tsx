@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
+  Alert,
+  BackHandler,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../constants/theme';
+import { StorageService } from '../../utils/storage';
 
 export default function TermsScreen() {
   const [isAgreed, setIsAgreed] = useState(false);
@@ -54,21 +57,52 @@ export default function TermsScreen() {
 
   const handleContinue = async () => {
     if (isAtBottom && isAgreed) {
-      // This is only for register flow - complete registration
-      const { completeRegister } = require('../../store').useRegisterStore.getState();
       try {
-        await completeRegister();
-        router.replace('/(auth)/register/success');
+        // Save TnC acceptance to storage
+        await StorageService.completeOnboardingFlow();
+        // Replace to login after agreeing to terms (no back button)
+        router.replace('/(auth)/login');
       } catch (error) {
-        console.error('Registration error:', error);
+        console.error('Error saving TnC acceptance:', error);
+        Alert.alert('Error', 'Gagal menyimpan persetujuan. Silakan coba lagi.');
       }
     }
   };
 
+  const handleDecline = () => {
+    Alert.alert(
+      'Syarat & Ketentuan Diperlukan',
+      'Anda harus menyetujui Syarat & Ketentuan untuk menggunakan aplikasi ini. Silakan tutup aplikasi secara manual atau setujui untuk melanjutkan.',
+      [
+        {
+          text: 'Mengerti',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backAction = () => {
+      handleDecline();
+      return true; // Prevent default back action
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, []);
+
   const canProceed = isAtBottom && isAgreed;
 
-  const handleBack = () => {
-    if (router.canGoBack()) {
+  const handleBack = async () => {
+    // Check if user came from onboarding or is first time
+    const hasCompletedOnboarding = await StorageService.hasCompletedOnboarding();
+    
+    if (hasCompletedOnboarding) {
+      // User skipped onboarding, show decline alert
+      handleDecline();
+    } else if (router.canGoBack()) {
       router.back();
     } else {
       router.replace('/(public)/onboarding');
@@ -239,7 +273,7 @@ export default function TermsScreen() {
               disabled={!canProceed}
             >
               <Text style={[styles.continueBtnText, !canProceed && styles.continueBtnTextDisabled]}>
-                Setuju & Daftar
+                Setuju & Lanjutkan
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -427,5 +461,29 @@ const styles = StyleSheet.create({
   },
   continueBtnTextDisabled: {
     color: COLORS.textSecondary,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  declineBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: COLORS.red,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  declineBtnText: {
+    fontSize: 16,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.red,
+  },
+  continueBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    backgroundColor: COLORS.teal,
+    borderRadius: 12,
+    alignItems: 'center',
   },
 });

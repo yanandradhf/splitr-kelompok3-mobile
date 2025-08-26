@@ -1,42 +1,42 @@
-import { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import CustomSplashScreen from './(public)/splash';
-import LoadingScreen from '../components/ui/LoadingScreen';
-import { useAuthStore } from '../store';
+import { StorageService } from '../utils/storage';
+import { COLORS } from '../constants/theme';
 
-export default function Index() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [isChecking, setIsChecking] = useState(false);
-  const { checkAuth, isAuthenticated } = useAuthStore();
+export default function AppEntry() {
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!showSplash) {
-      checkAuthStatus();
-    }
-  }, [showSplash]);
+    checkOnboardingStatus();
+  }, []);
 
-  const checkAuthStatus = async () => {
-    setIsChecking(true);
-    await checkAuth();
-    setIsChecking(false);
-    
-    if (isAuthenticated) {
-      router.replace('/(tabs)/home');
-    } else {
+  const checkOnboardingStatus = async () => {
+    try {
+      const shouldShowOnboarding = await StorageService.shouldShowOnboarding();
+      
+      if (shouldShowOnboarding) {
+        // First time user - show onboarding
+        router.replace('/(public)/onboarding');
+      } else {
+        // Returning user - direct to login
+        router.replace('/(auth)/login');
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      // Default to onboarding on error
       router.replace('/(public)/onboarding');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSplashFinish = () => {
-    setShowSplash(false);
-  };
-
-  if (showSplash) {
-    return <CustomSplashScreen onFinish={handleSplashFinish} />;
-  }
-
-  if (isChecking) {
-    return <LoadingScreen message="Memeriksa autentikasi..." />;
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.backgroundMain }}>
+        <ActivityIndicator size="large" color={COLORS.teal} />
+      </View>
+    );
   }
 
   return null;
