@@ -1,6 +1,7 @@
 // Centralized store exports for clean imports
 export { useTransactionStore } from './transaction.store';
 export { useAppStore } from './appStore';
+export { useCommentsStore } from './comments.store';
 
 // Feature-based store exports
 export { useAuthStore } from '../features/auth/auth.store';
