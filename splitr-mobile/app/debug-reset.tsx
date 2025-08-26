@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { StorageService } from '../utils/storage';
+import { handleSessionError } from '../utils/errorHandler';
+import * as SecureStore from 'expo-secure-store';
 import { COLORS, FONTS } from '../constants/theme';
 
 export default function DebugReset() {
@@ -16,11 +18,37 @@ export default function DebugReset() {
     }
   };
 
+  const testSessionReplaced = async () => {
+    await handleSessionError('SESSION_REPLACED', 'Account accessed from another device');
+  };
+
+  const testSessionExpired = async () => {
+    await handleSessionError('SESSION_EXPIRED', 'Session has expired');
+  };
+
+  const testTokens = async () => {
+    const accessToken = await SecureStore.getItemAsync('access_token');
+    const refreshToken = await SecureStore.getItemAsync('refresh_token');
+    Alert.alert('Tokens', `Access: ${accessToken ? 'Found' : 'None'}\nRefresh: ${refreshToken ? 'Found' : 'None'}`);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Debug Reset</Text>
       <TouchableOpacity style={styles.button} onPress={handleReset}>
         <Text style={styles.buttonText}>Reset Onboarding</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={[styles.button, styles.testButton]} onPress={testSessionReplaced}>
+        <Text style={styles.buttonText}>Test Session Replaced</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={[styles.button, styles.testButton]} onPress={testSessionExpired}>
+        <Text style={styles.buttonText}>Test Session Expired</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={[styles.button, styles.infoButton]} onPress={testTokens}>
+        <Text style={styles.buttonText}>Check Tokens</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backText}>Kembali</Text>
@@ -48,6 +76,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 12,
     marginBottom: 20,
+  },
+  testButton: {
+    backgroundColor: '#ff6b6b',
+  },
+  infoButton: {
+    backgroundColor: '#4ecdc4',
   },
   buttonText: {
     color: COLORS.white,
