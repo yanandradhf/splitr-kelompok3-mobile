@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.teal,
     paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.xs,
+    borderRadius: BORDER_RADIUS.sm,
   },
   hostBadgeText: {
     fontSize: FONT_SIZES.xs,

@@ -125,20 +125,13 @@ function MethodCard({
       accessibilityState={{ selected: active }}
       style={[
         styles.card,
-        active && {
-          borderColor: stylesVars.orange,
-          shadowColor: stylesVars.orange,
-          shadowOpacity: 0.2,
-          shadowOffset: { width: 0, height: 6 },
-          shadowRadius: 10,
-          elevation: 6,
-        },
+        active && styles.cardActive,
       ]}
     >
-      <View style={[styles.cardIconWrap, { backgroundColor: leftBg }]}>
+      <View style={[styles.cardIconWrap, styles.cardIconBg]}>
         {leftIcon}
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{title}</Text>
         <Text style={styles.cardDesc}>{description}</Text>
       </View>
@@ -247,6 +240,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+  },
+  cardIconBg: {
+    backgroundColor: "#EFEFF3",
+  },
+  cardContent: {
+    flex: 1,
+  },
+  cardActive: {
+    borderColor: stylesVars.orange,
+    shadowColor: stylesVars.orange,
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 6,
   },
   cardTitle: {
     fontSize: 16,
