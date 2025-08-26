@@ -818,7 +818,7 @@ export default function GroupDetailScreen() {
                 <Ionicons
                   name="person-add"
                   size={getIconSize(40)}
-                  color="#00897B"
+                  color="#fd8838"
                 />
               </View>
               <Text style={styles.deleteMessage}>
@@ -913,7 +913,7 @@ export default function GroupDetailScreen() {
                       />
                       <Text style={styles.friendName}>{item.friend.name}</Text>
                       {selectedFriendToAdd?.friend.userId === item.friend.userId && (
-                        <Ionicons name="checkmark-circle" size={20} color="#00897B" />
+                        <Ionicons name="checkmark-circle" size={20} color={COLORS.orange} />
                       )}
                     </TouchableOpacity>
                   )}
@@ -1090,7 +1090,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: rf(12),
     fontFamily: FONTS.semiBold,
-    color: "#F36E1A",
+    color: "#fda76a",
     marginLeft: getSpacing(4),
   },
   groupNameDisplay: {
@@ -1410,7 +1410,7 @@ const styles = StyleSheet.create({
   },
   confirmFriendButton: {
     flex: 1,
-    backgroundColor: "#00897B",
+    backgroundColor: COLORS.bottomButton,
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(12),
     alignItems: "center",
@@ -1474,8 +1474,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.inputBorder,
   },
   friendItemSelected: {
-    borderColor: "#00897B",
-    backgroundColor: "rgba(0, 137, 123, 0.05)",
+    borderColor: COLORS.orange,
+    backgroundColor: "rgba(253, 136, 56, 0.05)",
   },
   friendAvatar: {
     width: wp(10),
@@ -1528,7 +1528,7 @@ const styles = StyleSheet.create({
   },
   confirmAddButton: {
     flex: 1,
-    backgroundColor: "#00897B",
+    backgroundColor: COLORS.bottomButton,
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(12),
     alignItems: "center",

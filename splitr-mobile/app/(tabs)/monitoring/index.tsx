@@ -323,7 +323,7 @@ export default function MonitoringIndex() {
       return { text: "Dijadwalkan", color: COLORS.teal, bg: "#F0F9FF" };
     }
     if (bill.paymentStatus === "completed_scheduled") {
-      return { text: "Terjadwal Selesai", color: COLORS.teal, bg: "#F0F9FF" };
+      return { text: "Terjadwal Selesai", color: COLORS.success, bg: "#DCFCE7" };
     }
     if (
       bill.paymentStatus === "completed" ||

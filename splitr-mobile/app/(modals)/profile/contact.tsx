@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emailButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 15,
