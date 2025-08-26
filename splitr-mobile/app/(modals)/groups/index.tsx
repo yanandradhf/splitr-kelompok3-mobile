@@ -357,12 +357,12 @@ const styles = StyleSheet.create({
   groupId: {
     fontSize: rf(14),
     fontFamily: FONTS.semiBold,
-    color: "#FFFFFF",
+    color: "#000000",
   },
   groupHost: {
     fontSize: rf(14),
     fontFamily: FONTS.semiBold,
-    color: "#FFFFFF",
+    color: "#000000",
   },
   groupContent: {
     backgroundColor: COLORS.white,

@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
   groupHost: {
     fontSize: 12,
     fontFamily: FONTS.semiBold,
-    color: "#FFFFFF",
+    color: "#000000",
   },
   groupContent: {
     backgroundColor: LOCAL_COLORS.cardWhite,
