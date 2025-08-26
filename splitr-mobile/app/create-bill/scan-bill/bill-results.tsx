@@ -125,12 +125,13 @@ export default function BillResult() {
     
   const handleNameChange = (newName: string) => {
     setName(newName);
-    setHeader(newName, category as any);
+    setHeader(newName, category?.categoryId || null, category?.categoryName || null);
   };
   
   const handleConfirm = () => {
     if (canConfirm) {
-      setHeader(name.trim(), category ? category.categoryName as BillCategory : null);
+      // Store both categoryId and categoryName
+      setHeader(name.trim(), category?.categoryId || null, category?.categoryName || null);
       router.push("/create-bill/bill-detail");
     }
   };
