@@ -426,14 +426,14 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity
-                  style={styles.friendItem}
+                  style={styles.addFriendItem}
                   activeOpacity={0.7}
                   onPress={() => router.push("/(modals)/add-friend")}
                 >
                   <View style={styles.addFriendCircle}>
-                    <Ionicons name="add" size={28} color={COLORS.white} />
+                    <Ionicons name="person-add" size={24} color={COLORS.white} />
                   </View>
-                  <Text style={styles.friendName}>Tambah teman</Text>
+                  <Text style={styles.addFriendText}>Tambah{"\n"}teman</Text>
                 </TouchableOpacity>
               </ScrollView>
             ) : (
@@ -504,6 +504,7 @@ const styles = StyleSheet.create({
   userProfile: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
   profileImage: {
     width: 60,
@@ -513,7 +514,8 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     justifyContent: "center",
-    marginLeft: 10,
+    marginLeft: 12,
+    flex: 1,
   },
   welcomeSubtext: {
     fontSize: 16,
@@ -813,7 +815,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   groupContent: {
-    backgroundColor: LOCAL_COLORS.cardWhite,
+    backgroundColor: LOCAL_COLORS.background,
     flexDirection: "row",
     padding: 12,
     alignItems: "center",
@@ -894,28 +896,76 @@ const styles = StyleSheet.create({
   },
   friendItem: {
     alignItems: "center",
+    justifyContent: "space-between",
     marginRight: 16,
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    borderRadius: 12,
+    backgroundColor: LOCAL_COLORS.background,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    width: 80,
+    minHeight: 100,
   },
   friendImage: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    marginBottom: 8,
+    borderWidth: 3,
+    borderColor: LOCAL_COLORS.background,
   },
   friendName: {
-    fontSize: 14,
-    fontFamily: FONTS.medium,
+    fontSize: 12,
+    fontFamily: FONTS.semiBold,
     color: LOCAL_COLORS.textPrimary,
     textAlign: "center",
+    maxWidth: 70,
+    lineHeight: 14,
+  },
+  addFriendItem: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginRight: 16,
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: LOCAL_COLORS.background,
+    borderStyle: "dashed",
+    width: 80,
+    minHeight: 100,
   },
   addFriendCircle: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: LOCAL_COLORS.border,
+    backgroundColor: LOCAL_COLORS.background,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
+    shadowColor: LOCAL_COLORS.background,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  addFriendText: {
+    fontSize: 12,
+    fontFamily: FONTS.semiBold,
+    color: LOCAL_COLORS.textPrimary,
+    textAlign: "center",
+    maxWidth: 70,
+    lineHeight: 14,
   },
 
   // EMPTY STATES
