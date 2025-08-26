@@ -109,7 +109,8 @@ export default function PinVerificationScreen() {
           <View style={styles.placeholder} />
         </View>
 
-        <View style={styles.content}>
+        <View style={styles.whiteModalContainer}>
+          <View style={styles.content}>
           {/* Icon */}
           <View style={styles.iconContainer}>
             <View style={styles.lockIcon}>
@@ -172,6 +173,7 @@ export default function PinVerificationScreen() {
           </Pressable>
 
 
+          </View>
         </View>
       </SafeAreaView>
     </View>
@@ -199,9 +201,22 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 24,
   },
+  whiteModalContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderTopRightRadius: BORDER_RADIUS.xl,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    flex: 1,
+    marginBottom: -50,
+  },
   content: {
     flex: 1,
     paddingHorizontal: SPACING.lg,
+    paddingBottom: 70,
     alignItems: 'center',
     justifyContent: 'center',
   },

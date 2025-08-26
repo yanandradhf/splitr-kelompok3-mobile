@@ -532,6 +532,9 @@ export default function MemberOfBills() {
               )}
             </ScrollView>
 
+          </View>
+          
+          <View style={styles.footer}>
             <TouchableOpacity
               disabled={!canConfirm}
               onPress={() => { 
@@ -545,13 +548,10 @@ export default function MemberOfBills() {
                 {canConfirm && (
                   <Ionicons name="arrow-forward" size={16} color={COLORS.white} />
                 )}
-                <Text style={[styles.confirmText, !canConfirm && styles.confirmTextDisabled]}>
+                <Text style={[styles.confirmText, !canConfirm && styles.confirmTextDisabled]} numberOfLines={2}>
                   {canConfirm ? 
                     (tab === "groups" ? 
-                      `Lanjut dengan ${groups.find(g => {
-                        const memberIds = g.members?.map((m: any) => m.userId || m.id) || [];
-                        return memberIds.length > 0 && memberIds.every(id => selected.includes(id)) && selected.length === memberIds.length;
-                      })?.groupName || 'grup'} (${selectedCount} anggota)` : 
+                      `Lanjut dengan ${selectedCount} anggota` : 
                       `Lanjut dengan ${selectedCount} orang`
                     ) : 
                     'Pilih minimal 1 peserta'
@@ -602,12 +602,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     flex: 1,
+    marginBottom: -50,
   },
   content: {
     flex: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.sm,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
@@ -1412,12 +1413,17 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
+  footer: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingBottom: 70,
+    backgroundColor: COLORS.white,
+  },
   confirmButton: {
     backgroundColor: COLORS.teal,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
     alignItems: "center",
-    marginTop: SPACING.md,
     shadowColor: COLORS.teal,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,

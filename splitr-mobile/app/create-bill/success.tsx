@@ -164,17 +164,20 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    backgroundColor: COLORS.backgroundMain,
   },
   scrollContent: {
     flexGrow: 1,
+    minHeight: '100%',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xl,
-    paddingBottom: SPACING.lg,
+    paddingBottom: 50,
     alignItems: 'center',
+    backgroundColor: COLORS.backgroundMain,
   },
   iconContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.sm,
     position: 'relative',
   },
   successCircle: {
@@ -184,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.success,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: 0,
     shadowColor: COLORS.success,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,

@@ -165,11 +165,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     justifyContent: "center",
-    marginTop: 18,
-    marginLeft: 16,
+    marginTop: 30,
+    marginLeft: 24,
   },
   heroWrap: {
     alignItems: "center",

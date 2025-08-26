@@ -1007,7 +1007,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 40,
+    paddingBottom: 16,
   },
   headerTitle: {
     fontSize: rf(FONT_SIZES.xl),
@@ -1024,11 +1025,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    marginBottom: -24,
+    marginBottom: -100,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 16,
+    paddingBottom: 100,
   },
   groupInfoCard: {
     backgroundColor: "#A6D3CE",

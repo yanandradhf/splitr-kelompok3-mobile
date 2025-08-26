@@ -111,6 +111,40 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* FIXED HEADER SECTION */}
+      <View style={styles.purpleSection}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.userProfile}
+            activeOpacity={0.7}
+            onPress={() => router.push("/(modals)/profile")}
+          >
+            <UserAvatar
+              photoUrl={user?.profilePhotoUrl || storeUser?.profilePhotoUrl}
+              name={user?.name || storeUser?.name || 'User'}
+              size={60}
+            />
+            <View style={styles.welcomeText}>
+              <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
+              <Text style={styles.welcomeName}>
+                {user?.name || storeUser?.name || "User"}
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerNotificationContainer}
+            onPress={() => router.push("/(modals)/notifications")}
+          >
+            <Ionicons
+              name="notifications-outline"
+              size={28}
+              color={COLORS.textPrimary}
+            />
+            {showNotificationDot && <View style={styles.notificationDot} />}
+          </TouchableOpacity>
+        </View>
+      </View>
+      
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -124,38 +158,7 @@ export default function HomeScreen() {
         }
       >
         {/* PURPLE BACKGROUND SECTION */}
-        <View style={styles.purpleSection}>
-          {/* HEADER SECTION */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.userProfile}
-              activeOpacity={0.7}
-              onPress={() => router.push("/(modals)/profile")}
-            >
-              <UserAvatar
-                photoUrl={user?.profilePhotoUrl || storeUser?.profilePhotoUrl}
-                name={user?.name || storeUser?.name || 'User'}
-                size={60}
-              />
-              <View style={styles.welcomeText}>
-                <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
-                <Text style={styles.welcomeName}>
-                  {user?.name || storeUser?.name || "User"}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerNotificationContainer}
-              onPress={() => router.push("/(modals)/notifications")}
-            >
-              <Ionicons
-                name="notifications-outline"
-                size={28}
-                color={COLORS.textPrimary}
-              />
-              {showNotificationDot && <View style={styles.notificationDot} />}
-            </TouchableOpacity>
-          </View>
+        <View style={styles.purpleSectionScrollable}>
 
           {/* ACTIVITY SECTION */}
           <View style={styles.activitySection}>
@@ -271,9 +274,6 @@ export default function HomeScreen() {
                     activeOpacity={0.8}
                   >
                     <View style={styles.groupHeader}>
-                      <Text style={styles.groupId}>
-                        ID {group.groupId.slice(0, 8)}
-                      </Text>
                       <Text style={styles.groupHost}>
                         Host : {group.isCreator ? "You" : group.creatorName}
                       </Text>
@@ -451,6 +451,10 @@ const styles = StyleSheet.create({
     backgroundColor: LOCAL_COLORS.background,
     paddingBottom: 20,
   },
+  purpleSectionScrollable: {
+    backgroundColor: LOCAL_COLORS.background,
+    paddingBottom: 20,
+  },
   scrollView: {
     flex: 1,
   },
@@ -473,7 +477,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 15,
+    paddingBottom: 16,
   },
   userProfile: {
     flexDirection: "row",
@@ -487,6 +492,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     justifyContent: "center",
+    marginLeft: 8,
   },
   welcomeSubtext: {
     fontSize: 16,

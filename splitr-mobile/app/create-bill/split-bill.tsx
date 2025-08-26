@@ -230,6 +230,9 @@ export default function SplitBill() {
               ))}
             </View>
 
+          </ScrollView>
+          
+          <View style={styles.footer}>
             <TouchableOpacity 
               onPress={handleConfirm} 
               disabled={!allItemsValid} 
@@ -238,7 +241,7 @@ export default function SplitBill() {
             >
               <Text style={styles.confirmText}>Konfirmasi</Text>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
       </SafeAreaView>
     </View>
@@ -281,12 +284,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     flex: 1,
+    marginBottom: -50,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 20,
+    paddingBottom: 70,
   },
   memberInfo: {
     fontSize: 16,
@@ -441,19 +445,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: 'italic',
   },
+  footer: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingBottom: 70,
+  },
   confirmButton: {
     backgroundColor: COLORS.teal,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 10,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
     shadowColor: COLORS.teal,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   confirmText: {
     color: COLORS.white,

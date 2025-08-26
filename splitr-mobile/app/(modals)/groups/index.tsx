@@ -174,9 +174,6 @@ export default function GroupsScreen() {
                     activeOpacity={0.8}
                   >
                     <View style={styles.groupHeader}>
-                      <Text style={styles.groupId}>
-                        ID {group.groupId?.slice(0, 8) || "N/A"}
-                      </Text>
                       <Text style={styles.groupHost}>
                         Host :{" "}
                         {group.isCreator
@@ -287,7 +284,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   headerTitle: {
     fontSize: rf(FONT_SIZES.xl),

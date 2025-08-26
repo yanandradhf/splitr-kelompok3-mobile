@@ -215,6 +215,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     flex: 1,
+    marginBottom: -50,
   },
   content: {
     flex: 1,
@@ -341,6 +342,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 20,
+    paddingBottom: 70,
   },
   confirmButton: {
     backgroundColor: COLORS.teal,

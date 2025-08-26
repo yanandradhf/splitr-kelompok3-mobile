@@ -483,7 +483,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 25,
+    paddingBottom: 16,
   },
   backButton: {
     padding: 8,
@@ -521,9 +522,9 @@ const styles = StyleSheet.create({
   stickySectionWithMargin: {
     backgroundColor: COLORS.white,
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 8,
     paddingBottom: 12,
-    marginTop: 16,
+    marginTop: 4,
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.white,
     zIndex: 10,

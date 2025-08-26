@@ -32,14 +32,16 @@ export default function EditBill() {
   const handlePriceChange = (value: string) => {
     // Remove non-numeric characters
     const numericValue = value.replace(/[^0-9]/g, '');
-    setPrice(numericValue);
+    // Format with thousand separators
+    const formattedValue = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    setPrice(formattedValue);
   };
 
   const onAdd = () => {
     if (isAddDisabled) return;
     
     const qtyNum = isSharing ? 1 : Math.max(1, Number(qty) || 1);
-    const priceNum = Math.max(0, Number(price) || 0);
+    const priceNum = Math.max(0, Number(price.replace(/\./g, '')) || 0);
     
     const item: BillItem = {
       id: Math.random().toString(36).slice(2),
@@ -67,7 +69,7 @@ export default function EditBill() {
       id: editingItem,
       name: editName.trim(),
       qty: editIsSharing ? 1 : Math.max(1, Number(editQty) || 1),
-      price: Math.max(0, Number(editPrice) || 0),
+      price: Math.max(0, Number(editPrice.replace(/\./g, '')) || 0),
       isSharing: editIsSharing,
     };
     updateItem(updatedItem);
@@ -84,7 +86,9 @@ export default function EditBill() {
 
   const handleEditPriceChange = (value: string) => {
     const numericValue = value.replace(/[^0-9]/g, '');
-    setEditPrice(numericValue);
+    // Format with thousand separators
+    const formattedValue = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    setEditPrice(formattedValue);
   };
 
   return (
@@ -365,8 +369,12 @@ export default function EditBill() {
                       <TextInput 
                         placeholder="50000" 
                         keyboardType="number-pad" 
-                        value={String(draft.fees.discountNominal || '')} 
-                        onChangeText={(v) => setFees({ ...draft.fees, discountNominal: Number(v) || 0, discountPct: 0 })} 
+                        value={draft.fees.discountNominal ? String(draft.fees.discountNominal).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''} 
+                        onChangeText={(v) => {
+                          const numericValue = v.replace(/[^0-9]/g, '');
+                          const formattedValue = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                          setFees({ ...draft.fees, discountNominal: Number(numericValue) || 0, discountPct: 0 });
+                        }} 
                         style={styles.priceInput} 
                       />
                     </View>
@@ -411,21 +419,24 @@ export default function EditBill() {
               </View>
             </View>
 
-            <Pressable 
-              onPress={() => {
-                // Navigate back to appropriate screen based on returnTo param
-                if (returnTo === "scan-results") {
-                  router.back();
-                } else {
-                  router.back();
-                }
-              }} 
-              style={styles.confirmButton}
-            >
-              <Text style={styles.confirmText}>Simpan Tagihan</Text>
-            </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
+        
+        <View style={styles.footer}>
+          <Pressable 
+            onPress={() => {
+              // Navigate back to appropriate screen based on returnTo param
+              if (returnTo === "scan-results") {
+                router.back();
+              } else {
+                router.back();
+              }
+            }} 
+            style={styles.confirmButton}
+          >
+            <Text style={styles.confirmText}>Simpan Tagihan</Text>
+          </Pressable>
+        </View>
         </View>
       </SafeAreaView>
     </View>
@@ -468,6 +479,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     flex: 1,
+    marginBottom: -50,
   },
   keyboardAvoid: {
     flex: 1,
@@ -683,12 +695,17 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.teal,
   },
+  footer: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingBottom: 70,
+    backgroundColor: COLORS.white,
+  },
   confirmButton: {
     backgroundColor: COLORS.teal,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.sm,
     alignItems: 'center',
-    marginTop: SPACING.md,
   },
   confirmText: {
     color: COLORS.white,
