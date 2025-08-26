@@ -280,30 +280,57 @@ export default function HomeScreen() {
                     </View>
                     <View style={styles.groupContent}>
                       <View style={styles.groupAvatars}>
-                        {group.members?.slice(0, 4).map((member, avatarIndex) => (
-                          <UserAvatar
-                            key={member.userId || avatarIndex}
-                            photoUrl={member.profilePhotoUrl || member.profilePhoto || member.avatar}
-                            name={member.name || 'User'}
-                            size={36}
-                            style={[
-                              styles.avatar,
-                              avatarIndex > 0 && styles.avatarOverlap,
-                            ]}
-                          />
-                        )) || 
-                        Array.from({ length: Math.min(group.memberCount || 1, 4) }, (_, avatarIndex) => (
-                          <UserAvatar
-                            key={avatarIndex}
-                            photoUrl={undefined}
-                            name="User"
-                            size={36}
-                            style={[
-                              styles.avatar,
-                              avatarIndex > 0 && styles.avatarOverlap,
-                            ]}
-                          />
-                        ))}
+                        {(() => {
+                          const allMembers = group.members || [];
+                          const displayMembers = allMembers.slice(0, 3);
+                          const totalMembers = group.memberCount || allMembers.length || 0;
+
+                          if (displayMembers.length === 0 && totalMembers > 0) {
+                            return (
+                              <>
+                                {Array.from({ length: Math.min(totalMembers, 3) }, (_, index) => (
+                                  <UserAvatar
+                                    key={`placeholder-${index}`}
+                                    photoUrl={undefined}
+                                    name={`User ${index + 1}`}
+                                    size={32}
+                                    style={[
+                                      styles.avatar,
+                                      index > 0 && styles.avatarOverlap,
+                                    ]}
+                                  />
+                                ))}
+                                {totalMembers > 3 && (
+                                  <View style={[styles.avatar, styles.avatarOverlap, styles.moreAvatarContainer]}>
+                                    <Text style={styles.moreAvatarText}>+{totalMembers - 3}</Text>
+                                  </View>
+                                )}
+                              </>
+                            );
+                          }
+
+                          return (
+                            <>
+                              {displayMembers.map((member, index) => (
+                                <UserAvatar
+                                  key={member.userId || index}
+                                  photoUrl={member.profilePhotoUrl || member.profilePhoto || member.avatar}
+                                  name={member.name || 'User'}
+                                  size={32}
+                                  style={[
+                                    styles.avatar,
+                                    index > 0 && styles.avatarOverlap,
+                                  ]}
+                                />
+                              ))}
+                              {totalMembers > 3 && (
+                                <View style={[styles.avatar, styles.avatarOverlap, styles.moreAvatarContainer]}>
+                                  <Text style={styles.moreAvatarText}>+{totalMembers - 3}</Text>
+                                </View>
+                              )}
+                            </>
+                          );
+                        })()}
                       </View>
                       <View style={styles.groupInfo}>
                         <Text style={styles.groupName}>{group.groupName}</Text>
@@ -801,6 +828,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     borderColor: LOCAL_COLORS.cardWhite,
+  },
+  moreAvatarContainer: {
+    backgroundColor: COLORS.teal,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  moreAvatarText: {
+    fontSize: 10,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
   },
   avatarOverlap: {
     marginLeft: -8,

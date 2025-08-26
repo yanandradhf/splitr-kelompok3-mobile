@@ -250,7 +250,7 @@ export default function GroupsScreen() {
                                       key={`placeholder-${index}`}
                                       photoUrl={undefined}
                                       name={`User ${index + 1}`}
-                                      size={40}
+                                      size={32}
                                       style={[
                                         styles.avatar,
                                         index > 0 && styles.avatarOverlap,
@@ -287,7 +287,7 @@ export default function GroupsScreen() {
                                     key={member.id || member.userId || index}
                                     photoUrl={avatarSource}
                                     name={member.name || `User ${index + 1}`}
-                                    size={40}
+                                    size={32}
                                     style={[
                                       styles.avatar,
                                       index > 0 && styles.avatarOverlap,
@@ -462,9 +462,9 @@ const styles = StyleSheet.create({
     marginRight: getSpacing(16),
   },
   avatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: COLORS.white,
   },
@@ -472,14 +472,14 @@ const styles = StyleSheet.create({
     marginLeft: -getSpacing(10),
   },
   moreAvatarContainer: {
-    backgroundColor: LOCAL_COLORS.background,
+    backgroundColor: COLORS.teal,
     justifyContent: "center",
     alignItems: "center",
   },
   moreAvatarText: {
-    fontSize: rf(12),
+    fontSize: 10,
     fontFamily: FONTS.semiBold,
-    color: "#FFFFFF",
+    color: COLORS.white,
   },
   groupInfo: {
     flex: 1,
