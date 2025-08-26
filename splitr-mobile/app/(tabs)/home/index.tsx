@@ -23,14 +23,14 @@ import UserAvatar from "../../../components/ui/UserAvatar";
 import { COLORS, FONTS } from "../../../constants/theme";
 
 const LOCAL_COLORS = {
-  background: "#A6D3CE",
+  background: "#fde9a2",
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
   textPrimary: COLORS.textPrimary,
   textSecondary: COLORS.textSecondary,
   border: COLORS.border,
-  headerBrown: "#00897B",
+  headerBrown: "#FDA76A",
   gray: COLORS.gray,
 };
 
@@ -174,7 +174,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="receipt-outline"
                           size={20}
-                          color={COLORS.teal}
+                          color={COLORS.orange}
                         />
                       </View>
                       <Text style={styles.statNumber}>
@@ -187,7 +187,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="checkmark-circle-outline"
                           size={20}
-                          color={COLORS.teal}
+                          color={COLORS.orange}
                         />
                       </View>
                       <Text style={styles.statNumber}>
@@ -200,7 +200,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="time-outline"
                           size={20}
-                          color={COLORS.teal}
+                          color={COLORS.orange}
                         />
                       </View>
                       <Text style={styles.statNumber}>
@@ -271,9 +271,9 @@ export default function HomeScreen() {
                     activeOpacity={0.8}
                   >
                     <View style={styles.groupHeader}>
-                      <Text style={styles.groupId}>
+                      {/* <Text style={styles.groupId}>
                         ID {group.groupId.slice(0, 8)}
-                      </Text>
+                      </Text> */}
                       <Text style={styles.groupHost}>
                         Host : {group.isCreator ? "You" : group.creatorName}
                       </Text>
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#76B9BB",
+    shadowColor: "#FDA76A",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     elevation: 3,
-    shadowColor: "#76B9BB",
+    shadowColor: "#FDA76A",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

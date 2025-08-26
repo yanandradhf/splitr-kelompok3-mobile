@@ -1413,7 +1413,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   confirmButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
     alignItems: "center",

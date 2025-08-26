@@ -211,7 +211,7 @@ const EditProfileScreen = () => {
                 size={100}
               />
               <TouchableOpacity style={styles.editIconContainer} onPress={handlePhotoUpload}>
-                <Ionicons name="camera" size={16} color={COLORS.teal} />
+                <Ionicons name="camera" size={16} color={COLORS.orange} />
               </TouchableOpacity>
             </View>
             <Text style={styles.profileName}>{user?.name || 'User'}</Text>
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.inputBorder,
   },
   updateButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     borderRadius: 15,
     paddingVertical: 18,
     alignItems: "center",

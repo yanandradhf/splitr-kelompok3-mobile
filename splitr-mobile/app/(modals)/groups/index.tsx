@@ -131,8 +131,8 @@ export default function GroupsScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={COLORS.teal}
-                colors={[COLORS.teal]}
+                tintColor={COLORS.orange}
+                colors={[COLORS.orange]}
               />
             }
           >
@@ -174,9 +174,9 @@ export default function GroupsScreen() {
                     activeOpacity={0.8}
                   >
                     <View style={styles.groupHeader}>
-                      <Text style={styles.groupId}>
+                      {/* <Text style={styles.groupId}>
                         ID {group.groupId?.slice(0, 8) || "N/A"}
-                      </Text>
+                      </Text> */}
                       <Text style={styles.groupHost}>
                         Host :{" "}
                         {group.isCreator
@@ -259,7 +259,7 @@ export default function GroupsScreen() {
 }
 
 const LOCAL_COLORS = {
-  background: "#A6D3CE",
+  background: "#fde9a2",
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     marginBottom: getSpacing(16),
   },
   groupHeader: {
-    backgroundColor: "#00897B",
+    backgroundColor: "#FDA76A",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -400,13 +400,13 @@ const styles = StyleSheet.create({
     marginBottom: getSpacing(8),
   },
   headerCreateButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     width: getIconSize(36),
     height: getIconSize(36),
     borderRadius: getIconSize(18),
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: COLORS.teal,
+    shadowColor: COLORS.orange,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

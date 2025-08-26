@@ -161,7 +161,7 @@ export default function ProfileScreen() {
                   <Ionicons
                     name="person-outline"
                     size={22}
-                    color={COLORS.teal}
+                    color={COLORS.orange}
                   />
                   <Text style={styles.menuText}>Edit Profile</Text>
                 </View>
@@ -180,7 +180,7 @@ export default function ProfileScreen() {
                   <Ionicons
                     name="settings-outline"
                     size={22}
-                    color={COLORS.teal}
+                    color={COLORS.orange}
                   />
                   <Text style={styles.menuText}>Pengaturan</Text>
                 </View>
@@ -199,7 +199,7 @@ export default function ProfileScreen() {
                   <Ionicons
                     name="help-circle-outline"
                     size={22}
-                    color={COLORS.teal}
+                    color={COLORS.orange}
                   />
                   <Text style={styles.menuText}>Bantuan</Text>
                 </View>
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 5,
     right: 5,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     borderRadius: 12,
     width: 24,
     height: 24,
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   bankCard: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     borderRadius: 16,
     padding: 16,
     shadowColor: COLORS.black,
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",

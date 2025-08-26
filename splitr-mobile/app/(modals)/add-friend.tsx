@@ -245,9 +245,9 @@ export default function TambahTeman() {
               />
               <TouchableOpacity style={styles.searchIcon} onPress={handleUsernameSearch}>
                 {isSearching ? (
-                  <ActivityIndicator size={20} color={COLORS.teal} />
+                  <ActivityIndicator size={20} color={COLORS.orange} />
                 ) : (
-                  <Ionicons name="search" size={20} color={COLORS.teal} />
+                  <Ionicons name="search" size={20} color={COLORS.orange} />
                 )}
               </TouchableOpacity>
             </View>
@@ -262,7 +262,7 @@ export default function TambahTeman() {
               >
                 {isSearching ? (
                   <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={COLORS.teal} />
+                    <ActivityIndicator size="large" color={COLORS.orange} />
                     <Text style={styles.loadingText}>Mencari pengguna...</Text>
                   </View>
                 ) : searchResults.length > 0 ? (
@@ -290,7 +290,7 @@ export default function TambahTeman() {
                   </>
                 ) : searchError ? (
                   <View style={styles.emptyState}>
-                    <Ionicons name="people" size={64} color={COLORS.teal} />
+                    <Ionicons name="people" size={64} color={COLORS.orange} />
                     <Text style={styles.emptyTitle}>Sudah Berteman</Text>
                     <Text style={styles.emptySubtitle}>{searchError}</Text>
                   </View>
@@ -319,7 +319,7 @@ export default function TambahTeman() {
                 autoCorrect={false}
               />
               <View style={styles.searchIcon}>
-                <Ionicons name="search" size={20} color={COLORS.teal} />
+                <Ionicons name="search" size={20} color={COLORS.orange} />
               </View>
             </View>
           </View>
@@ -333,7 +333,7 @@ export default function TambahTeman() {
             >
               {isLoadingFriends ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color={COLORS.teal} />
+                  <ActivityIndicator size="small" color={COLORS.orange} />
                   <Text style={styles.loadingText}>Memuat daftar teman...</Text>
                 </View>
               ) : filteredFriends.length === 0 ? (
@@ -371,7 +371,7 @@ export default function TambahTeman() {
           <View style={styles.modalOverlay}>
             <View style={styles.successModal}>
               <View style={styles.successIconContainer}>
-                <Ionicons name="checkmark-circle" size={80} color={COLORS.teal} />
+                <Ionicons name="checkmark-circle" size={80} color={COLORS.orange} />
               </View>
               <Text style={styles.successTitle}>Yeay!</Text>
               <Text style={styles.successMessage}>Teman berhasil ditambahkan</Text>
@@ -400,7 +400,7 @@ export default function TambahTeman() {
           <View style={styles.modalOverlay}>
             <View style={styles.confirmationModal}>
               <View style={styles.confirmationIconContainer}>
-                <Ionicons name="person-add" size={60} color={COLORS.teal} />
+                <Ionicons name="person-add" size={60} color={COLORS.orange} />
               </View>
               <Text style={styles.confirmationTitle}>Tambah Teman?</Text>
               <Text style={styles.confirmationMessage}>Apakah Anda ingin menambahkan pengguna ini sebagai teman?</Text>
@@ -671,7 +671,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     alignItems: 'center',
   },
   confirmAddButtonText: {

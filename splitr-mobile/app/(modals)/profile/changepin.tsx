@@ -25,13 +25,13 @@ function Stepper({ current }: { current: number }) {
             style={[
               styles.halfLine,
               idx === 0 && styles.invisible,
-              s - 1 < current && idx !== 0 && { backgroundColor: COLORS.teal },
+              s - 1 < current && idx !== 0 && { backgroundColor: COLORS.orange },
             ]}
           />
           <View
             style={[
               styles.stepCircle,
-              s <= current && { backgroundColor: COLORS.teal },
+              s <= current && { backgroundColor: COLORS.orange },
             ]}
           >
             <Text
@@ -47,7 +47,7 @@ function Stepper({ current }: { current: number }) {
             style={[
               styles.halfLine,
               idx === steps.length - 1 && styles.invisible,
-              s < current && idx !== steps.length - 1 && { backgroundColor: COLORS.teal },
+              s < current && idx !== steps.length - 1 && { backgroundColor: COLORS.orange },
             ]}
           />
         </View>
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.gray,
   },
   pinDotFilled: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
   },
   keypad: {
     marginBottom: 30,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   nextButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingHorizontal: 50,
     paddingVertical: 15,
     borderRadius: 15,
@@ -499,12 +499,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoutButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 12,

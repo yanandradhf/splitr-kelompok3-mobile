@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     color: COLORS.teal,
   },
   sendButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     borderRadius: BORDER_RADIUS.md,
     paddingVertical: SPACING.md,
     alignItems: 'center',

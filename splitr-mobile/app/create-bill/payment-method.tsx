@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   confirmButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.sm,
     alignItems: "center",

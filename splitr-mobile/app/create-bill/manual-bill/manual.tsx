@@ -327,8 +327,8 @@ const styles = StyleSheet.create({
   addButton: {
     alignSelf: 'center',
     borderWidth: 1,
-    borderColor: COLORS.teal,
-    backgroundColor: 'rgba(0, 137, 123, 0.1)',
+    borderColor: COLORS.orange,
+    backgroundColor: '#ffeee2ff',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   confirmButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

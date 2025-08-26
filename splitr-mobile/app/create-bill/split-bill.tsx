@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   confirmButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,

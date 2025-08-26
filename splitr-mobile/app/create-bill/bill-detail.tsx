@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     color: COLORS.teal,
   },
   confirmButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.sm,
     alignItems: "center",

@@ -436,7 +436,7 @@ export default function CreateGroupScreen() {
 }
 
 const LOCAL_COLORS = {
-  background: "#A6D3CE",
+  background: "#FDE9A2",
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
@@ -619,9 +619,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   addButton: {
-    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    backgroundColor: "#FDECDC",
     borderWidth: 1,
-    borderColor: "#00897B",
+    borderColor: "#F2650b",
     borderRadius: getBorderRadius(16),
     paddingHorizontal: getSpacing(12),
     paddingVertical: getSpacing(6),
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: rf(12),
     fontFamily: FONTS.semiBold,
-    color: "#00897B",
+    color: "#000000",
   },
 
   emptyFriendsState: {

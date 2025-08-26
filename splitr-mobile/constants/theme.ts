@@ -1,9 +1,10 @@
 export const COLORS = {
   // Primary Colors
-  orange: '#FF8736',        // Icons, branding
-  teal: '#00897B',         // Primary buttons
+  orange: '#fd8838',        // Icons, branding
+  orangeLight: '#FDA76A',        
+  teal: '#FDA76A',         // Primary buttons
   red: '#FF4747',          // Cancel, delete
-  backgroundMain: '#B2DBD7', // Main background theme
+  backgroundMain: '#fde9a2', // Main background theme
   
   // Secondary Colors
   card: '#D4A89D',         // Card backgrounds
@@ -13,6 +14,7 @@ export const COLORS = {
   // Base Colors (unchanged)
   white: '#FFFFFF',
   black: '#000000',
+  bottomButton : '#fd8838',    
   
   // Text Colors
   textPrimary: '#000000',
