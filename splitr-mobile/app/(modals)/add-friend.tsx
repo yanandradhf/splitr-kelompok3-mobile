@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    backgroundColor: COLORS.orange,
+    backgroundColor: "#F36E1A",
     alignItems: 'center',
   },
   confirmAddButtonText: {
