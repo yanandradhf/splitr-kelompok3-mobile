@@ -126,13 +126,10 @@ export default function PaymentMethod() {
               </View>
             )}
 
-          </ScrollView>
-          
-          <View style={styles.footer}>
             <Pressable onPress={onConfirm} style={styles.confirmButton}>
               <Text style={styles.confirmText}>Kirim ke Anggota</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </View>
       </SafeAreaView>
     </View>
@@ -175,7 +172,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     flex: 1,
-    marginBottom: -50,
   },
   content: {
     flex: 1,
@@ -184,7 +180,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   scrollContent: {
-    paddingBottom: 70,
+    paddingBottom: 20,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
@@ -269,21 +265,12 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
-  footer: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingBottom: 70,
-  },
   confirmButton: {
-    backgroundColor: COLORS.teal,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    shadowColor: COLORS.teal,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: COLORS.bottomButton,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
+    alignItems: "center",
+    marginTop: SPACING.md,
   },
   confirmText: {
     color: COLORS.white,

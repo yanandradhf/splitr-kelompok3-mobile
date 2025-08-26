@@ -70,7 +70,7 @@ const SettingsScreen = () => {
                 onPress={() => router.push("/(modals)/profile/changepassword")}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="lock-closed" size={20} color={COLORS.teal} />
+                  <Ionicons name="lock-closed" size={20} color={COLORS.orange} />
                 </View>
                 <Text style={styles.menuText}>Ubah Password</Text>
                 <Ionicons name="chevron-forward" size={20} color="#999" />
@@ -81,7 +81,7 @@ const SettingsScreen = () => {
                 onPress={() => router.push("/(modals)/profile/changepin")}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="keypad" size={20} color={COLORS.teal} />
+                  <Ionicons name="keypad" size={20} color={COLORS.orange} />
                 </View>
                 <Text style={styles.menuText}>Ubah PIN</Text>
                 <Ionicons name="chevron-forward" size={20} color="#999" />
@@ -99,12 +99,12 @@ const SettingsScreen = () => {
                   <Ionicons
                     name="notifications"
                     size={20}
-                    color={COLORS.teal}
+                    color={COLORS.orange}
                   />
                 </View>
                 <Text style={styles.menuText}>Aktifkan Notifikasi Email</Text>
                 <Switch
-                  trackColor={{ false: "#E0E0E0", true: COLORS.teal }}
+                  trackColor={{ false: "#E0E0E0", true: COLORS.orange }}
                   thumbColor={emailNotifications ? COLORS.white : COLORS.white}
                   ios_backgroundColor="#E0E0E0"
                   onValueChange={setEmailNotifications}
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    paddingTop: 16,
   },
   backgroundSection: {
     backgroundColor: COLORS.backgroundMain,

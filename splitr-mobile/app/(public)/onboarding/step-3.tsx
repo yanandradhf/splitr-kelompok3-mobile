@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   belumPunyaButton: {
-    backgroundColor: THEME_COLORS.teal,
+    backgroundColor: THEME_COLORS.bottomButton,
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,

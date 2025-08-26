@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   primaryButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.bottomButton,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

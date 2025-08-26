@@ -44,7 +44,7 @@ function CustomTabBar() {
             style={{
               width: 60,
               height: 4,
-              backgroundColor: "#00897B",
+              backgroundColor: "#FF8500",
               borderRadius: 2,
               marginBottom: 4,
             }}
@@ -118,7 +118,7 @@ function CustomTabBar() {
             style={{
               width: 60,
               height: 4,
-              backgroundColor: "#00897B",
+              backgroundColor: "#FF8500",
               borderRadius: 2,
               marginBottom: 4,
             }}

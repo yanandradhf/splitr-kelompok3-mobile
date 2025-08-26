@@ -56,7 +56,7 @@ export default function ChooseMethodScreen() {
 
         <View style={styles.heroWrap}>
           <View style={styles.billIconContainer}>
-            <Ionicons name="document-text" size={136} color={stylesVars.tosca} />
+            <Ionicons name="document-text" size={136} color="#fd8838" />
           </View>
         </View>
       </View>
@@ -79,7 +79,7 @@ export default function ChooseMethodScreen() {
             title="Scan Struk"
             description="Gunakan kamera untuk otomatis membuat tagihan dari struk"
             leftBg="#EFEFF3"
-            leftIcon={<Ionicons name="scan" size={22} color={stylesVars.orange} />}
+            leftIcon={<Ionicons name="scan" size={22} color={stylesVars.tosca} />}
           />
 
           {/* Metode: Manual */}
@@ -89,7 +89,7 @@ export default function ChooseMethodScreen() {
             title="Manual"
             description="Masukkan detail tagihan secara manual sesuai kebutuhan"
             leftBg="#EFEFF3"
-            leftIcon={<Ionicons name="create" size={22} color={stylesVars.orange} />}
+            leftIcon={<Ionicons name="create" size={22} color={stylesVars.tosca} />}
           />
 
           {/* CTA */}
@@ -149,19 +149,20 @@ function MethodCard({
 /** ====== Local design tokens untuk halaman ini ====== */
 const stylesVars = {
   purpleTop: "#B2DBD7", // latar ungu muda
-  tosca: "#00897B",     // ikon & tombol
-  orange: "#00897B",    // highlight card aktif
+  tosca: "#3FD8D3",     // ikon & tombol
+  orange: "#FD8838", 
+  yellow: "#fde9a2"   // highlight card aktif
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: stylesVars.purpleTop,
+    backgroundColor: stylesVars.yellow,
   },
 
   /** Header/hero */
   headerArea: {
-    backgroundColor: stylesVars.purpleTop,
+    backgroundColor: stylesVars.yellow,
     paddingBottom: 8,
   },
   backBtn: {
@@ -263,13 +264,13 @@ const styles = StyleSheet.create({
 
   /** Tombol CTA */
   cta: {
-    backgroundColor: stylesVars.tosca,
+    backgroundColor: stylesVars.orange,
     borderRadius: 14,
     height: 52,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 186,
-    shadowColor: stylesVars.tosca,
+    shadowColor: stylesVars.orange,
     shadowOpacity: 0.18,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 12,

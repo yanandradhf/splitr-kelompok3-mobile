@@ -199,11 +199,11 @@ export default function MasterBillDetail() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return COLORS.teal;
+        return COLORS.orange;
       case "completed":
         return COLORS.success;
       case "completed_scheduled":
-        return COLORS.teal;
+        return COLORS.orange;
       case "completed_late":
         return "#D97706";
       case "cancelled":
@@ -320,7 +320,7 @@ export default function MasterBillDetail() {
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.teal} />
+            <ActivityIndicator size="large" color={COLORS.orange} />
             <Text style={styles.loadingText}>Memuat tagihan...</Text>
           </View>
         </SafeAreaView>
@@ -392,7 +392,7 @@ export default function MasterBillDetail() {
                     <Ionicons
                       name="receipt-outline"
                       size={24}
-                      color={COLORS.teal}
+                      color={COLORS.orange}
                     />
                     <View style={styles.receiptInfoText}>
                       <Text style={styles.receiptInfoTitle}>
@@ -426,7 +426,7 @@ export default function MasterBillDetail() {
                         styles.statusBadge,
                         {
                           backgroundColor:
-                            getStatusColor(billData.status) === COLORS.teal
+                            getStatusColor(billData.status) === COLORS.orange
                               ? "#E6FFFA"
                               : getStatusColor(billData.status) ===
                                 COLORS.success
@@ -440,7 +440,7 @@ export default function MasterBillDetail() {
                               ? "#FEF3C7"
                               : "#F8F9FA",
                           borderColor:
-                            getStatusColor(billData.status) === COLORS.teal
+                            getStatusColor(billData.status) === COLORS.orange
                               ? "#B2F5EA"
                               : getStatusColor(billData.status) ===
                                 COLORS.success
@@ -640,7 +640,7 @@ export default function MasterBillDetail() {
                     <Ionicons
                       name="chatbubbles-outline"
                       size={20}
-                      color={COLORS.teal}
+                      color={COLORS.orange}
                     />
                     <Text style={styles.sectionTitle}>
                       Diskusi ({comments.length})
@@ -965,7 +965,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   backToHomeButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.sm,
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   totalAmountValue: {
     fontSize: 28,
     fontFamily: FONTS.bold,
-    color: COLORS.teal,
+    color: COLORS.orange,
   },
   summaryCard: {
     backgroundColor: COLORS.white,
@@ -1119,13 +1119,13 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     borderRadius: 4,
   },
   progressText: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.semiBold,
-    color: COLORS.teal,
+    color: COLORS.orange,
   },
   participantsSection: {
     marginBottom: SPACING.lg,
@@ -1159,7 +1159,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   hostBadge: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.xs,
@@ -1178,7 +1178,7 @@ const styles = StyleSheet.create({
   participantAmount: {
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.bold,
-    color: COLORS.teal,
+    color: COLORS.orange,
   },
   participantStatus: {
     alignItems: "flex-end",
@@ -1201,7 +1201,7 @@ const styles = StyleSheet.create({
   scheduledDate: {
     fontSize: FONT_SIZES.xs,
     fontFamily: FONTS.regular,
-    color: COLORS.teal,
+    color: COLORS.orange,
   },
   lateDate: {
     fontSize: FONT_SIZES.xs,
@@ -1246,12 +1246,12 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.bold,
-    color: COLORS.teal,
+    color: COLORS.orange,
   },
   sharingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.full,
@@ -1288,7 +1288,7 @@ const styles = StyleSheet.create({
   assignmentAmount: {
     fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.semiBold,
-    color: COLORS.teal,
+    color: COLORS.orange,
     minWidth: 80,
     textAlign: "right",
   },
@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: 2,
-    borderTopColor: COLORS.teal,
+    borderTopColor: COLORS.orange,
   },
   totalLabel: {
     fontSize: FONT_SIZES.lg,
@@ -1340,7 +1340,7 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: FONT_SIZES.lg,
     fontFamily: FONTS.bold,
-    color: COLORS.teal,
+    color: COLORS.orange,
   },
   receiptInfoCard: {
     backgroundColor: COLORS.white,
@@ -1449,7 +1449,7 @@ const styles = StyleSheet.create({
   moreCommentsText: {
     fontSize: FONT_SIZES.xs,
     fontFamily: FONTS.medium,
-    color: COLORS.teal,
+    color: COLORS.orange,
     textAlign: "center",
     marginTop: SPACING.xs,
   },
@@ -1558,7 +1558,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   commentBubbleOwn: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     borderRadius: BORDER_RADIUS.lg,
     borderBottomRightRadius: BORDER_RADIUS.xs,
     padding: SPACING.md,
@@ -1603,7 +1603,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   sendButton: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     borderRadius: BORDER_RADIUS.full,
     width: 36,
     height: 36,

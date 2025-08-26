@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   nextButton: {
-    backgroundColor: THEME_COLORS.teal,
+    backgroundColor: THEME_COLORS.bottomButton,
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 20,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   belumPunyaButton: {
-    backgroundColor: THEME_COLORS.teal,
+    backgroundColor: THEME_COLORS.bottomButton,
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,

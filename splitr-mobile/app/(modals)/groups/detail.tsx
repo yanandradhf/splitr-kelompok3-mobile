@@ -544,7 +544,7 @@ export default function GroupDetailScreen() {
                     <Ionicons
                       name={isEditing ? "checkmark" : "pencil"}
                       size={getIconSize(16)}
-                      color="#00897B"
+                      color="#FDA76A"
                     />
                     <Text style={styles.editButtonText}>
                       {isEditing ? "Simpan" : "Edit"}
@@ -591,7 +591,7 @@ export default function GroupDetailScreen() {
                     <Ionicons
                       name={isEditingDescription ? "checkmark" : "pencil"}
                       size={getIconSize(16)}
-                      color="#00897B"
+                      color="#FDA76A"
                     />
                     <Text style={styles.editButtonText}>
                       {isEditingDescription ? "Simpan" : "Edit"}
@@ -651,7 +651,7 @@ export default function GroupDetailScreen() {
                   <Ionicons
                     name="person-add-outline"
                     size={getIconSize(20)}
-                    color="#00897B"
+                    color="#000000"
                     style={styles.buttonIcon}
                   />
                   <Text style={styles.addMemberButtonText}>Tambah</Text>
@@ -983,7 +983,7 @@ export default function GroupDetailScreen() {
 }
 
 const LOCAL_COLORS = {
-  background: "#A6D3CE",
+  background: "#fde9a2",
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   groupInfoCard: {
-    backgroundColor: "#A6D3CE",
+    backgroundColor: "#C2F0ED",
     marginHorizontal: 20,
     marginTop: 16,
     marginBottom: 12,
@@ -1086,12 +1086,12 @@ const styles = StyleSheet.create({
     paddingVertical: getSpacing(6),
     borderRadius: getBorderRadius(16),
     borderWidth: 1,
-    borderColor: "#00897B",
+    borderColor: "#F36E1A",
   },
   editButtonText: {
     fontSize: rf(12),
     fontFamily: FONTS.semiBold,
-    color: "#00897B",
+    color: "#F36E1A",
     marginLeft: getSpacing(4),
   },
   groupNameDisplay: {
@@ -1177,7 +1177,7 @@ const styles = StyleSheet.create({
     marginRight: getSpacing(8),
   },
   hostBadge: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingHorizontal: getSpacing(6),
     paddingVertical: getSpacing(2),
     borderRadius: getBorderRadius(8),
@@ -1199,7 +1199,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   youHostBadge: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     paddingHorizontal: getSpacing(8),
     paddingVertical: getSpacing(2),
     borderRadius: getBorderRadius(8),
@@ -1216,17 +1216,17 @@ const styles = StyleSheet.create({
     marginTop: getSpacing(2),
   },
   addFriendButton: {
-    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    backgroundColor: "#FDECDC",
     paddingHorizontal: getSpacing(12),
     paddingVertical: getSpacing(6),
     borderRadius: getBorderRadius(16),
     borderWidth: 1,
-    borderColor: "rgba(0, 137, 123, 0.3)",
+    borderColor: "#F36E1A",
   },
   addFriendText: {
     fontSize: rf(12),
     fontFamily: FONTS.semiBold,
-    color: "#00897B",
+    color: "#000000",
   },
   removeButton: {
     width: wp(8),
@@ -1268,9 +1268,9 @@ const styles = StyleSheet.create({
   },
   addMemberButton: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.orange,
     borderWidth: 1.5,
-    borderColor: "#00897B",
+    borderColor: "#FDA76A",
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(14),
     flexDirection: "row",
@@ -1280,7 +1280,7 @@ const styles = StyleSheet.create({
   addMemberButtonText: {
     fontSize: rf(14),
     fontFamily: FONTS.semiBold,
-    color: "#00897B",
+    color: COLORS.black,
   },
   deleteGroupButton: {
     backgroundColor: "rgba(255, 59, 48, 0.1)",

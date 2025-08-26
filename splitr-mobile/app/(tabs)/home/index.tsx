@@ -23,14 +23,14 @@ import UserAvatar from "../../../components/ui/UserAvatar";
 import { COLORS, FONTS } from "../../../constants/theme";
 
 const LOCAL_COLORS = {
-  background: "#A6D3CE",
+  background: "#fde9a2",
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
   textPrimary: COLORS.textPrimary,
   textSecondary: COLORS.textSecondary,
   border: COLORS.border,
-  headerBrown: "#00897B",
+  headerBrown: "#FDA76A",
   gray: COLORS.gray,
 };
 
@@ -111,40 +111,6 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* FIXED HEADER SECTION */}
-      <View style={styles.purpleSection}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.userProfile}
-            activeOpacity={0.7}
-            onPress={() => router.push("/(modals)/profile")}
-          >
-            <UserAvatar
-              photoUrl={user?.profilePhotoUrl || storeUser?.profilePhotoUrl}
-              name={user?.name || storeUser?.name || 'User'}
-              size={60}
-            />
-            <View style={styles.welcomeText}>
-              <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
-              <Text style={styles.welcomeName}>
-                {user?.name || storeUser?.name || "User"}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerNotificationContainer}
-            onPress={() => router.push("/(modals)/notifications")}
-          >
-            <Ionicons
-              name="notifications-outline"
-              size={28}
-              color={COLORS.textPrimary}
-            />
-            {showNotificationDot && <View style={styles.notificationDot} />}
-          </TouchableOpacity>
-        </View>
-      </View>
-      
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -158,7 +124,38 @@ export default function HomeScreen() {
         }
       >
         {/* PURPLE BACKGROUND SECTION */}
-        <View style={styles.purpleSectionScrollable}>
+        <View style={styles.purpleSection}>
+          {/* HEADER SECTION */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.userProfile}
+              activeOpacity={0.7}
+              onPress={() => router.push("/(modals)/profile")}
+            >
+              <UserAvatar
+                photoUrl={user?.profilePhotoUrl || storeUser?.profilePhotoUrl}
+                name={user?.name || storeUser?.name || 'User'}
+                size={60}
+              />
+              <View style={styles.welcomeText}>
+                <Text style={styles.welcomeSubtext}>Hi, Welcome Back!</Text>
+                <Text style={styles.welcomeName}>
+                  {user?.name || storeUser?.name || "User"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerNotificationContainer}
+              onPress={() => router.push("/(modals)/notifications")}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={28}
+                color={COLORS.textPrimary}
+              />
+              {showNotificationDot && <View style={styles.notificationDot} />}
+            </TouchableOpacity>
+          </View>
 
           {/* ACTIVITY SECTION */}
           <View style={styles.activitySection}>
@@ -177,7 +174,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="receipt-outline"
                           size={20}
-                          color={COLORS.teal}
+                          color={COLORS.orange}
                         />
                       </View>
                       <Text style={styles.statNumber}>
@@ -190,7 +187,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="checkmark-circle-outline"
                           size={20}
-                          color={COLORS.teal}
+                          color={COLORS.orange}
                         />
                       </View>
                       <Text style={styles.statNumber}>
@@ -203,7 +200,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="time-outline"
                           size={20}
-                          color={COLORS.teal}
+                          color={COLORS.orange}
                         />
                       </View>
                       <Text style={styles.statNumber}>
@@ -274,6 +271,9 @@ export default function HomeScreen() {
                     activeOpacity={0.8}
                   >
                     <View style={styles.groupHeader}>
+                      {/* <Text style={styles.groupId}>
+                        ID {group.groupId.slice(0, 8)}
+                      </Text> */}
                       <Text style={styles.groupHost}>
                         Host : {group.isCreator ? "You" : group.creatorName}
                       </Text>
@@ -446,12 +446,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: LOCAL_COLORS.background,
+    paddingTop: 16,
   },
   purpleSection: {
-    backgroundColor: LOCAL_COLORS.background,
-    paddingBottom: 20,
-  },
-  purpleSectionScrollable: {
     backgroundColor: LOCAL_COLORS.background,
     paddingBottom: 20,
   },
@@ -477,8 +474,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: 16,
+    paddingVertical: 16,
   },
   userProfile: {
     flexDirection: "row",
@@ -492,7 +488,6 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     justifyContent: "center",
-    marginLeft: 8,
   },
   welcomeSubtext: {
     fontSize: 16,
@@ -558,7 +553,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#76B9BB",
+    shadowColor: "#FDA76A",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -635,7 +630,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     elevation: 3,
-    shadowColor: "#76B9BB",
+    shadowColor: "#FDA76A",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -789,7 +784,7 @@ const styles = StyleSheet.create({
   groupHost: {
     fontSize: 12,
     fontFamily: FONTS.semiBold,
-    color: "#FFFFFF",
+    color: "#000000",
   },
   groupContent: {
     backgroundColor: LOCAL_COLORS.cardWhite,

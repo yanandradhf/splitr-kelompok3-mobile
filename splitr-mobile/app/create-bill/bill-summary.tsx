@@ -224,16 +224,13 @@ export default function BillSummary() {
           </View>
         </View>
 
-          </ScrollView>
-          
-          <View style={styles.footer}>
             <Pressable 
               onPress={handleSendBill} 
               style={styles.sendButton}
             >
               <Text style={styles.sendButtonText}>Lanjut ke Verifikasi</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </View>
       </SafeAreaView>
     </View>
@@ -276,7 +273,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     flex: 1,
-    marginBottom: -50,
   },
   content: {
     flex: 1,
@@ -285,7 +281,7 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.lg,
   },
   scrollContent: {
-    paddingBottom: 70,
+    paddingBottom: SPACING.lg,
   },
   billInfo: {
     backgroundColor: COLORS.white,
@@ -493,21 +489,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     color: COLORS.teal,
   },
-  footer: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: 20,
-    paddingBottom: 70,
-  },
   sendButton: {
-    backgroundColor: COLORS.teal,
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: COLORS.bottomButton,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
-    shadowColor: COLORS.teal,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    marginBottom: SPACING.lg,
   },
   sendButtonText: {
     color: COLORS.white,

@@ -1474,7 +1474,7 @@ export default function MonitoringIndex() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundMain,
+    backgroundColor: COLORS.white,
   },
 
   tabContainer: {
@@ -1493,10 +1493,10 @@ const styles = StyleSheet.create({
   compactCard: {
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    shadowColor: COLORS.teal,
+    shadowColor: COLORS.orange,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -1518,7 +1518,7 @@ const styles = StyleSheet.create({
   compactAmount: {
     fontSize: 28,
     fontFamily: FONTS.bold,
-    color: COLORS.white,
+    color: COLORS.black,
     marginBottom: SPACING.xs,
     textAlign: "center",
   },
@@ -1529,11 +1529,11 @@ const styles = StyleSheet.create({
   compactLabel: {
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.semiBold,
-    color: COLORS.white,
+    color: COLORS.black,
     textAlign: "center",
   },
   compactUrgent: {
-    backgroundColor: COLORS.danger,
+    backgroundColor: COLORS.red,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.sm,
@@ -1754,7 +1754,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.sm,
   },
   activeTab: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
   },
   tabText: {
     fontSize: FONT_SIZES.base,
@@ -1873,29 +1873,29 @@ const styles = StyleSheet.create({
   },
   hostCard: {
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.teal,
-    backgroundColor: "#F8FFFE",
+    borderLeftColor: COLORS.orange,
+    backgroundColor: COLORS.white,
   },
   completedCard: {
     borderLeftWidth: 4,
     borderLeftColor: COLORS.success,
-    backgroundColor: "#F0FDF4",
+    backgroundColor: COLORS.white,
   },
   scheduledCard: {
     borderLeftWidth: 4,
     borderLeftColor: COLORS.teal,
-    backgroundColor: "#F0F9FF",
+    backgroundColor: COLORS.white,
   },
   expiredCard: {
     borderColor: "#FCA5A5",
     borderWidth: 2,
-    backgroundColor: "#FEF2F2",
+    backgroundColor: COLORS.white,
     opacity: 0.8,
   },
   lateCard: {
     borderLeftWidth: 4,
     borderLeftColor: "#D97706",
-    backgroundColor: "#FFFBEB",
+    backgroundColor: COLORS.white,
   },
   billContent: {
     padding: SPACING.lg,
