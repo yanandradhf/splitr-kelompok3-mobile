@@ -97,7 +97,8 @@ export default function RegisterSetPin() {
 
     try {
       setStep5Data({ pin });
-      router.push("/(public)/terms");
+      await completeRegister();
+      router.replace("/(auth)/register/success");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     }

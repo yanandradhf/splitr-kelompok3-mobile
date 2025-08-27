@@ -12,7 +12,8 @@ const emptyTotals: Totals = { subTotal: 0, tax: 0, service: 0, discount: 0, gran
 const newDraft = (): BillDraft => ({
   id: Math.random().toString(36).slice(2),
   name: "",
-  category: null,
+  categoryId: null,
+  categoryName: null,
   items: [],
   fees: { taxPct: 0, servicePct: 0, discountPct: 0, discountNominal: 0 },
   assignments: [],
@@ -26,7 +27,7 @@ const newDraft = (): BillDraft => ({
 interface BillState {
   draft: BillDraft;
   reset: () => void;
-  setHeader: (name: string, category: string | null) => void;
+  setHeader: (name: string, categoryId: string | null, categoryName?: string | null) => void;
   addItem: (item: BillItem) => void;
   updateItem: (item: BillItem) => void;
   removeItem: (id: string) => void;
@@ -45,8 +46,8 @@ interface BillState {
 export const useBillStore = create<BillState>((set, get) => ({
   draft: newDraft(),
   reset: () => set({ draft: newDraft() }),
-  setHeader: (name, category) =>
-    set((s) => ({ draft: { ...s.draft, name, category } })),
+  setHeader: (name, categoryId, categoryName) =>
+    set((s) => ({ draft: { ...s.draft, name, categoryId, categoryName } })),
   addItem: (item) =>
     set((s) => ({ draft: { ...s.draft, items: [...s.draft.items, item] } })),
   updateItem: (item) =>

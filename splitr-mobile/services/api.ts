@@ -11,7 +11,12 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync('auth_token');
+    // Try new token format first, fallback to old format
+    let token = await SecureStore.getItemAsync('access_token');
+    if (!token) {
+      token = await SecureStore.getItemAsync('auth_token');
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,6 +26,24 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Refresh token function
+const refreshAccessToken = async () => {
+  const refreshToken = await SecureStore.getItemAsync('refresh_token');
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+  
+  const response = await axios.post(
+    `${API_CONFIG.BASE_URL}${ENDPOINTS.REFRESH}`,
+    { refreshToken },
+    { headers: API_CONFIG.HEADERS }
+  );
+  
+  const { accessToken } = response.data;
+  await SecureStore.setItemAsync('access_token', accessToken);
+  return accessToken;
+};
 
 // Helper to convert image URLs to ngrok
 const convertImageUrls = (obj: any): any => {
@@ -68,7 +91,7 @@ const convertImageUrls = (obj: any): any => {
   return obj;
 };
 
-// Response interceptor
+// Response interceptor with refresh token handling
 api.interceptors.response.use(
   (response) => {
     // Convert localhost URLs to ngrok in response data
@@ -78,21 +101,71 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+    
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+      const errorCode = error.response?.data?.code;
+      
+      // Handle single session errors first
+      const { handleSessionError } = await import('../utils/errorHandler');
+      const sessionHandled = await handleSessionError(error);
+      if (sessionHandled) {
+        return Promise.reject(error);
+      }
+      
+      // Handle invalid token - force logout
       const errorMessage = error.response?.data?.error || error.response?.data?.message || '';
+      const isInvalidToken = errorMessage.includes('invalid') || 
+                            errorMessage.includes('expired') ||
+                            errorMessage.includes('malformed') ||
+                            error.response?.data?.code === 'INVALID_TOKEN';
       
-      // Only delete tokens for actual authentication failures, not validation errors
-      const isAuthFailure = errorMessage.includes('token') || 
-                           errorMessage.includes('unauthorized') || 
-                           errorMessage.includes('expired') ||
-                           errorMessage === 'Access token required';
-      
-      if (isAuthFailure) {
-        console.log('🚨 Authentication failure - clearing tokens');
-        await SecureStore.deleteItemAsync('auth_token');
+      if (isInvalidToken) {
+        console.log('🚨 Invalid token detected, forcing logout');
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('refresh_token');
         await SecureStore.deleteItemAsync('user_data');
-      } else {
-        console.log('⚠️ 401 but not auth failure');
+        
+        const { Alert } = await import('react-native');
+        const { router } = await import('expo-router');
+        
+        Alert.alert(
+          'Session Invalid',
+          'Your session has expired. Please login again.',
+          [{ text: 'Login', onPress: () => router.replace('/(auth)/login') }]
+        );
+        
+        return Promise.reject(error);
+      }
+      
+      // Try to refresh token only if we have refresh token
+      const refreshToken = await SecureStore.getItemAsync('refresh_token');
+      if (!refreshToken) {
+        console.log('🚨 No refresh token, logging out');
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('user_data');
+        
+        const { router } = await import('expo-router');
+        router.replace('/(auth)/login');
+        return Promise.reject(error);
+      }
+      
+      originalRequest._retry = true;
+      try {
+        console.log('🔄 Attempting token refresh...');
+        const newToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        console.log('✅ Token refreshed, retrying request');
+        return api(originalRequest);
+      } catch (refreshError) {
+        console.log('❌ Token refresh failed, logging out');
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('refresh_token');
+        await SecureStore.deleteItemAsync('user_data');
+        
+        const { router } = await import('expo-router');
+        router.replace('/(auth)/login');
+        return Promise.reject(refreshError);
       }
     }
     return Promise.reject(error);
@@ -105,7 +178,12 @@ export const authAPI = {
     return api.post(ENDPOINTS.LOGIN, credentials);
   },
   me: () => api.get(ENDPOINTS.ME),
-  logout: () => api.post(ENDPOINTS.LOGOUT),
+  logout: () => {
+    return api.post(ENDPOINTS.LOGOUT);
+  },
+  refresh: (refreshToken: string) => {
+    return api.post(ENDPOINTS.REFRESH, { refreshToken });
+  },
   sendResetOTP: (data: { email: string }) => {
     console.log('🌐 Making API call to:', API_CONFIG.BASE_URL + ENDPOINTS.SEND_RESET_OTP);
     return api.post(ENDPOINTS.SEND_RESET_OTP, data);

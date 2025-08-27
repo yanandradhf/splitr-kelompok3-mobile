@@ -157,6 +157,16 @@ export default function LoginScreen() {
                 {isLoading ? "Login..." : "Login"}
               </Text>
             </Pressable>
+
+            {/* Debug Reset - Development Only */}
+            {__DEV__ && (
+              <TouchableOpacity 
+                style={styles.debugLink}
+                onPress={() => router.push('/debug-reset')}
+              >
+                <Text style={styles.debugText}>🔧 Reset Onboarding (Dev)</Text>
+              </TouchableOpacity>
+            )}
             </View>
           </ScrollView>
         </View>
@@ -316,6 +326,18 @@ const styles = StyleSheet.create({
   },
 
   loginButtonTextDisabled: {
+    color: COLORS.textSecondary,
+  },
+
+  debugLink: {
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 10,
+  },
+
+  debugText: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
 });

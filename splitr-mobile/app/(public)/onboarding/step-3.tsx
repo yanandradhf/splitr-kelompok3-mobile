@@ -42,11 +42,11 @@ export default function Onboarding3({
     PlusJakartaSans_800ExtraBold,
   });
 
-  const handleBelumPunyaPress = () => {
+  const handleSudahPunyaPress = () => {
     router.push("/(public)/terms");
   };
 
-  const handleSudahPunyaPress = () => {
+  const handleBelumPunyaPress = () => {
     const wondrUrl = "https://apps.apple.com/id/app/wondr-by-bni/id6499518320";
     const wondrUrlAndroid =
       "https://play.google.com/store/apps/details?id=com.bni.wondr";
@@ -62,11 +62,6 @@ export default function Onboarding3({
 
   return (
     <View style={styles.container}>
-      {/* <Image 
-        source={require('../../../assets/images/splitr.png')} 
-        style={styles.logoTop}
-        resizeMode="contain"
-      /> */}
       <Image
         source={require("../../../assets/images/onboarding3.png")}
         style={styles.onboardingImage}
@@ -90,14 +85,14 @@ export default function Onboarding3({
       <View style={styles.buttonGroup}>
         <TouchableOpacity
           style={styles.belumPunyaButton}
-          onPress={handleBelumPunyaPress}
+          onPress={handleSudahPunyaPress}
         >
           <Text style={styles.belumPunyaText}>Sudah Punya Rekening BNI</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.sudahPunyaButton}
-          onPress={handleSudahPunyaPress}
+          onPress={handleBelumPunyaPress}
         >
           <Text style={styles.sudahPunyaText}>Belum Punya Rekening BNI</Text>
         </TouchableOpacity>
@@ -114,13 +109,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     padding: 20,
-  },
-  logoTop: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    width: 80,
-    height: 40,
   },
   onboardingImage: {
     width: 250,

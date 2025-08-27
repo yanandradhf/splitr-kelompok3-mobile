@@ -277,8 +277,8 @@ export function transformDraftToCreateBillRequest(draft: BillDraft, categoryId: 
   const hasSharedItems = draft.items.some(item => item.isSharing);
   const splitMethod = hasSharedItems ? 'custom' : 'equal';
   
-  // Use the category ID directly from draft
-  const finalCategoryId = draft.category || categoryId;
+  // Use the stored categoryId from draft, fallback to parameter
+  const finalCategoryId = draft.categoryId || categoryId;
   
   return {
     billName: draft.name,

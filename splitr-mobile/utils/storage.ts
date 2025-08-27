@@ -1,41 +1,58 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const storage = {
-  // Secure storage for sensitive data
-  setSecure: async (key: string, value: string) => {
-    try {
-      await SecureStore.setItemAsync(key, value);
-    } catch (error) {
-      console.error('Error storing secure data:', error);
+const STORAGE_KEYS = {
+  HAS_COMPLETED_ONBOARDING: 'hasCompletedOnboarding',
+  HAS_TNC_ACCEPTED: 'hasTnCAccepted',
+  TNC_ACCEPTED_DATE: 'tncAcceptedDate',
+};
+
+export const StorageService = {
+  // Onboarding status
+  async setOnboardingCompleted(completed: boolean): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING, JSON.stringify(completed));
+  },
+
+  async hasCompletedOnboarding(): Promise<boolean> {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING);
+    return value ? JSON.parse(value) : false;
+  },
+
+  // TnC status
+  async setTnCAccepted(accepted: boolean): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEYS.HAS_TNC_ACCEPTED, JSON.stringify(accepted));
+    if (accepted) {
+      await AsyncStorage.setItem(STORAGE_KEYS.TNC_ACCEPTED_DATE, new Date().toISOString());
     }
   },
 
-  getSecure: async (key: string) => {
-    try {
-      return await SecureStore.getItemAsync(key);
-    } catch (error) {
-      console.error('Error retrieving secure data:', error);
-      return null;
-    }
+  async hasTnCAccepted(): Promise<boolean> {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.HAS_TNC_ACCEPTED);
+    return value ? JSON.parse(value) : false;
   },
 
-  removeSecure: async (key: string) => {
-    try {
-      await SecureStore.deleteItemAsync(key);
-    } catch (error) {
-      console.error('Error removing secure data:', error);
-    }
+  async getTnCAcceptedDate(): Promise<string | null> {
+    return await AsyncStorage.getItem(STORAGE_KEYS.TNC_ACCEPTED_DATE);
   },
 
-  // Helper methods
-  setToken: (token: string) => storage.setSecure('auth_token', token),
-  getToken: () => storage.getSecure('auth_token'),
-  removeToken: () => storage.removeSecure('auth_token'),
-  
-  setUser: (user: object) => storage.setSecure('user_data', JSON.stringify(user)),
-  getUser: async () => {
-    const userData = await storage.getSecure('user_data');
-    return userData ? JSON.parse(userData) : null;
+  // Check if user should see onboarding
+  async shouldShowOnboarding(): Promise<boolean> {
+    const hasCompleted = await this.hasCompletedOnboarding();
+    const hasTnC = await this.hasTnCAccepted();
+    return !hasCompleted || !hasTnC;
   },
-  removeUser: () => storage.removeSecure('user_data'),
+
+  // Complete full onboarding flow
+  async completeOnboardingFlow(): Promise<void> {
+    await this.setOnboardingCompleted(true);
+    await this.setTnCAccepted(true);
+  },
+
+  // Reset for testing
+  async resetOnboarding(): Promise<void> {
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.HAS_COMPLETED_ONBOARDING,
+      STORAGE_KEYS.HAS_TNC_ACCEPTED,
+      STORAGE_KEYS.TNC_ACCEPTED_DATE,
+    ]);
+  },
 };
