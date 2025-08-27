@@ -65,19 +65,44 @@ const EditProfileScreen = () => {
     }
   }, [user]);
 
+  // Validation functions
+  const isValidEmail = (email: string) => {
+    return email.includes('@') && email.includes('.');
+  };
+
+  const hasValidChanges = () => {
+    // Check if any field has meaningful changes (not just spaces)
+    const nameChanged = username.trim() !== originalData.name.trim() && username.trim() !== '';
+    const phoneChanged = phoneNumber.trim() !== originalData.phone.trim() && phoneNumber.trim() !== '';
+    const emailChanged = email.trim() !== originalData.email.trim() && email.trim() !== '';
+    
+    const hasChanges = nameChanged || phoneChanged || emailChanged;
+    
+    // If email changed, validate it
+    if (emailChanged && !isValidEmail(email.trim())) {
+      return false;
+    }
+    
+    return hasChanges;
+  };
+
   // Check if data has changed
-  const hasChanges =
-    username !== originalData.name ||
-    phoneNumber !== originalData.phone ||
-    email !== originalData.email;
+  const hasChanges = hasValidChanges();
 
   const handleUpdateProfile = async () => {
     if (!hasChanges) return;
 
+    // Validate email if it was changed
+    if (email.trim() !== originalData.email.trim() && !isValidEmail(email.trim())) {
+      Alert.alert('Email Tidak Valid', 'Masukkan alamat email yang valid dengan @ dan domain.');
+      return;
+    }
+
+    // Trim all values before sending
     const success = await updateProfile({
-      name: username,
-      phone: phoneNumber,
-      email: email,
+      name: username.trim(),
+      phone: phoneNumber.trim(),
+      email: email.trim(),
     });
 
     if (success) {

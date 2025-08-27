@@ -53,28 +53,31 @@ export const MembersSection: React.FC<MembersSectionProps> = ({
           <Text style={styles.pendingLabel}>Menunggu konfirmasi</Text>
         )}
       </View>
-      {!displayGroup?.isCreator && canAddAsFriend(item.id) && !isCurrentUser(item) && (
-        <TouchableOpacity
-          style={styles.addFriendButton}
-          onPress={() => onAddFriend(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.addFriendText}>Add Friend</Text>
-        </TouchableOpacity>
-      )}
-      {item.id !== "creator" && displayGroup?.isCreator && !isCurrentUser(item) && (
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => onRemoveMember(item)}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={getIconSize(16)}
-            color="#FF3B30"
-          />
-        </TouchableOpacity>
-      )}
+      <View style={styles.memberActions}>
+        {!displayGroup?.isCreator && canAddAsFriend(item.id) && !isCurrentUser(item) && (
+          <TouchableOpacity
+            style={styles.addFriendButton}
+            onPress={() => onAddFriend(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="person-add" size={14} color={COLORS.teal} />
+            <Text style={styles.addFriendText}>Add</Text>
+          </TouchableOpacity>
+        )}
+        {item.id !== "creator" && displayGroup?.isCreator && !isCurrentUser(item) && (
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => onRemoveMember(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={16}
+              color={COLORS.white}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 
@@ -178,27 +181,38 @@ const styles = StyleSheet.create({
     color: "#FF9500",
     marginTop: getSpacing(2),
   },
+  memberActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: getSpacing(8),
+  },
   addFriendButton: {
-    backgroundColor: "rgba(253, 136, 56, 0.1)",
-    paddingHorizontal: getSpacing(12),
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.white,
+    paddingHorizontal: getSpacing(10),
     paddingVertical: getSpacing(6),
     borderRadius: getBorderRadius(16),
-    borderWidth: 1,
-    borderColor: "rgba(253, 136, 56, 0.3)",
+    borderWidth: 1.5,
+    borderColor: COLORS.teal,
+    gap: getSpacing(4),
   },
   addFriendText: {
-    fontSize: rf(12),
+    fontSize: rf(11),
     fontFamily: FONTS.semiBold,
-    color: COLORS.orange,
+    color: COLORS.teal,
   },
   removeButton: {
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    backgroundColor: "rgba(255, 59, 48, 0.1)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.red,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 59, 48, 0.2)",
+    shadowColor: COLORS.red,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });

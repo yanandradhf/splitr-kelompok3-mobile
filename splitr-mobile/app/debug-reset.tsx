@@ -32,6 +32,11 @@ export default function DebugReset() {
     Alert.alert('Tokens', `Access: ${accessToken ? 'Found' : 'None'}\nRefresh: ${refreshToken ? 'Found' : 'None'}`);
   };
 
+  const debugStorage = async () => {
+    await StorageService.debugStorage();
+    Alert.alert('Debug', 'Check console for storage values');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Debug Reset</Text>
@@ -49,6 +54,10 @@ export default function DebugReset() {
       
       <TouchableOpacity style={[styles.button, styles.infoButton]} onPress={testTokens}>
         <Text style={styles.buttonText}>Check Tokens</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={[styles.button, styles.debugButton]} onPress={debugStorage}>
+        <Text style={styles.buttonText}>Debug Storage</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backText}>Kembali</Text>
@@ -82,6 +91,9 @@ const styles = StyleSheet.create({
   },
   infoButton: {
     backgroundColor: '#4ecdc4',
+  },
+  debugButton: {
+    backgroundColor: '#9b59b6',
   },
   buttonText: {
     color: COLORS.white,

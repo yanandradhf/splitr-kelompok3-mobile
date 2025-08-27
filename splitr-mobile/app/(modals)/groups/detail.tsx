@@ -151,10 +151,14 @@ export default function GroupDetailScreen() {
   };
 
   const addMember = async () => {
-    if (!fetchFriendsForAddMember) {
-      await fetchFriendsForAddMember();
+    try {
+      if (fetchFriendsForAddMember) {
+        await fetchFriendsForAddMember();
+      }
+      setShowAddMemberModal(true);
+    } catch (error) {
+      console.error('Error in addMember:', error);
     }
-    setShowAddMemberModal(true);
   };
 
   const confirmAddMember = async () => {
@@ -365,7 +369,137 @@ export default function GroupDetailScreen() {
           </BlurView>
         </Modal>
 
-        {/* Other modals would go here with similar structure... */}
+        {/* Remove Member Modal */}
+        <Modal visible={showRemoveMemberModal} transparent={true} animationType="fade">
+          <BlurView intensity={20} style={styles.modalOverlay}>
+            <View style={styles.deleteModal}>
+              <View style={styles.warningIcon}>
+                <Ionicons name="person-remove" size={getIconSize(40)} color="#FF9500" />
+              </View>
+              <Text style={styles.deleteTitle}>Hapus Anggota?</Text>
+              <Text style={styles.deleteMessage}>
+                Yakin ingin menghapus {memberToRemove?.name} dari grup?
+              </Text>
+              <View style={styles.deleteActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowRemoveMemberModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmDeleteButton}
+                  onPress={confirmRemoveMember}
+                >
+                  <Text style={styles.confirmDeleteText}>Hapus</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BlurView>
+        </Modal>
+
+        {/* Add Friend Modal */}
+        <Modal visible={showConfirmFriendModal} transparent={true} animationType="fade">
+          <BlurView intensity={20} style={styles.modalOverlay}>
+            <View style={styles.deleteModal}>
+              <View style={styles.warningIcon}>
+                <Ionicons name="person-add" size={getIconSize(40)} color="#00897B" />
+              </View>
+              <Text style={styles.deleteTitle}>Tambah Teman?</Text>
+              <Text style={styles.deleteMessage}>
+                Tambahkan {selectedFriend?.name} sebagai teman?
+              </Text>
+              <View style={styles.deleteActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowConfirmFriendModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmDeleteButton, { backgroundColor: COLORS.teal }]}
+                  onPress={addFriend}
+                >
+                  <Text style={styles.confirmDeleteText}>Tambah</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BlurView>
+        </Modal>
+
+        {/* Add Member Modal */}
+        <Modal visible={showAddMemberModal} transparent={true} animationType="slide">
+          <BlurView intensity={20} style={styles.modalOverlay}>
+            <View style={styles.addMemberModal}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Tambah Anggota</Text>
+                <TouchableOpacity onPress={() => setShowAddMemberModal(false)}>
+                  <Ionicons name="close" size={24} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.modalSubtitle}>Pilih teman untuk ditambahkan ke grup</Text>
+              
+              {availableFriends.length > 0 ? (
+                <ScrollView 
+                  style={styles.friendsList}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {availableFriends.map((friendData) => (
+                    <TouchableOpacity
+                      key={friendData.friend.userId}
+                      style={[
+                        styles.friendItem,
+                        selectedFriendToAdd?.friend.userId === friendData.friend.userId && styles.selectedFriendItem
+                      ]}
+                      onPress={() => setSelectedFriendToAdd(friendData)}
+                      activeOpacity={0.7}
+                    >
+                      <UserAvatar
+                        photoUrl={friendData.friend.profilePhotoUrl}
+                        name={friendData.friend.name}
+                        size={40}
+                      />
+                      <View style={styles.friendInfo}>
+                        <Text style={styles.friendName}>{friendData.friend.name}</Text>
+                        <Text style={styles.friendUsername}>
+                          @{friendData.friend.username || friendData.friend.name.toLowerCase().replace(/\s+/g, '')}
+                        </Text>
+                      </View>
+                      {selectedFriendToAdd?.friend.userId === friendData.friend.userId && (
+                        <Ionicons name="checkmark-circle" size={24} color={COLORS.teal} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons name="people-outline" size={48} color={COLORS.textSecondary} />
+                  <Text style={styles.emptyText}>Tidak ada teman yang bisa ditambahkan</Text>
+                </View>
+              )}
+              
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelModalButton}
+                  onPress={() => setShowAddMemberModal(false)}
+                >
+                  <Text style={styles.cancelModalText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.confirmModalButton, 
+                    !selectedFriendToAdd && styles.disabledButton
+                  ]}
+                  onPress={confirmAddMember}
+                  disabled={!selectedFriendToAdd}
+                >
+                  <Text style={styles.confirmModalText}>Tambah</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BlurView>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -454,5 +588,114 @@ const styles = {
     fontWeight: "bold" as const,
     color: COLORS.white,
     textAlign: "center" as const,
+  },
+  addMemberModal: {
+    backgroundColor: COLORS.white,
+    borderRadius: getBorderRadius(20),
+    marginHorizontal: getSpacing(20),
+    maxHeight: wp(80),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    padding: getSpacing(20),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: rf(20),
+    fontWeight: "bold" as const,
+    color: COLORS.textPrimary,
+  },
+  modalSubtitle: {
+    fontSize: rf(14),
+    color: COLORS.textSecondary,
+    paddingHorizontal: getSpacing(20),
+    paddingTop: getSpacing(16),
+    paddingBottom: getSpacing(8),
+  },
+  friendsList: {
+    maxHeight: wp(50),
+    paddingHorizontal: getSpacing(20),
+  },
+  friendItem: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    paddingVertical: getSpacing(12),
+    paddingHorizontal: getSpacing(16),
+    borderRadius: getBorderRadius(12),
+    marginBottom: getSpacing(8),
+    backgroundColor: COLORS.inputBg,
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+  },
+  selectedFriendItem: {
+    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    borderColor: COLORS.teal,
+  },
+  friendInfo: {
+    flex: 1,
+    marginLeft: getSpacing(12),
+  },
+  friendName: {
+    fontSize: rf(16),
+    fontWeight: "600" as const,
+    color: COLORS.textPrimary,
+  },
+  friendUsername: {
+    fontSize: rf(12),
+    color: COLORS.textSecondary,
+    marginTop: getSpacing(2),
+  },
+  emptyState: {
+    alignItems: "center" as const,
+    paddingVertical: getSpacing(32),
+  },
+  emptyText: {
+    fontSize: rf(14),
+    color: COLORS.textSecondary,
+    marginTop: getSpacing(12),
+    textAlign: "center" as const,
+  },
+  modalActions: {
+    flexDirection: "row" as const,
+    padding: getSpacing(20),
+    gap: getSpacing(12),
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  cancelModalButton: {
+    flex: 1,
+    paddingVertical: getSpacing(12),
+    borderRadius: getBorderRadius(12),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center" as const,
+  },
+  cancelModalText: {
+    fontSize: rf(16),
+    fontWeight: "600" as const,
+    color: COLORS.textSecondary,
+  },
+  confirmModalButton: {
+    flex: 1,
+    paddingVertical: getSpacing(12),
+    borderRadius: getBorderRadius(12),
+    backgroundColor: COLORS.teal,
+    alignItems: "center" as const,
+  },
+  confirmModalText: {
+    fontSize: rf(16),
+    fontWeight: "600" as const,
+    color: COLORS.white,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 };

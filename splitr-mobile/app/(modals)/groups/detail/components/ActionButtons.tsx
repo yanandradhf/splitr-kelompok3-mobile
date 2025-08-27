@@ -29,10 +29,10 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             <Ionicons
               name="person-add-outline"
               size={getIconSize(20)}
-              color={COLORS.orange}
+              color={COLORS.white}
               style={styles.buttonIcon}
             />
-            <Text style={styles.addMemberButtonText}>Tambah</Text>
+            <Text style={styles.addMemberButtonText}>Tambah Anggota</Text>
           </TouchableOpacity>
 
           {/* Delete Group Button */}
@@ -42,9 +42,9 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             activeOpacity={0.8}
           >
             <Ionicons
-              name="trash-outline"
+              name="trash"
               size={getIconSize(18)}
-              color="#FF3B30"
+              color={COLORS.white}
             />
           </TouchableOpacity>
         </>
@@ -59,7 +59,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             <Ionicons
               name="exit-outline"
               size={getIconSize(20)}
-              color="#FF3B30"
+              color={COLORS.white}
               style={styles.buttonIcon}
             />
             <Text style={styles.leaveGroupButtonText}>Keluar</Text>
@@ -82,29 +82,35 @@ const styles = StyleSheet.create({
   },
   addMemberButton: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderWidth: 1.5,
-    borderColor: COLORS.orange,
+    backgroundColor: COLORS.teal,
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(14),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: COLORS.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   addMemberButtonText: {
     fontSize: rf(14),
     fontFamily: FONTS.semiBold,
-    color: COLORS.orange,
+    color: COLORS.white,
   },
   deleteGroupButton: {
-    backgroundColor: "rgba(255, 59, 48, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 59, 48, 0.3)",
+    backgroundColor: COLORS.red,
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(14),
     paddingHorizontal: getSpacing(16),
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: COLORS.red,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   leaveGroupButton: {
     flex: 1,
