@@ -13,6 +13,7 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
@@ -24,6 +25,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
+  refreshToken: null,
   isLoading: false,
   isAuthenticated: false,
 
@@ -38,25 +40,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           console.log('🔥 API Response:', response);
           console.log('🔥 Response data:', response.data);
           
-          const { user, token } = response.data;
+          const { user, accessToken, refreshToken } = response.data;
           
           console.log('🔥 Extracted user:', user);
-          console.log('🔥 Extracted token:', token);
+          console.log('🔥 Extracted tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
           
           // Save to SecureStore
-          await SecureStore.setItemAsync('auth_token', token);
+          await SecureStore.setItemAsync('access_token', accessToken);
+          await SecureStore.setItemAsync('refresh_token', refreshToken);
           await SecureStore.setItemAsync('user_data', JSON.stringify(user));
           
           console.log('🔥 Saved to SecureStore');
           
-          // Verify token was saved
-          const savedToken = await SecureStore.getItemAsync('auth_token');
-          console.log('🔑 Token verification - Saved successfully:', !!savedToken);
-          console.log('🔑 Token preview:', savedToken ? savedToken.substring(0, 20) + '...' : 'No token');
-          
           set({ 
             user, 
-            token, 
+            token: accessToken,
+            refreshToken,
             isAuthenticated: true, 
             isLoading: false 
           });
@@ -70,41 +69,78 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       },
 
       logout: async () => {
-        set({ 
-          user: null, 
-          token: null, 
-          isAuthenticated: false 
-        });
+        try {
+          // Try to call logout API, but don't fail if it errors
+          await authAPI.logout();
+        } catch (error) {
+          console.log('Logout API failed, clearing locally:', error?.message || error);
+        } finally {
+          // Always clear local storage
+          try {
+            await SecureStore.deleteItemAsync('access_token');
+            await SecureStore.deleteItemAsync('refresh_token');
+            await SecureStore.deleteItemAsync('user_data');
+          } catch (storageError) {
+            console.log('Storage cleanup error:', storageError);
+          }
+          
+          // Always reset state
+          set({ 
+            user: null, 
+            token: null, 
+            refreshToken: null,
+            isAuthenticated: false 
+          });
+        }
       },
 
   checkAuth: async () => {
     try {
-      const token = await SecureStore.getItemAsync('auth_token');
+      console.log('🔍 Checking stored authentication...');
+      
+      // Check new token format first
+      let accessToken = await SecureStore.getItemAsync('access_token');
+      let refreshToken = await SecureStore.getItemAsync('refresh_token');
+      
+      // Fallback to old token format for backward compatibility
+      if (!accessToken) {
+        accessToken = await SecureStore.getItemAsync('auth_token');
+        console.log('🔄 Using legacy token format');
+      }
+      
       const userData = await SecureStore.getItemAsync('user_data');
       
-      if (token && userData) {
+      console.log('🔍 Found tokens:', { 
+        accessToken: !!accessToken, 
+        refreshToken: !!refreshToken, 
+        userData: !!userData 
+      });
+      
+      if (accessToken && userData) {
         const user = JSON.parse(userData);
+        console.log('✅ Valid session found, user:', user.username);
         set({ 
           user, 
-          token, 
+          token: accessToken,
+          refreshToken: refreshToken || null,
           isAuthenticated: true 
+        });
+      } else {
+        console.log('❌ No valid session found');
+        set({ 
+          user: null,
+          token: null,
+          refreshToken: null,
+          isAuthenticated: false 
         });
       }
     } catch (error) {
-      console.log('Check auth error:', error);
-      get().logout();
+      console.log('❌ Check auth error:', error);
+      await get().logout();
     }
   },
 
-  logout: async () => {
-    await SecureStore.deleteItemAsync('auth_token');
-    await SecureStore.deleteItemAsync('user_data');
-    set({ 
-      user: null, 
-      token: null, 
-      isAuthenticated: false 
-    });
-  },
+
 
   updateUser: async (userData: Partial<User>) => {
     const currentUser = get().user;

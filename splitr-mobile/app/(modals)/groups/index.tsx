@@ -13,7 +13,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  SPACING,
+  BORDER_RADIUS,
+} from "../../../constants/theme";
 import { useApi } from "../../../hooks/useApi";
 import { useGroupsStore } from "../../../store";
 import UserAvatar from "../../../components/ui/UserAvatar";
@@ -36,11 +42,7 @@ const personImages = [
 export default function GroupsScreen() {
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const { 
-    groups, 
-    isLoading: loading, 
-    fetchGroups 
-  } = useGroupsStore();
+  const { groups, isLoading: loading, fetchGroups } = useGroupsStore();
 
   const [lastFetchTime, setLastFetchTime] = useState(0);
 
@@ -78,13 +80,15 @@ export default function GroupsScreen() {
         <View style={styles.purpleSection}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/(tabs)/home');
-              }
-            }}>
+            <TouchableOpacity
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace("/(tabs)/home");
+                }
+              }}
+            >
               <Ionicons
                 name="arrow-back"
                 size={getIconSize(24)}
@@ -143,18 +147,61 @@ export default function GroupsScreen() {
                   {[1, 2, 3].map((i) => (
                     <View key={i} style={styles.groupCard}>
                       <View style={styles.groupHeader}>
-                        <View style={{ width: 80, height: 14, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4 }} />
-                        <View style={{ width: 100, height: 14, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4 }} />
+                        <View
+                          style={{
+                            width: 80,
+                            height: 14,
+                            backgroundColor: "rgba(255,255,255,0.3)",
+                            borderRadius: 4,
+                          }}
+                        />
+                        <View
+                          style={{
+                            width: 100,
+                            height: 14,
+                            backgroundColor: "rgba(255,255,255,0.3)",
+                            borderRadius: 4,
+                          }}
+                        />
                       </View>
                       <View style={styles.groupContent}>
                         <View style={styles.groupAvatars}>
-                          {[1, 2, 3, 4].map((j) => (
-                            <View key={j} style={[styles.avatar, { backgroundColor: '#E1E5E9' }, j > 1 && styles.avatarOverlap]} />
+                          {[1, 2].map((j) => (
+                            <View
+                              key={j}
+                              style={[
+                                styles.avatar,
+                                { backgroundColor: "#E1E5E9" },
+                                j > 1 && styles.avatarOverlap,
+                              ]}
+                            />
                           ))}
+                          <View
+                            style={[
+                              styles.avatar,
+                              styles.avatarOverlap,
+                              { backgroundColor: "#E1E5E9" },
+                            ]}
+                          />
                         </View>
                         <View style={styles.groupInfo}>
-                          <View style={{ width: 120, height: 18, backgroundColor: '#E1E5E9', borderRadius: 4, marginBottom: 4 }} />
-                          <View style={{ width: 80, height: 14, backgroundColor: '#E1E5E9', borderRadius: 4 }} />
+                          <View
+                            style={{
+                              width: 120,
+                              height: 18,
+                              backgroundColor: "#E1E5E9",
+                              borderRadius: 4,
+                              marginBottom: 4,
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: 80,
+                              height: 14,
+                              backgroundColor: "#E1E5E9",
+                              borderRadius: 4,
+                            }}
+                          />
                         </View>
                       </View>
                     </View>
@@ -189,38 +236,80 @@ export default function GroupsScreen() {
                       <View style={styles.groupAvatars}>
                         {(() => {
                           const allMembers = group.members || [];
-                          const displayMembers = allMembers.slice(0, 4);
-                          
-                          if (displayMembers.length === 0 && group.memberCount > 0) {
-                            return Array.from({ length: Math.min(group.memberCount, 4) }, (_, index) => (
-                              <UserAvatar
-                                key={`placeholder-${index}`}
-                                photoUrl={undefined}
-                                name={`User ${index + 1}`}
-                                size={40}
-                                style={[
-                                  styles.avatar,
-                                  index > 0 && styles.avatarOverlap,
-                                ]}
-                              />
-                            ));
-                          }
-                          
-                          return displayMembers.map((member, index) => {
-                            const avatarSource = member.profilePhotoUrl || member.avatar || member.profilePicture;
+                          const displayMembers = allMembers.slice(0, 2);
+                          const totalMembers =
+                            group.members?.length || group.memberCount || 0;
+
+                          if (displayMembers.length === 0 && totalMembers > 0) {
                             return (
-                              <UserAvatar
-                                key={member.id || member.userId || index}
-                                photoUrl={avatarSource}
-                                name={member.name || `User ${index + 1}`}
-                                size={40}
-                                style={[
-                                  styles.avatar,
-                                  index > 0 && styles.avatarOverlap,
-                                ]}
-                              />
+                              <>
+                                {Array.from(
+                                  { length: Math.min(totalMembers, 2) },
+                                  (_, index) => (
+                                    <UserAvatar
+                                      key={`placeholder-${index}`}
+                                      photoUrl={undefined}
+                                      name={`User ${index + 1}`}
+                                      size={32}
+                                      style={[
+                                        styles.avatar,
+                                        index > 0 && styles.avatarOverlap,
+                                      ]}
+                                    />
+                                  )
+                                )}
+                                {totalMembers > 2 && (
+                                  <View
+                                    style={[
+                                      styles.avatar,
+                                      styles.avatarOverlap,
+                                      styles.moreAvatarContainer,
+                                    ]}
+                                  >
+                                    <Text style={styles.moreAvatarText}>
+                                      +{totalMembers - 2}
+                                    </Text>
+                                  </View>
+                                )}
+                              </>
                             );
-                          });
+                          }
+
+                          return (
+                            <>
+                              {displayMembers.map((member, index) => {
+                                const avatarSource =
+                                  member.profilePhotoUrl ||
+                                  member.avatar ||
+                                  member.profilePicture;
+                                return (
+                                  <UserAvatar
+                                    key={member.id || member.userId || index}
+                                    photoUrl={avatarSource}
+                                    name={member.name || `User ${index + 1}`}
+                                    size={32}
+                                    style={[
+                                      styles.avatar,
+                                      index > 0 && styles.avatarOverlap,
+                                    ]}
+                                  />
+                                );
+                              })}
+                              {totalMembers > 2 && (
+                                <View
+                                  style={[
+                                    styles.avatar,
+                                    styles.avatarOverlap,
+                                    styles.moreAvatarContainer,
+                                  ]}
+                                >
+                                  <Text style={styles.moreAvatarText}>
+                                    +{totalMembers - 2}
+                                  </Text>
+                                </View>
+                              )}
+                            </>
+                          );
                         })()}
                       </View>
 
@@ -229,7 +318,8 @@ export default function GroupsScreen() {
                           {group.groupName || "Unnamed Group"}
                         </Text>
                         <Text style={styles.groupMembers}>
-                          {group.members?.length || group.memberCount || 0} orang dalam grup ini
+                          {group.members?.length || group.memberCount || 0}{" "}
+                          orang dalam grup ini
                         </Text>
                       </View>
                     </View>
@@ -249,8 +339,6 @@ export default function GroupsScreen() {
                 </View>
               )}
             </View>
-
-
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -375,14 +463,24 @@ const styles = StyleSheet.create({
     marginRight: getSpacing(16),
   },
   avatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: COLORS.white,
   },
   avatarOverlap: {
     marginLeft: -getSpacing(10),
+  },
+  moreAvatarContainer: {
+    backgroundColor: COLORS.teal,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  moreAvatarText: {
+    fontSize: 10,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.white,
   },
   groupInfo: {
     flex: 1,
