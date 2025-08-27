@@ -1,9 +1,18 @@
 import React from "react";
-import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  RefreshControl,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { formatRp } from "../../../lib/currency";
-import { SkeletonMonitoringList, SkeletonHistoryList } from "../../../components/ui/Skeleton";
+import {
+  SkeletonMonitoringList,
+  SkeletonHistoryList,
+} from "../../../components/ui/Skeleton";
 
 // Components
 import { BillCard } from "./components/BillCard";
@@ -31,12 +40,12 @@ export default function MonitoringIndex() {
     loading,
     historyLoading,
     paymentHistory,
-    
+
     // Computed
     filteredBills,
     dashboardInfo,
     hasActiveFilters,
-    
+
     // Actions
     setActiveTab,
     setSortBy,
@@ -46,12 +55,12 @@ export default function MonitoringIndex() {
     toggleExpanded,
     onRefresh,
     resetFilters,
-    
+
     // Handlers
     handleHistoryCardPress,
     handleBillPress,
     handlePaymentPress,
-    
+
     // Utils
     isPaidStatus,
     getStatusBadgeHistory,
@@ -67,10 +76,15 @@ export default function MonitoringIndex() {
       const isZero = totalToPay === "Rp 0";
       return {
         totalAmount: totalToPay,
-        label: isZero ? "Anda tidak memiliki tagihan untuk dibayar" : "Total Harus Dibayar",
+        label: isZero
+          ? "Anda tidak memiliki tagihan untuk dibayar"
+          : "Total Harus Dibayar",
       };
     } else {
-      const totalPaid = paymentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+      const totalPaid = paymentHistory.reduce(
+        (sum, payment) => sum + (payment.amount || 0),
+        0
+      );
       const formattedTotal = formatRp(totalPaid);
       const isZero = totalPaid === 0;
       return {
@@ -87,7 +101,10 @@ export default function MonitoringIndex() {
       {/* Tab Navigation */}
       <View style={monitoringStyles.tabContainer}>
         <Pressable
-          style={[monitoringStyles.tab, activeTab === "tagihan" && monitoringStyles.activeTab]}
+          style={[
+            monitoringStyles.tab,
+            activeTab === "tagihan" && monitoringStyles.activeTab,
+          ]}
           onPress={() => {
             setActiveTab("tagihan");
           }}
@@ -102,7 +119,10 @@ export default function MonitoringIndex() {
           </Text>
         </Pressable>
         <Pressable
-          style={[monitoringStyles.tab, activeTab === "riwayat" && monitoringStyles.activeTab]}
+          style={[
+            monitoringStyles.tab,
+            activeTab === "riwayat" && monitoringStyles.activeTab,
+          ]}
           onPress={() => {
             setActiveTab("riwayat");
             fetchPaymentHistoryLocal();
@@ -192,11 +212,20 @@ export default function MonitoringIndex() {
                 .filter((payment) => {
                   switch (statusFilter) {
                     case "terlambat":
-                      return payment.isLate || payment.status === "completed_late";
+                      return (
+                        payment.isLate || payment.status === "completed_late"
+                      );
                     case "terjadwal":
-                      return payment.paymentType === "scheduled" || payment.status === "completed_scheduled";
+                      return (
+                        payment.paymentType === "scheduled" ||
+                        payment.status === "completed_scheduled"
+                      );
                     case "selesai":
-                      return payment.status === "completed" && !payment.isLate && payment.paymentType !== "scheduled";
+                      return (
+                        payment.status === "completed" &&
+                        !payment.isLate &&
+                        payment.paymentType !== "scheduled"
+                      );
                     default:
                       return true;
                   }
@@ -220,11 +249,21 @@ export default function MonitoringIndex() {
             ))}
 
           {/* Empty State */}
-          {((activeTab === "tagihan" && !loading && filteredBills.length === 0) ||
-            (activeTab === "riwayat" && !historyLoading && paymentHistory.length === 0)) && (
+          {((activeTab === "tagihan" &&
+            !loading &&
+            filteredBills.length === 0) ||
+            (activeTab === "riwayat" &&
+              !historyLoading &&
+              paymentHistory.length === 0)) && (
             <View style={monitoringStyles.emptyState}>
-              <Ionicons name="receipt-outline" size={48} color={COLORS.textSecondary} />
-              <Text style={monitoringStyles.emptyText}>Tidak ada aktivitas</Text>
+              <Ionicons
+                name="receipt-outline"
+                size={48}
+                color={COLORS.textSecondary}
+              />
+              <Text style={monitoringStyles.emptyText}>
+                Tidak ada aktivitas
+              </Text>
             </View>
           )}
         </ScrollView>
