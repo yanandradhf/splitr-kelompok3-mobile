@@ -226,7 +226,7 @@ export default function BillNotificationDetail() {
             )}
 
             {/* Action Button */}
-            {billData.paymentStatus !== 'completed' && billData.paymentStatus !== 'completed_scheduled' && billData.paymentStatus !== 'completed_late' && (
+            {billData.paymentStatus === 'pending' && (
               <Pressable 
                 onPress={handlePayment} 
                 style={[

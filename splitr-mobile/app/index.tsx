@@ -30,6 +30,14 @@ export default function AppEntry() {
     try {
       console.log('🚀 Initializing app...');
       
+      // DEVELOPMENT ONLY: Clear data if __DEV__ flag is true and specific condition met
+      if (__DEV__ && false) { // Change 'false' to 'true' temporarily to clear data
+        await StorageService.clearAllData();
+      }
+      
+      // Debug: Check storage state
+      await StorageService.debugStorage();
+      
       // 1. Check onboarding status
       const shouldShowOnboarding = await StorageService.shouldShowOnboarding();
       
