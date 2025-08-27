@@ -4,7 +4,7 @@
  */
 
 // Get ngrok URL from environment variable
-export const NGROK_URL = process.env.EXPO_PUBLIC_NGROK_URL || "https://c520ce759f72.ngrok-free.app";
+export const NGROK_URL = process.env.EXPO_PUBLIC_NGROK_URL || "https://2cf65d03461e.ngrok-free.app";
 
 // Helper to get full URL
 export const getFullUrl = (path: string = ''): string => {
@@ -22,7 +22,7 @@ export const getImageUrl = (imagePath?: string): string => {
   }
   
   // Get base URL with fallback
-  const baseUrl = NGROK_URL || "https://c520ce759f72.ngrok-free.app";
+  const baseUrl = NGROK_URL || "https://2cf65d03461e.ngrok-free.app";
   
   // Convert relative path to full URL
   return `${baseUrl}${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;

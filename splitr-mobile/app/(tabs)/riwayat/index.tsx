@@ -76,24 +76,64 @@ export default function RiwayatScreen() {
 
   const renderCompletedPayment = (payment: any) => {
     const getMethodText = (method: string) => {
-      return method === 'bayar-sekarang' ? 'Bayar Sekarang' : 'Auto Transfer';
+      return method === 'bayar-sekarang' ? 'Bayar Langsung' : 'Bayar Nanti';
     };
 
+    const getStatusBadge = (method: string) => {
+      if (method === 'bayar-sekarang') {
+        return { text: 'Bayar Langsung', color: COLORS.success, bg: '#DCFCE7' };
+      } else {
+        return { text: 'Bayar Nanti', color: '#0369A1', bg: '#DBEAFE' };
+      }
+    };
+
+    const statusBadge = getStatusBadge(payment.method);
+    const paymentDate = new Date(payment.methodDate).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+    const paymentTime = new Date(payment.methodDate).toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
     return (
-      <View key={payment.id} style={styles.paymentCard}>
-        <View style={styles.paymentHeader}>
-          <View style={styles.paymentInfo}>
-            <Text style={styles.paymentTitle}>{payment.title}</Text>
-            <Text style={styles.paymentHost}>kepada {payment.hostName}</Text>
+      <View key={payment.id} style={styles.newPaymentCard}>
+        <View style={styles.newPaymentHeader}>
+          <View style={styles.newPaymentLeft}>
+            <View style={styles.newPaymentIcon}>
+              <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+            </View>
+            <View style={styles.newPaymentInfo}>
+              <Text style={styles.newPaymentTitle}>{payment.title}</Text>
+              <Text style={styles.newPaymentHost}>ke {payment.hostName}</Text>
+            </View>
           </View>
-          <View style={styles.statusCompleted}>
-            <Ionicons name="checkmark-circle" size={20} color={COLORS.teal} />
-            <Text style={styles.statusCompletedText}>Lunas</Text>
-          </View>
+          <Text style={styles.newPaymentAmount}>{payment.amount.formatted}</Text>
         </View>
-        <View style={styles.paymentDetails}>
-          <Text style={styles.paymentAmount}>{payment.amount.formatted}</Text>
-          <Text style={styles.paymentMethod}>{getMethodText(payment.method)} • {payment.methodDate}</Text>
+        
+        <View style={styles.newPaymentDetails}>
+          <View style={styles.newDetailRow}>
+            <Text style={styles.newDetailLabel}>Kode Tagihan</Text>
+            <Text style={styles.newDetailValue}>#{payment.id}</Text>
+          </View>
+          <View style={styles.newDetailRow}>
+            <Text style={styles.newDetailLabel}>Kepada</Text>
+            <Text style={styles.newDetailValue}>{payment.hostName}</Text>
+          </View>
+          <View style={styles.newDetailRow}>
+            <Text style={styles.newDetailLabel}>Waktu</Text>
+            <Text style={styles.newDetailValue}>{paymentDate} • {paymentTime}</Text>
+          </View>
+          <View style={styles.newDetailRow}>
+            <Text style={styles.newDetailLabel}>Status</Text>
+            <View style={[styles.newStatusBadge, { backgroundColor: statusBadge.bg }]}>
+              <Text style={[styles.newStatusText, { color: statusBadge.color }]}>
+                {statusBadge.text}
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     );
@@ -239,59 +279,95 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
-  paymentCard: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: width * 0.04,
+  newPaymentCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E8F5E8',
+    borderColor: '#E5E7EB',
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.success,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  paymentHeader: {
+  newPaymentHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  paymentInfo: {
+  newPaymentLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
+  },
+  newPaymentIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
-  paymentTitle: {
-    fontSize: width * 0.04,
+  newPaymentInfo: {
+    flex: 1,
+  },
+  newPaymentTitle: {
+    fontSize: 16,
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  paymentHost: {
-    fontSize: width * 0.035,
+  newPaymentHost: {
+    fontSize: 14,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
   },
-  statusCompleted: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statusCompletedText: {
-    fontSize: width * 0.032,
+  newPaymentAmount: {
+    fontSize: 18,
     fontFamily: FONTS.bold,
     color: COLORS.teal,
   },
-  paymentDetails: {
+  newPaymentDetails: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  newDetailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  paymentAmount: {
-    fontSize: width * 0.045,
-    fontFamily: FONTS.bold,
-    color: COLORS.textPrimary,
-  },
-  paymentMethod: {
-    fontSize: width * 0.032,
+  newDetailLabel: {
+    fontSize: 13,
     fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
+  },
+  newDetailValue: {
+    fontSize: 13,
+    fontFamily: FONTS.semiBold,
+    color: COLORS.textPrimary,
+  },
+  newStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  newStatusText: {
+    fontSize: 11,
+    fontFamily: FONTS.semiBold,
   },
   emptyState: {
     alignItems: 'center',
