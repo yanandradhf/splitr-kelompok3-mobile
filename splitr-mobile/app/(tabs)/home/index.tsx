@@ -23,17 +23,7 @@ import { useHomeLogic } from "./hooks/useHomeLogic";
 // Types
 import { Friend, Group } from "./types";
 
-const LOCAL_COLORS = {
-  background: "#A6D3CE",
-  cardBrown: COLORS.card,
-  cardWhite: COLORS.white,
-  orange: COLORS.orange,
-  textPrimary: COLORS.textPrimary,
-  textSecondary: COLORS.textSecondary,
-  border: COLORS.border,
-  headerBrown: "#00897B",
-  gray: COLORS.gray,
-};
+// Remove LOCAL_COLORS - use COLORS directly for consistency
 
 export default function HomeScreen() {
   const {
@@ -134,7 +124,7 @@ export default function HomeScreen() {
               <Ionicons
                 name="chevron-forward"
                 size={20}
-                color={LOCAL_COLORS.textPrimary}
+                color={COLORS.textSecondary}
               />
             </TouchableOpacity>
             {groupsLoading ? (
@@ -354,43 +344,44 @@ export default function HomeScreen() {
 
 // Simplified styles (keeping essential ones)
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: LOCAL_COLORS.background },
-  purpleSection: { backgroundColor: LOCAL_COLORS.background, paddingBottom: 20 },
+  container: { flex: 1, backgroundColor: COLORS.backgroundMain },
+  purpleSection: { backgroundColor: COLORS.backgroundMain, paddingBottom: 20 },
   scrollView: { flex: 1 },
-  whiteModalContainer: { backgroundColor: LOCAL_COLORS.cardWhite, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 16, shadowColor: "#000", shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 },
+  whiteModalContainer: { backgroundColor: COLORS.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 16, shadowColor: "#000", shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingVertical: 16 },
   userProfile: { flexDirection: "row", alignItems: "center", flex: 1 },
   welcomeText: { justifyContent: "center", marginLeft: 12, flex: 1 },
-  welcomeSubtext: { fontSize: 16, fontFamily: FONTS.regular, color: LOCAL_COLORS.textSecondary },
-  welcomeName: { fontSize: 18, fontFamily: FONTS.bold, color: LOCAL_COLORS.textPrimary },
+  welcomeSubtext: { fontSize: 16, fontFamily: FONTS.regular, color: COLORS.textSecondary },
+  welcomeName: { fontSize: 18, fontFamily: FONTS.bold, color: COLORS.textPrimary },
   headerNotificationContainer: { position: "relative" },
   notificationDot: { position: "absolute", top: 1, right: 1, width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.red },
   activitySection: { paddingHorizontal: 20, marginBottom: 10 },
   modalSection: { marginTop: 5, marginBottom: 24 },
-  sectionTitle: { fontSize: 20, fontFamily: FONTS.bold, color: LOCAL_COLORS.textPrimary },
+  sectionTitle: { fontSize: 20, fontFamily: FONTS.bold, color: COLORS.textPrimary },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingVertical: 8, paddingHorizontal: 4, borderRadius: 8 },
   groupsScroll: { paddingVertical: 8 },
-  groupCard: { borderRadius: 12, overflow: "hidden", elevation: 4, shadowColor: "#000000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, width: 300, backgroundColor: LOCAL_COLORS.cardWhite },
-  groupHeader: { backgroundColor: LOCAL_COLORS.headerBrown, flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8 },
+  groupCard: { borderRadius: 12, overflow: "hidden", elevation: 4, shadowColor: "#000000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, width: 300, backgroundColor: COLORS.white },
+  groupHeader: { backgroundColor: COLORS.teal, flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 12, paddingVertical: 8 },
+
   groupId: { fontSize: 12, fontFamily: FONTS.semiBold, color: "#FFFFFF" },
   groupHost: { fontSize: 12, fontFamily: FONTS.semiBold, color: "#FFFFFF" },
-  groupContent: { backgroundColor: LOCAL_COLORS.background, flexDirection: "row", padding: 12, alignItems: "center" },
+  groupContent: { backgroundColor: COLORS.backgroundMain, flexDirection: "row", padding: 12, alignItems: "center" },
   groupAvatars: { flexDirection: "row", marginRight: 12 },
-  avatar: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: LOCAL_COLORS.cardWhite },
+  avatar: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: COLORS.white },
   moreAvatarContainer: { backgroundColor: COLORS.teal, justifyContent: "center", alignItems: "center" },
   moreAvatarText: { fontSize: 10, fontFamily: FONTS.semiBold, color: COLORS.white },
   avatarOverlap: { marginLeft: -8 },
   groupInfo: { flex: 1 },
-  groupName: { fontSize: 16, fontFamily: FONTS.bold, color: LOCAL_COLORS.textPrimary, marginBottom: 2 },
-  groupMembers: { fontSize: 12, fontFamily: FONTS.regular, color: LOCAL_COLORS.textSecondary, marginBottom: 6 },
+  groupName: { fontSize: 16, fontFamily: FONTS.bold, color: COLORS.textPrimary, marginBottom: 2 },
+  groupMembers: { fontSize: 12, fontFamily: FONTS.regular, color: COLORS.textSecondary, marginBottom: 6 },
   separator: { height: 1, backgroundColor: "#E0E0E0", marginHorizontal: 0, marginVertical: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
   friendsScroll: { paddingVertical: 8 },
-  friendItem: { alignItems: "center", justifyContent: "space-between", marginRight: 16, paddingTop: 12, paddingHorizontal: 12, paddingBottom: 8, borderRadius: 12, backgroundColor: LOCAL_COLORS.background, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3, width: 80, minHeight: 100 },
-  friendImage: { width: 60, height: 60, borderRadius: 30, borderWidth: 3, borderColor: LOCAL_COLORS.background },
-  friendName: { fontSize: 12, fontFamily: FONTS.semiBold, color: LOCAL_COLORS.textPrimary, textAlign: "center", maxWidth: 70, lineHeight: 14 },
-  addFriendItem: { alignItems: "center", justifyContent: "space-between", marginRight: 16, paddingTop: 12, paddingHorizontal: 12, paddingBottom: 8, borderRadius: 12, backgroundColor: COLORS.white, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3, borderWidth: 2, borderColor: LOCAL_COLORS.background, borderStyle: "dashed", width: 80, minHeight: 100 },
-  addFriendCircle: { width: 60, height: 60, borderRadius: 30, backgroundColor: LOCAL_COLORS.background, justifyContent: "center", alignItems: "center", shadowColor: LOCAL_COLORS.background, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
-  addFriendText: { fontSize: 12, fontFamily: FONTS.semiBold, color: LOCAL_COLORS.textPrimary, textAlign: "center", maxWidth: 70, lineHeight: 14 },
+  friendItem: { alignItems: "center", justifyContent: "space-between", marginRight: 16, paddingTop: 12, paddingHorizontal: 12, paddingBottom: 8, borderRadius: 12, backgroundColor: COLORS.backgroundMain, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3, width: 80, minHeight: 100 },
+  friendImage: { width: 60, height: 60, borderRadius: 30, borderWidth: 3, borderColor: COLORS.backgroundMain },
+  friendName: { fontSize: 12, fontFamily: FONTS.semiBold, color: COLORS.textPrimary, textAlign: "center", maxWidth: 70, lineHeight: 14 },
+  addFriendItem: { alignItems: "center", justifyContent: "space-between", marginRight: 16, paddingTop: 12, paddingHorizontal: 12, paddingBottom: 8, borderRadius: 12, backgroundColor: COLORS.white, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3, borderWidth: 2, borderColor: COLORS.backgroundMain, borderStyle: "dashed", width: 80, minHeight: 100 },
+  addFriendCircle: { width: 60, height: 60, borderRadius: 30, backgroundColor: COLORS.backgroundMain, justifyContent: "center", alignItems: "center", shadowColor: COLORS.backgroundMain, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
+  addFriendText: { fontSize: 12, fontFamily: FONTS.semiBold, color: COLORS.textPrimary, textAlign: "center", maxWidth: 70, lineHeight: 14 },
   emptyGroupState: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, alignItems: "center", marginHorizontal: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
   emptyFriendState: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, alignItems: "center", marginHorizontal: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
   emptyIconContainer: { width: 48, height: 48, borderRadius: 24, backgroundColor: "rgba(0, 137, 123, 0.1)", justifyContent: "center", alignItems: "center", marginBottom: 12 },
