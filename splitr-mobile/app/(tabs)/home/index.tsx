@@ -23,17 +23,7 @@ import { useHomeLogic } from "./hooks/useHomeLogic";
 // Types
 import { Friend, Group } from "./types";
 
-const LOCAL_COLORS = {
-  background: "#A6D3CE",
-  cardBrown: COLORS.card,
-  cardWhite: COLORS.white,
-  orange: COLORS.orange,
-  textPrimary: COLORS.textPrimary,
-  textSecondary: COLORS.textSecondary,
-  border: COLORS.border,
-  headerBrown: "#00897B",
-  gray: COLORS.gray,
-};
+// Remove LOCAL_COLORS - use COLORS directly for consistency
 
 export default function HomeScreen() {
   const {
@@ -136,7 +126,7 @@ export default function HomeScreen() {
               <Ionicons
                 name="chevron-forward"
                 size={20}
-                color={LOCAL_COLORS.textPrimary}
+                color={COLORS.textSecondary}
               />
             </TouchableOpacity>
             {groupsLoading ? (
@@ -404,14 +394,11 @@ export default function HomeScreen() {
 
 // Simplified styles (keeping essential ones)
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: LOCAL_COLORS.background },
-  purpleSection: {
-    backgroundColor: LOCAL_COLORS.background,
-    paddingBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: COLORS.backgroundMain },
+  purpleSection: { backgroundColor: COLORS.backgroundMain, paddingBottom: 20 },
   scrollView: { flex: 1 },
   whiteModalContainer: {
-    backgroundColor: LOCAL_COLORS.cardWhite,
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -434,12 +421,12 @@ const styles = StyleSheet.create({
   welcomeSubtext: {
     fontSize: 16,
     fontFamily: FONTS.regular,
-    color: LOCAL_COLORS.textSecondary,
+    color: COLORS.textSecondary,
   },
   welcomeName: {
     fontSize: 18,
     fontFamily: FONTS.bold,
-    color: LOCAL_COLORS.textPrimary,
+    color: COLORS.textPrimary,
   },
   headerNotificationContainer: { position: "relative" },
   notificationDot: {
@@ -456,7 +443,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontFamily: FONTS.bold,
-    color: LOCAL_COLORS.textPrimary,
+    color: COLORS.textPrimary,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -477,20 +464,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
     width: 300,
-    backgroundColor: LOCAL_COLORS.cardWhite,
+    backgroundColor: COLORS.white,
   },
   groupHeader: {
-    backgroundColor: LOCAL_COLORS.headerBrown,
+    backgroundColor: COLORS.teal,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
+
   groupId: { fontSize: 12, fontFamily: FONTS.semiBold, color: "#FFFFFF" },
   groupHost: { fontSize: 12, fontFamily: FONTS.semiBold, color: "#FFFFFF" },
   groupContent: {
-    backgroundColor: LOCAL_COLORS.background,
+    backgroundColor: COLORS.backgroundMain,
     flexDirection: "row",
     padding: 12,
     alignItems: "center",
@@ -501,7 +489,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: LOCAL_COLORS.cardWhite,
+    borderColor: COLORS.white,
   },
   moreAvatarContainer: {
     backgroundColor: COLORS.teal,
@@ -518,13 +506,13 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 16,
     fontFamily: FONTS.bold,
-    color: LOCAL_COLORS.textPrimary,
+    color: COLORS.textPrimary,
     marginBottom: 2,
   },
   groupMembers: {
     fontSize: 12,
     fontFamily: FONTS.regular,
-    color: LOCAL_COLORS.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: 6,
   },
   separator: {
@@ -547,7 +535,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 8,
     borderRadius: 12,
-    backgroundColor: LOCAL_COLORS.background,
+    backgroundColor: COLORS.backgroundMain,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -561,12 +549,12 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     borderWidth: 3,
-    borderColor: LOCAL_COLORS.background,
+    borderColor: COLORS.backgroundMain,
   },
   friendName: {
     fontSize: 12,
     fontFamily: FONTS.semiBold,
-    color: LOCAL_COLORS.textPrimary,
+    color: COLORS.textPrimary,
     textAlign: "center",
     maxWidth: 70,
     lineHeight: 14,
@@ -586,7 +574,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 2,
-    borderColor: LOCAL_COLORS.background,
+    borderColor: COLORS.backgroundMain,
     borderStyle: "dashed",
     width: 80,
     minHeight: 100,
@@ -595,10 +583,10 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: LOCAL_COLORS.background,
+    backgroundColor: COLORS.backgroundMain,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: LOCAL_COLORS.background,
+    shadowColor: COLORS.backgroundMain,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -607,7 +595,7 @@ const styles = StyleSheet.create({
   addFriendText: {
     fontSize: 12,
     fontFamily: FONTS.semiBold,
-    color: LOCAL_COLORS.textPrimary,
+    color: COLORS.textPrimary,
     textAlign: "center",
     maxWidth: 70,
     lineHeight: 14,

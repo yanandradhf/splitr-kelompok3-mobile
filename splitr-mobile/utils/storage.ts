@@ -38,6 +38,13 @@ export const StorageService = {
   async shouldShowOnboarding(): Promise<boolean> {
     const hasCompleted = await this.hasCompletedOnboarding();
     const hasTnC = await this.hasTnCAccepted();
+    
+    console.log('🔍 Onboarding check:', {
+      hasCompleted,
+      hasTnC,
+      shouldShow: !hasCompleted || !hasTnC
+    });
+    
     return !hasCompleted || !hasTnC;
   },
 
@@ -54,5 +61,38 @@ export const StorageService = {
       STORAGE_KEYS.HAS_TNC_ACCEPTED,
       STORAGE_KEYS.TNC_ACCEPTED_DATE,
     ]);
+  },
+
+  // Debug: Check all storage values
+  async debugStorage(): Promise<void> {
+    const hasCompleted = await AsyncStorage.getItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING);
+    const hasTnC = await AsyncStorage.getItem(STORAGE_KEYS.HAS_TNC_ACCEPTED);
+    const tncDate = await AsyncStorage.getItem(STORAGE_KEYS.TNC_ACCEPTED_DATE);
+    
+    console.log('🔍 Storage Debug:', {
+      hasCompletedOnboarding: hasCompleted,
+      hasTnCAccepted: hasTnC,
+      tncAcceptedDate: tncDate,
+      shouldShowOnboarding: await this.shouldShowOnboarding()
+    });
+  },
+
+  // Clear all app data (for development/testing)
+  async clearAllData(): Promise<void> {
+    try {
+      // Clear AsyncStorage
+      await AsyncStorage.clear();
+      
+      // Clear SecureStore
+      const { deleteItemAsync, getAllKeysAsync } = await import('expo-secure-store');
+      const keys = await getAllKeysAsync();
+      for (const key of keys) {
+        await deleteItemAsync(key);
+      }
+      
+      console.log('🧹 All app data cleared successfully');
+    } catch (error) {
+      console.error('❌ Error clearing app data:', error);
+    }
   },
 };

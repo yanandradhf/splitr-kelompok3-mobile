@@ -79,8 +79,9 @@ export const FriendsListSection: React.FC<FriendsListSectionProps> = ({
                 <TouchableOpacity 
                   style={styles.deleteButton}
                   onPress={() => onDeleteFriend(friend)}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="trash-outline" size={20} color={COLORS.red} />
+                  <Ionicons name="trash" size={18} color={COLORS.white} />
                 </TouchableOpacity>
               </View>
             ))

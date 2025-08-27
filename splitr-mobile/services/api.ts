@@ -103,7 +103,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
       const errorCode = error.response?.data?.code;
       
       // Handle single session errors first
@@ -113,7 +113,43 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
-      // Try to refresh token
+      // Handle invalid token - force logout
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || '';
+      const isInvalidToken = errorMessage.includes('invalid') || 
+                            errorMessage.includes('expired') ||
+                            errorMessage.includes('malformed') ||
+                            error.response?.data?.code === 'INVALID_TOKEN';
+      
+      if (isInvalidToken) {
+        console.log('🚨 Invalid token detected, forcing logout');
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('refresh_token');
+        await SecureStore.deleteItemAsync('user_data');
+        
+        const { Alert } = await import('react-native');
+        const { router } = await import('expo-router');
+        
+        Alert.alert(
+          'Session Invalid',
+          'Your session has expired. Please login again.',
+          [{ text: 'Login', onPress: () => router.replace('/(auth)/login') }]
+        );
+        
+        return Promise.reject(error);
+      }
+      
+      // Try to refresh token only if we have refresh token
+      const refreshToken = await SecureStore.getItemAsync('refresh_token');
+      if (!refreshToken) {
+        console.log('🚨 No refresh token, logging out');
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('user_data');
+        
+        const { router } = await import('expo-router');
+        router.replace('/(auth)/login');
+        return Promise.reject(error);
+      }
+      
       originalRequest._retry = true;
       try {
         console.log('🔄 Attempting token refresh...');

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useFriends } from '../../../../hooks/useApi';
 import api from '../../../../services/api';
+import { API_CONFIG } from '../../../../constants/config';
 import type { Friend, SearchResult } from '../types';
 
 export const useAddFriendLogic = () => {
@@ -59,7 +60,7 @@ export const useAddFriendLogic = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const response = await api.get(`/api/mobile/friends/search?username=${encodeURIComponent(username)}`);
+      const response = await api.get(`${API_CONFIG.ENDPOINTS.SEARCH_FRIEND}?username=${encodeURIComponent(username)}`);
       const searchResult: SearchResult = response.data;
       
       if (searchResult.found && searchResult.canAddFriend) {
@@ -108,7 +109,7 @@ export const useAddFriendLogic = () => {
     setIsAddingFriend(true);
     
     try {
-      await api.post('/api/mobile/friends/add', {
+      await api.post(API_CONFIG.ENDPOINTS.ADD_FRIEND, {
         friendUserId: selectedUser.id
       });
       
@@ -149,7 +150,7 @@ export const useAddFriendLogic = () => {
     setIsDeletingFriend(true);
     
     try {
-      await api.delete(`/api/mobile/friends/remove/${selectedFriend.id}`);
+      await api.delete(`${API_CONFIG.ENDPOINTS.REMOVE_FRIEND}/${selectedFriend.id}`);
       
       setShowDeleteModal(false);
       setSelectedFriend(null);
