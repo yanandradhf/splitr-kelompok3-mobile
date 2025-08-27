@@ -89,7 +89,7 @@ function CustomTabBar() {
           onPress={() => router.push("/create-bill")}
           activeOpacity={0.8}
         >
-          <Ionicons name="add" size={28} color="#00897B" />
+          <Ionicons name="add" size={28} color={COLORS.orange} />
         </TouchableOpacity>
         <Text
           style={{

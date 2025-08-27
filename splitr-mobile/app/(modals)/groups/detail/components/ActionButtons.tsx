@@ -29,7 +29,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             <Ionicons
               name="person-add-outline"
               size={getIconSize(20)}
-              color="#00897B"
+              color={COLORS.orange}
               style={styles.buttonIcon}
             />
             <Text style={styles.addMemberButtonText}>Tambah</Text>
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
     borderWidth: 1.5,
-    borderColor: "#00897B",
+    borderColor: COLORS.orange,
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(14),
     flexDirection: "row",
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   addMemberButtonText: {
     fontSize: rf(14),
     fontFamily: FONTS.semiBold,
-    color: "#00897B",
+    color: COLORS.orange,
   },
   deleteGroupButton: {
     backgroundColor: "rgba(255, 59, 48, 0.1)",

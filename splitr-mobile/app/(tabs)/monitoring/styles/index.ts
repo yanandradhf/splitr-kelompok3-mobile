@@ -4,7 +4,7 @@ import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../../c
 export const monitoringStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#A6D3CE",
+    backgroundColor: "#fde9a2",
   },
   whiteModalContainer: {
     flex: 1,

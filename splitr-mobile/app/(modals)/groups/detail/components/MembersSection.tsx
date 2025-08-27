@@ -179,17 +179,17 @@ const styles = StyleSheet.create({
     marginTop: getSpacing(2),
   },
   addFriendButton: {
-    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    backgroundColor: "rgba(253, 136, 56, 0.1)",
     paddingHorizontal: getSpacing(12),
     paddingVertical: getSpacing(6),
     borderRadius: getBorderRadius(16),
     borderWidth: 1,
-    borderColor: "rgba(0, 137, 123, 0.3)",
+    borderColor: "rgba(253, 136, 56, 0.3)",
   },
   addFriendText: {
     fontSize: rf(12),
     fontFamily: FONTS.semiBold,
-    color: "#00897B",
+    color: COLORS.orange,
   },
   removeButton: {
     width: wp(8),

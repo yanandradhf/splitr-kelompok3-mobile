@@ -3,7 +3,7 @@ import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../../.
 import { wp, hp, rf, getSpacing, getBorderRadius, getIconSize } from "../../../../../utils/responsive";
 
 const LOCAL_COLORS = {
-  background: "#A6D3CE",
+  background: "#fde9a2",
   cardBrown: COLORS.card,
   cardWhite: COLORS.white,
   orange: COLORS.orange,
@@ -54,7 +54,7 @@ export const groupDetailStyles = StyleSheet.create({
 
 export const groupInfoStyles = StyleSheet.create({
   groupInfoCard: {
-    backgroundColor: "#A6D3CE",
+    backgroundColor: "#fde9a2",
     marginHorizontal: 20,
     marginTop: 16,
     marginBottom: 12,
@@ -100,12 +100,12 @@ export const sectionStyles = StyleSheet.create({
     paddingVertical: getSpacing(6),
     borderRadius: getBorderRadius(16),
     borderWidth: 1,
-    borderColor: "#00897B",
+    borderColor: COLORS.orange,
   },
   editButtonText: {
     fontSize: rf(12),
     fontFamily: FONTS.semiBold,
-    color: "#00897B",
+    color: COLORS.orange,
     marginLeft: getSpacing(4),
   },
   input: {

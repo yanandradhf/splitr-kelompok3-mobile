@@ -39,7 +39,7 @@ export const EditableSection: React.FC<EditableSectionProps> = ({
             <Ionicons
               name={isEditing ? "checkmark" : "pencil"}
               size={getIconSize(16)}
-              color="#00897B"
+              color={COLORS.orange}
             />
             <Text style={sectionStyles.editButtonText}>
               {isEditing ? "Simpan" : "Edit"}

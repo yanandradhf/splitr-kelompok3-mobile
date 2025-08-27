@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   header: {
-    backgroundColor: '#00897B',
+    backgroundColor: '#FDA76A',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

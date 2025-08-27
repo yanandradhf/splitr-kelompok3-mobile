@@ -238,7 +238,7 @@ export default function HomeScreen() {
                   <Ionicons
                     name="people-outline"
                     size={24}
-                    color={COLORS.teal}
+                    color={COLORS.orange}
                   />
                 </View>
                 <Text style={styles.emptyTitle}>Belum ada grup</Text>
