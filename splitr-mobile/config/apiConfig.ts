@@ -25,6 +25,7 @@ export const ENDPOINTS = {
   VERIFY_OTP: "/api/mobile/auth/verify-otp",
   ME: "/api/mobile/auth/me",
   LOGOUT: "/api/mobile/auth/logout",
+  REFRESH: "/api/mobile/auth/refresh",
   SEND_RESET_OTP: "/api/mobile/auth/send-reset-otp",
   VERIFY_RESET_OTP: "/api/mobile/auth/verify-reset-otp",
   RESET_PASSWORD: "/api/mobile/auth/reset-password",

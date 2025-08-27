@@ -8,11 +8,10 @@ function CustomTabBar() {
   const pathname = usePathname();
   const isHome = pathname === "/home" || pathname === "/";
   const isMonitoring = pathname.includes("/monitoring");
-  const isPayment = pathname.includes("/pembayaran");
-  const isPilihTanggal = pathname.includes("/bayarNanti/pilih-tanggal");
+  // Removed unused payment route checks
   const isBill = pathname.includes("/bill") || pathname.includes("/create-bill");
 
-  if (isPayment || isPilihTanggal || isBill) {
+  if (isBill) {
     return null;
   }
 
@@ -75,22 +74,22 @@ function CustomTabBar() {
       >
         <TouchableOpacity
           style={{
-            width: 60,
-            height: 60,
-            borderRadius: 20,
+            width: 56,
+            height: 56,
+            borderRadius: 14,
             backgroundColor: "#FFFFFF",
             justifyContent: "center",
             alignItems: "center",
-            elevation: 3,
+            elevation: 4,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.15,
-            shadowRadius: 3,
+            shadowRadius: 4,
           }}
           onPress={() => router.push("/create-bill")}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Ionicons name="add-circle-outline" size={32} color="#000000" />
+          <Ionicons name="add" size={28} color="#00897B" />
         </TouchableOpacity>
         <Text
           style={{
@@ -177,18 +176,7 @@ export default function TabsLayout() {
             title: "Aktivitas",
           }}
         />
-        <Tabs.Screen
-          name="groups"
-          options={{
-            href: null,
-          }}
-        />
-        <Tabs.Screen
-          name="riwayat"
-          options={{
-            href: null,
-          }}
-        />
+
 
 
       </Tabs>

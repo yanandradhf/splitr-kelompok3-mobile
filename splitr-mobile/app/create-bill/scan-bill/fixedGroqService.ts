@@ -196,11 +196,30 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
       // Fix mathematical expressions in JSON
       jsonText = jsonText.replace(/"subtotal":\s*([0-9+\s*-]+),/g, (match, expr) => {
         try {
-          const result = eval(expr.replace(/\s/g, ''));
-          return `"subtotal": ${result},`;
+          // Safely evaluate simple arithmetic expressions
+          const cleanExpr = expr.replace(/\s/g, '').replace(/[^0-9+\-*/]/g, '');
+          if (/^[0-9+\-*/]+$/.test(cleanExpr)) {
+            const result = Function('"use strict"; return (' + cleanExpr + ')')();
+            return `"subtotal": ${result},`;
+          }
+          return match;
         } catch {
           return match;
         }
+      });
+      
+      // Remove any remaining mathematical expressions that might cause JSON parse errors
+      jsonText = jsonText.replace(/"[^"]*":\s*[0-9+\s*-]+(?=[,}])/g, (match) => {
+        const colonIndex = match.indexOf(':');
+        const key = match.substring(0, colonIndex + 1);
+        const value = match.substring(colonIndex + 1).trim();
+        
+        // If value contains operators, try to extract just the number
+        const numberMatch = value.match(/^(\d+)/);
+        if (numberMatch) {
+          return key + ' ' + numberMatch[1];
+        }
+        return match;
       });
 
       console.log('Fixed Groq: Parsing JSON:', jsonText);

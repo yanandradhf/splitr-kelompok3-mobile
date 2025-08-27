@@ -129,7 +129,7 @@ export default function PinVerification() {
       });
 
       // Use categoryId directly from draft
-      const categoryId = draft.category;
+      const categoryId = draft.categoryId;
       
       if (!categoryId) {
         alert('Error: Category not selected. Please try again.');
