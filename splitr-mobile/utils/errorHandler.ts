@@ -10,30 +10,46 @@ export interface ApiError {
 
 export const handleSessionError = async (error: any) => {
   const errorCode = error.response?.data?.code;
+  const errorMessage = error.response?.data?.error || error.response?.data?.message || '';
   
+  // Handle session replacement/expiry
   if (errorCode === 'SESSION_REPLACED' || errorCode === 'SESSION_EXPIRED') {
     console.log('🚨 Session invalid:', errorCode);
     
-    // Clear tokens locally (don't call logout API)
-    try {
-      await SecureStore.deleteItemAsync('access_token');
-      await SecureStore.deleteItemAsync('refresh_token');
-      await SecureStore.deleteItemAsync('user_data');
-    } catch (storageError) {
-      console.log('Storage cleanup error:', storageError);
-    }
+    await clearTokensAndRedirect('Your account was accessed from another device. Please login again.');
+    return true;
+  }
+  
+  // Handle invalid token
+  if (errorCode === 'INVALID_TOKEN' || 
+      errorMessage.includes('invalid') || 
+      errorMessage.includes('malformed') ||
+      errorMessage.includes('expired')) {
+    console.log('🚨 Invalid token detected:', errorMessage);
     
-    // Show user-friendly message
-    Alert.alert(
-      'Session Expired',
-      'Your account was accessed from another device. Please login again.',
-      [{ text: 'Login', onPress: () => router.replace('/(auth)/login') }]
-    );
-    
-    return true; // Handled
+    await clearTokensAndRedirect('Your session has expired. Please login again.');
+    return true;
   }
   
   return false; // Not handled
+};
+
+const clearTokensAndRedirect = async (message: string) => {
+  // Clear tokens locally (don't call logout API)
+  try {
+    await SecureStore.deleteItemAsync('access_token');
+    await SecureStore.deleteItemAsync('refresh_token');
+    await SecureStore.deleteItemAsync('user_data');
+  } catch (storageError) {
+    console.log('Storage cleanup error:', storageError);
+  }
+  
+  // Show user-friendly message
+  Alert.alert(
+    'Session Invalid',
+    message,
+    [{ text: 'Login', onPress: () => router.replace('/(auth)/login') }]
+  );
 };
 
 export const handleApiError = async (error: any): Promise<ApiError> => {
@@ -52,6 +68,17 @@ export const handleApiError = async (error: any): Promise<ApiError> => {
         }
         return { message: 'Sesi Anda telah berakhir, silakan login kembali', status };
       case 403:
+        const errorMessage403 = error.response.data?.message || error.response.data?.error || '';
+        const isInvalidToken403 = errorMessage403.includes('invalid') || 
+                                 errorMessage403.includes('token') ||
+                                 error.response.data?.code === 'INVALID_TOKEN';
+        
+        if (isInvalidToken403) {
+          const handled403 = await handleSessionError(error);
+          if (handled403) {
+            return { message: 'Invalid token', status, code: error.response.data?.code };
+          }
+        }
         return { message: 'Anda tidak memiliki akses untuk melakukan aksi ini', status };
       case 404:
         return { message: 'Data tidak ditemukan', status };
