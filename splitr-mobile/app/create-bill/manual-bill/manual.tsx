@@ -62,8 +62,8 @@ export default function ManualScreen() {
   };
 
   const handleConfirm = () => {
-    // Use categoryId instead of mapping categoryName
-    setHeader(name.trim(), category?.categoryId || null);
+    // Store both categoryId and categoryName
+    setHeader(name.trim(), category?.categoryId || null, category?.categoryName || null);
     router.push('/create-bill/bill-detail');
   };
 

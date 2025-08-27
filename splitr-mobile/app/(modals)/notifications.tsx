@@ -78,10 +78,24 @@ export default function NotificationsScreen() {
       // Handle bill-related notifications with smart routing
       const billRelatedTypes = [
         'bill_created', 'payment_received', 'participant_joined',
-        'bill_assignment', 'bill_invitation', 'payment_reminder'
+        'bill_assignment', 'bill_invitation', 'payment_reminder', 'bill_comment'
       ];
       
       if (billRelatedTypes.includes(notification.type) && identifier) {
+        // Special handling for bill_comment - always navigate to master bill
+        if (notification.type === 'bill_comment') {
+          const billId = notification.metadata?.billId || identifier;
+          console.log('💬 Bill comment notification detected:', {
+            type: notification.type,
+            billId,
+            commenterName: notification.metadata?.commenterName
+          });
+          
+          await markAsReadOptimistic(notification.notificationId);
+          router.push(`/master-bill/${billId}`);
+          return;
+        }
+        
         const isHost = getIsHostFromNotification(notification.type);
         console.log(`💰 ${isHost ? 'HOST' : 'PARTICIPANT'} notification detected:`, {
           type: notification.type,
@@ -229,6 +243,8 @@ export default function NotificationsScreen() {
         return 'trash-outline';
       case 'group_invite':
         return 'people-outline';
+      case 'bill_comment':
+        return 'chatbubbles-outline';
       default:
         return 'notifications-outline';
     }
