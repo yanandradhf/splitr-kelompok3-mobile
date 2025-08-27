@@ -1,40 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
-  TextInput,
-  Image,
   SafeAreaView,
   ScrollView,
   FlatList,
   Modal,
-  Alert,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from "../../../constants/theme";
+import { COLORS } from "../../../constants/theme";
 import UserAvatar from "../../../components/ui/UserAvatar";
-import {
-  wp,
-  hp,
-  rf,
-  getSpacing,
-  getBorderRadius,
-  getIconSize,
-} from "../../../utils/responsive";
-import { useApi } from "../../../hooks/useApi";
-import { useGroupsStore } from "../../../store";
-import { friendsAPI } from "../../../services";
+import { wp, rf, getSpacing, getBorderRadius, getIconSize } from "../../../utils/responsive";
 
-const personImages = [
-  require("../../../assets/images/person1.png"),
-  require("../../../assets/images/person2.png"),
-  require("../../../assets/images/person3.png"),
-  require("../../../assets/images/person4.png"),
-];
+// Components
+import { GroupInfoCard } from "./detail/components/GroupInfoCard";
+import { EditableSection } from "./detail/components/EditableSection";
+import { MembersSection } from "./detail/components/MembersSection";
+import { ActionButtons } from "./detail/components/ActionButtons";
+
+// Hooks & Utils
+import { useGroupDetailLogic } from "./detail/hooks/useGroupDetailLogic";
+
+// Styles
+import { groupDetailStyles } from "./detail/styles";
+import { GroupData, FriendData } from "./detail/types";
 
 export default function GroupDetailScreen() {
   let params;
@@ -57,232 +49,73 @@ export default function GroupDetailScreen() {
   
   const groupId = params.groupId as string;
 
-  const { 
-    currentGroup,
+  const {
+    // State
+    displayGroup,
+    groupName,
+    groupDescription,
+    members,
+    showDeleteModal,
+    showSuccessModal,
+    showRemoveMemberModal,
+    showConfirmFriendModal,
+    showSuccessFriendModal,
+    showAddMemberModal,
+    showAddMemberSuccessModal,
+    memberToRemove,
+    selectedFriend,
+    selectedFriendToAdd,
+    availableFriends,
+    isEditing,
+    isEditingDescription,
     isUpdating,
     isDeleting,
-    fetchGroupDetail,
-    editGroup,
-    deleteGroup: apiDeleteGroup,
-    leaveGroup: apiLeaveGroup,
-    removeMember: apiRemoveMember,
-    addMember: apiAddMember,
+
+    // Actions
+    setGroupName,
+    setGroupDescription,
+    setIsEditing,
+    setIsEditingDescription,
+    setShowDeleteModal,
+    setShowSuccessModal,
+    setShowRemoveMemberModal,
+    setShowConfirmFriendModal,
+    setShowSuccessFriendModal,
+    setShowAddMemberModal,
+    setShowAddMemberSuccessModal,
+    setMemberToRemove,
+    setSelectedFriend,
+    setSelectedFriendToAdd,
+    setIsGroupDeleted,
+    updateGroupName,
+    updateGroupDescription,
+    fetchFriendsForAddMember,
+
+    // Utils
+    isCurrentUser,
+    canAddAsFriend,
+
+    // API Actions
+    apiDeleteGroup,
+    apiLeaveGroup,
+    apiRemoveMember,
+    apiAddMember,
     addFriendFromGroup,
-    clearCurrentGroup
-  } = useGroupsStore();
+    fetchGroupDetail,
+    clearCurrentGroup,
+  } = useGroupDetailLogic(groupId, groupData);
 
-  // State variables
-  const [groupName, setGroupName] = useState("");
-  const [groupDescription, setGroupDescription] = useState("");
-  const [members, setMembers] = useState<any[]>([]);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
-  const [showConfirmFriendModal, setShowConfirmFriendModal] = useState(false);
-  const [showSuccessFriendModal, setShowSuccessFriendModal] = useState(false);
-  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [showAddMemberSuccessModal, setShowAddMemberSuccessModal] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<any>(null);
-  const [selectedFriend, setSelectedFriend] = useState<any>(null);
-  const [selectedFriendToAdd, setSelectedFriendToAdd] = useState<any>(null);
-  const [friendsList, setFriendsList] = useState<string[]>(["creator"]);
-  const [myFriends, setMyFriends] = useState<any[]>([]);
-  const [availableFriends, setAvailableFriends] = useState<any[]>([]);
-  const [friendsLoaded, setFriendsLoaded] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [isGroupDeleted, setIsGroupDeleted] = useState(false);
-
-  // Use currentGroup from store if available
-  const displayGroup = currentGroup || groupData;
-
-  // Fetch group detail if needed
-  useEffect(() => {
-    if (isGroupDeleted) return; // Don't fetch if group is deleted
-    
-    console.log('Detail screen params:', { groupId, groupData: groupData?.groupId });
-    
-    // Clear current group cache first
-    clearCurrentGroup();
-    
-    const fetchData = async () => {
-      try {
-        if (groupId) {
-          console.log('Fetching by groupId:', groupId);
-          await fetchGroupDetail(groupId);
-        } else if (groupData?.groupId) {
-          console.log('Fetching by groupData.groupId:', groupData.groupId);
-          await fetchGroupDetail(groupData.groupId);
-        }
-      } catch (error) {
-        console.error('Error fetching group detail:', error);
-        if (error.response?.status === 404) {
-          // Group not found - show alert and go back
-          Alert.alert(
-            'Grup Tidak Ditemukan',
-            'Grup ini sudah dihapus atau Anda sudah dikeluarkan dari grup.',
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  if (router.canGoBack()) {
-                    router.back();
-                  } else {
-                    router.replace('/(modals)/groups');
-                  }
-                }
-              }
-            ]
-          );
-        }
-      }
-    };
-    
-    fetchData();
-  }, [groupId, groupData?.groupId, isGroupDeleted]);
-
-  // Update local state when displayGroup changes
-  useEffect(() => {
-    if (displayGroup) {
-      setGroupName(displayGroup.groupName || "Makan Bersama");
-      setGroupDescription(displayGroup.description || displayGroup.groupDescription || "Deskripsi grup belum diatur");
-    }
-  }, [displayGroup]);
-
-  // Update members state when displayGroup changes
-  useEffect(() => {
-    if (displayGroup?.members && Array.isArray(displayGroup.members)) {
-      const actualMembers = displayGroup.members.map((member: any, index: number) => ({
-        id: member.userId || member.id || `member-${index}`,
-        name: member.name || member.username || `Member ${index + 1}`,
-        status: member.status || "active",
-        avatar: member.profilePhotoUrl || member.avatar,
-        isCreator: member.isCreator || false,
-        isFriend: member.isFriend || false,
-        canAddFriend: member.canAddFriend || false,
-        isCurrentUser: member.isCurrentUser || (displayGroup?.isCreator && member.isCreator),
-      }));
-      setMembers(actualMembers);
-    } else {
-      // Fallback members
-      setMembers([
-        {
-          id: "creator",
-          name: groupData?.creatorName || "Host",
-          status: "active",
-          avatar: personImages[0],
-          isCreator: true,
-          isCurrentUser: groupData?.isCreator || false,
-        },
-        {
-          id: "pending-1",
-          name: "Ahmad Rizki",
-          status: "pending",
-          avatar: personImages[1],
-          isCurrentUser: false,
-        },
-        {
-          id: "pending-2",
-          name: "Sari Dewi",
-          status: "pending",
-          avatar: personImages[2],
-          isCurrentUser: false,
-        },
-      ]);
-    }
-  }, [displayGroup?.members]);
-
-  // Fetch friends list - only when add member modal is opened
-  const fetchFriendsForAddMember = async () => {
-    if (isGroupDeleted || friendsLoaded) return;
-    
-    try {
-      const response = await friendsAPI.getFriends();
-      const friendsData = response.data.friends || [];
-      setMyFriends(friendsData);
-      
-      const friendIds = friendsData.map((f: any) => f.friend.userId);
-      setFriendsList(["creator", ...friendIds]);
-      
-      // Filter available friends immediately
-      if (members.length > 0) {
-        const currentMemberIds = members.map(m => m.id);
-        const available = friendsData.filter((f: any) => 
-          !currentMemberIds.includes(f.friend.userId)
-        );
-        setAvailableFriends(available);
-      }
-    } catch (error) {
-      console.error('Error fetching friends:', error);
-    } finally {
-      setFriendsLoaded(true);
-    }
-  };
-
-  // Update available friends when members change (only if friends already loaded)
-  useEffect(() => {
-    if (friendsLoaded && myFriends.length > 0 && members.length > 0 && !isGroupDeleted) {
-      const currentMemberIds = members.map(m => m.id);
-      const available = myFriends.filter((f: any) => 
-        !currentMemberIds.includes(f.friend.userId)
-      );
-      setAvailableFriends(available);
-    }
-  }, [members, myFriends, friendsLoaded, isGroupDeleted]);
-
-  // Functions
-  const updateGroupName = async () => {
-    if (groupName.trim().length === 0) {
-      setGroupName(displayGroup?.groupName || "Makan Bersama");
-      setIsEditing(false);
-      return;
-    }
-
-    try {
-      await editGroup(displayGroup?.groupId, {
-        groupName: groupName.trim(),
-        description: groupDescription
-      });
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error updating group name:", error);
-      setGroupName(displayGroup?.groupName || "Makan Bersama");
-      setIsEditing(false);
-    }
-  };
-
-  const updateGroupDescription = async () => {
-    try {
-      await editGroup(displayGroup?.groupId, {
-        groupName: groupName,
-        description: groupDescription.trim()
-      });
-      setIsEditingDescription(false);
-    } catch (error) {
-      console.error("Error updating group description:", error);
-      setGroupDescription(displayGroup?.description || displayGroup?.groupDescription || "Deskripsi grup belum diatur");
-      setIsEditingDescription(false);
-    }
-  };
-
+  // Action handlers
   const deleteGroup = async () => {
     try {
       setIsGroupDeleted(true);
       await apiDeleteGroup(displayGroup?.groupId);
       
-      // Smooth transition: close delete modal first
       setShowDeleteModal(false);
-      
-      // Wait for delete modal to close, then show success
       setTimeout(() => {
         setShowSuccessModal(true);
-        
-        // Auto close success modal and navigate back
         setTimeout(() => {
           setShowSuccessModal(false);
-          
-          // Wait for success modal to close before navigating
           setTimeout(() => {
             if (router.canGoBack()) { router.back(); } else { router.replace("/(modals)/groups"); }
           }, 200);
@@ -295,12 +128,37 @@ export default function GroupDetailScreen() {
     }
   };
 
-  const addMember = async () => {
-    // Fetch friends only when modal is opened
-    if (!friendsLoaded) {
-      await fetchFriendsForAddMember();
+  const leaveGroup = async () => {
+    try {
+      setIsGroupDeleted(true);
+      await apiLeaveGroup(displayGroup?.groupId);
+      
+      setShowDeleteModal(false);
+      setTimeout(() => {
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          setTimeout(() => {
+            if (router.canGoBack()) { router.back(); } else { router.replace("/(modals)/groups"); }
+          }, 200);
+        }, 1200);
+      }, 300);
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      setShowDeleteModal(false);
+      setIsGroupDeleted(false);
     }
-    setShowAddMemberModal(true);
+  };
+
+  const addMember = async () => {
+    try {
+      if (fetchFriendsForAddMember) {
+        await fetchFriendsForAddMember();
+      }
+      setShowAddMemberModal(true);
+    } catch (error) {
+      console.error('Error in addMember:', error);
+    }
   };
 
   const confirmAddMember = async () => {
@@ -312,12 +170,10 @@ export default function GroupDetailScreen() {
       setShowAddMemberModal(false);
       setShowAddMemberSuccessModal(true);
       
-      // Refresh data immediately after API success
       if (displayGroup?.groupId) {
         fetchGroupDetail(displayGroup.groupId);
       }
       
-      // Close success modal
       setTimeout(() => {
         setShowAddMemberSuccessModal(false);
         setSelectedFriendToAdd(null);
@@ -326,35 +182,6 @@ export default function GroupDetailScreen() {
       console.error("Error adding member:", error);
       setShowAddMemberModal(false);
       setSelectedFriendToAdd(null);
-    }
-  };
-
-  const leaveGroup = async () => {
-    try {
-      setIsGroupDeleted(true);
-      await apiLeaveGroup(displayGroup?.groupId);
-      
-      // Smooth transition: close delete modal first
-      setShowDeleteModal(false);
-      
-      // Wait for delete modal to close, then show success
-      setTimeout(() => {
-        setShowSuccessModal(true);
-        
-        // Auto close success modal and navigate back
-        setTimeout(() => {
-          setShowSuccessModal(false);
-          
-          // Wait for success modal to close before navigating
-          setTimeout(() => {
-            if (router.canGoBack()) { router.back(); } else { router.replace("/(modals)/groups"); }
-          }, 200);
-        }, 1200);
-      }, 300);
-    } catch (error) {
-      console.error("Error leaving group:", error);
-      setShowDeleteModal(false);
-      setIsGroupDeleted(false);
     }
   };
 
@@ -368,10 +195,6 @@ export default function GroupDetailScreen() {
     
     try {
       await apiRemoveMember(displayGroup?.groupId, memberToRemove.id);
-      
-      // Immediately update local members state
-      setMembers(prev => prev.filter(member => member.id !== memberToRemove.id));
-      
       setShowRemoveMemberModal(false);
       setMemberToRemove(null);
     } catch (error) {
@@ -379,16 +202,6 @@ export default function GroupDetailScreen() {
       setShowRemoveMemberModal(false);
       setMemberToRemove(null);
     }
-  };
-
-  const checkIsFriend = (userId: string) => {
-    const member = displayGroup?.members?.find((m: any) => (m.userId || m.id) === userId);
-    return member?.isFriend || friendsList.includes(userId);
-  };
-
-  const canAddAsFriend = (userId: string) => {
-    const member = displayGroup?.members?.find((m: any) => (m.userId || m.id) === userId);
-    return member?.canAddFriend !== false && !checkIsFriend(userId) && userId !== "creator";
   };
 
   const openConfirmModal = (friendData: any) => {
@@ -401,14 +214,6 @@ export default function GroupDetailScreen() {
     
     try {
       await addFriendFromGroup(displayGroup?.groupId, selectedFriend.id);
-      
-      setFriendsList(prev => [...prev, selectedFriend.id]);
-      
-      setMembers(prev => prev.map(member => 
-        member.id === selectedFriend.id 
-          ? { ...member, isFriend: true, canAddFriend: false }
-          : member
-      ));
       
       setShowConfirmFriendModal(false);
       setShowSuccessFriendModal(true);
@@ -424,76 +229,15 @@ export default function GroupDetailScreen() {
     }
   };
 
-  const isCurrentUser = (member: any) => {
-    return (member.id === "creator" && displayGroup?.isCreator) || 
-           member.name === "You" || 
-           member.isCurrentUser ||
-           (displayGroup?.isCreator && member.isCreator);
-  };
-
-  const renderMember = ({ item }: { item: any }) => (
-    <View style={styles.memberItem}>
-      <UserAvatar
-        photoUrl={typeof item.avatar === 'string' ? item.avatar : undefined}
-        name={item.name}
-        size={40}
-        style={styles.memberAvatar}
-      />
-      <View style={styles.memberInfo}>
-        <View style={styles.memberNameContainer}>
-          <Text style={styles.memberName}>{item.name}</Text>
-          {(item.isCreator || item.id === "creator") && isCurrentUser(item) ? (
-            <View style={styles.youHostBadge}>
-              <Text style={styles.youHostBadgeText}>You as Host</Text>
-            </View>
-          ) : (item.isCreator || item.id === "creator") ? (
-            <View style={styles.hostBadge}>
-              <Text style={styles.hostBadgeText}>Host</Text>
-            </View>
-          ) : isCurrentUser(item) ? (
-            <View style={styles.youBadge}>
-              <Text style={styles.youBadgeText}>You</Text>
-            </View>
-          ) : null}
-        </View>
-        {item.status === "pending" && (
-          <Text style={styles.pendingLabel}>Menunggu konfirmasi</Text>
-        )}
-      </View>
-      {!displayGroup?.isCreator && canAddAsFriend(item.id) && !isCurrentUser(item) && (
-        <TouchableOpacity
-          style={styles.addFriendButton}
-          onPress={() => openConfirmModal(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.addFriendText}>Add Friend</Text>
-        </TouchableOpacity>
-      )}
-      {item.id !== "creator" && displayGroup?.isCreator && !isCurrentUser(item) && (
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => showRemoveMemberConfirmation(item)}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="trash-outline"
-            size={getIconSize(16)}
-            color="#FF3B30"
-          />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+    <View style={groupDetailStyles.container}>
+      <SafeAreaView style={groupDetailStyles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={groupDetailStyles.header}>
           <TouchableOpacity onPress={() => {
             clearCurrentGroup();
             if (router.canGoBack()) {
-              if (router.canGoBack()) { router.back(); } else { router.replace("/(modals)/groups"); }
+              router.back();
             } else {
               router.replace('/(modals)/groups');
             }
@@ -504,211 +248,78 @@ export default function GroupDetailScreen() {
               color={COLORS.textPrimary}
             />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Detail Grup</Text>
+          <Text style={groupDetailStyles.headerTitle}>Detail Grup</Text>
           <View style={{ width: getIconSize(24) }} />
         </View>
 
         {/* White Modal Container */}
-        <View style={styles.whiteModalContainer}>
+        <View style={groupDetailStyles.whiteModalContainer}>
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={groupDetailStyles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Group Info Card */}
-            <View style={styles.groupInfoCard}>
-              <Text style={styles.groupTitle}>{groupName || "Makan Bersama"}</Text>
-              <Text style={styles.groupSubtitle}>
-                Dibuat oleh{" "}
-                {displayGroup?.isCreator
-                  ? "You"
-                  : displayGroup?.creatorName || "Hanis"}
-              </Text>
-            </View>
+            <GroupInfoCard
+              groupName={groupName}
+              displayGroup={displayGroup}
+            />
 
-            {/* Group Name Section */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Nama Grup</Text>
-                {displayGroup?.isCreator && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      if (isEditing) {
-                        updateGroupName();
-                      } else {
-                        setIsEditing(true);
-                      }
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={isEditing ? "checkmark" : "pencil"}
-                      size={getIconSize(16)}
-                      color="#00897B"
-                    />
-                    <Text style={styles.editButtonText}>
-                      {isEditing ? "Simpan" : "Edit"}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+            <EditableSection
+              title="Nama Grup"
+              value={groupName}
+              isEditing={isEditing}
+              isCreator={displayGroup?.isCreator || false}
+              placeholder="Masukkan nama grup"
+              onValueChange={setGroupName}
+              onToggleEdit={() => {
+                if (isEditing) {
+                  updateGroupName();
+                } else {
+                  setIsEditing(true);
+                }
+              }}
+            />
 
-              {displayGroup?.isCreator && isEditing ? (
-                <TextInput
-                  style={styles.input}
-                  value={groupName}
-                  onChangeText={setGroupName}
-                  onSubmitEditing={updateGroupName}
-                  placeholder="Masukkan nama grup"
-                  placeholderTextColor={COLORS.placeholder}
-                  autoFocus={true}
-                  selectTextOnFocus={true}
-                  returnKeyType="done"
-                />
-              ) : (
-                <View style={styles.groupNameDisplay}>
-                  <Text style={styles.groupNameText}>{groupName || "Makan Bersama"}</Text>
-                </View>
-              )}
-            </View>
+            <EditableSection
+              title="Deskripsi Grup"
+              value={groupDescription}
+              isEditing={isEditingDescription}
+              isCreator={displayGroup?.isCreator || false}
+              multiline={true}
+              placeholder="Masukkan deskripsi grup"
+              onValueChange={setGroupDescription}
+              onToggleEdit={() => {
+                if (isEditingDescription) {
+                  updateGroupDescription();
+                } else {
+                  setIsEditingDescription(true);
+                }
+              }}
+            />
 
-            {/* Group Description Section */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Deskripsi Grup</Text>
-                {displayGroup?.isCreator && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => {
-                      if (isEditingDescription) {
-                        updateGroupDescription();
-                      } else {
-                        setIsEditingDescription(true);
-                      }
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={isEditingDescription ? "checkmark" : "pencil"}
-                      size={getIconSize(16)}
-                      color="#00897B"
-                    />
-                    <Text style={styles.editButtonText}>
-                      {isEditingDescription ? "Simpan" : "Edit"}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+            <MembersSection
+              members={members}
+              displayGroup={displayGroup}
+              onAddFriend={openConfirmModal}
+              onRemoveMember={showRemoveMemberConfirmation}
+              isCurrentUser={isCurrentUser}
+              canAddAsFriend={canAddAsFriend}
+            />
 
-              {displayGroup?.isCreator && isEditingDescription ? (
-                <TextInput
-                  style={styles.textArea}
-                  value={groupDescription}
-                  onChangeText={setGroupDescription}
-                  onSubmitEditing={updateGroupDescription}
-                  placeholder="Masukkan deskripsi grup"
-                  placeholderTextColor={COLORS.placeholder}
-                  multiline={true}
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                  autoFocus={true}
-                />
-              ) : (
-                <View style={styles.groupDescriptionDisplay}>
-                  <Text style={styles.groupDescriptionText}>{groupDescription || "Deskripsi grup belum diatur"}</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Members Section */}
-            <View style={styles.section}>
-              <View style={styles.membersHeader}>
-                <Text style={styles.sectionTitle}>Anggota Grup</Text>
-                <Text style={styles.memberCount}>
-                  {members.length} anggota
-                </Text>
-              </View>
-              <FlatList
-                data={members}
-                renderItem={renderMember}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
-                scrollEnabled={false}
-              />
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtons}>
-            {displayGroup?.isCreator ? (
-              <>
-
-
-                {/* Add Member Button */}
-                <TouchableOpacity
-                  style={styles.addMemberButton}
-                  onPress={addMember}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="person-add-outline"
-                    size={getIconSize(20)}
-                    color="#00897B"
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.addMemberButtonText}>Tambah</Text>
-                </TouchableOpacity>
-
-                {/* Delete Group Button */}
-                <TouchableOpacity
-                  style={styles.deleteGroupButton}
-                  onPress={() => setShowDeleteModal(true)}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="trash-outline"
-                    size={getIconSize(18)}
-                    color="#FF3B30"
-                  />
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-
-
-                {/* Leave Group Button */}
-                <TouchableOpacity
-                  style={styles.leaveGroupButton}
-                  onPress={() => setShowDeleteModal(true)}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="exit-outline"
-                    size={getIconSize(20)}
-                    color="#FF3B30"
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.leaveGroupButtonText}>Keluar</Text>
-                </TouchableOpacity>
-              </>
-            )}
-            </View>
-
+            <ActionButtons
+              displayGroup={displayGroup}
+              onAddMember={addMember}
+              onDeleteGroup={() => setShowDeleteModal(true)}
+            />
           </ScrollView>
         </View>
 
+        {/* All Modals */}
         {/* Delete Confirmation Modal */}
-        <Modal
-          visible={showDeleteModal}
-          transparent={true}
-          animationType="fade"
-        >
+        <Modal visible={showDeleteModal} transparent={true} animationType="fade">
           <BlurView intensity={20} style={styles.modalOverlay}>
             <View style={styles.deleteModal}>
               <View style={styles.warningIcon}>
-                <Ionicons
-                  name="warning"
-                  size={getIconSize(40)}
-                  color="#FF9500"
-                />
+                <Ionicons name="warning" size={getIconSize(40)} color="#FF9500" />
               </View>
               <Text style={styles.deleteTitle}>
                 {displayGroup?.isCreator ? "Hapus Grup?" : "Keluar Grup?"}
@@ -745,19 +356,11 @@ export default function GroupDetailScreen() {
         </Modal>
 
         {/* Success Modal */}
-        <Modal
-          visible={showSuccessModal}
-          transparent={true}
-          animationType="slide"
-        >
+        <Modal visible={showSuccessModal} transparent={true} animationType="slide">
           <BlurView intensity={20} style={styles.modalOverlay}>
             <View style={styles.successModal}>
               <View style={styles.successIcon}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={getIconSize(60)}
-                  color="#00897B"
-                />
+                <Ionicons name="checkmark-circle" size={getIconSize(60)} color="#00897B" />
               </View>
               <Text style={styles.successTitle}>
                 {displayGroup?.isCreator ? "Grup Berhasil dihapus" : "Berhasil keluar dari grup"}
@@ -766,32 +369,21 @@ export default function GroupDetailScreen() {
           </BlurView>
         </Modal>
 
-        {/* Remove Member Confirmation Modal */}
-        <Modal
-          visible={showRemoveMemberModal}
-          transparent={true}
-          animationType="fade"
-        >
+        {/* Remove Member Modal */}
+        <Modal visible={showRemoveMemberModal} transparent={true} animationType="fade">
           <BlurView intensity={20} style={styles.modalOverlay}>
             <View style={styles.deleteModal}>
               <View style={styles.warningIcon}>
-                <Ionicons
-                  name="warning"
-                  size={getIconSize(40)}
-                  color="#FF9500"
-                />
+                <Ionicons name="person-remove" size={getIconSize(40)} color="#FF9500" />
               </View>
               <Text style={styles.deleteTitle}>Hapus Anggota?</Text>
               <Text style={styles.deleteMessage}>
-                Apakah Anda yakin ingin menghapus {memberToRemove?.name} dari grup ini?
+                Yakin ingin menghapus {memberToRemove?.name} dari grup?
               </Text>
               <View style={styles.deleteActions}>
                 <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={() => {
-                    setShowRemoveMemberModal(false);
-                    setMemberToRemove(null);
-                  }}
+                  onPress={() => setShowRemoveMemberModal(false)}
                 >
                   <Text style={styles.cancelButtonText}>Batal</Text>
                 </TouchableOpacity>
@@ -806,174 +398,105 @@ export default function GroupDetailScreen() {
           </BlurView>
         </Modal>
 
-        {/* Confirm Add Friend Modal */}
-        <Modal
-          visible={showConfirmFriendModal}
-          transparent={true}
-          animationType="fade"
-        >
+        {/* Add Friend Modal */}
+        <Modal visible={showConfirmFriendModal} transparent={true} animationType="fade">
           <BlurView intensity={20} style={styles.modalOverlay}>
             <View style={styles.deleteModal}>
-              <View style={styles.friendIcon}>
-                <Ionicons
-                  name="person-add"
-                  size={getIconSize(40)}
-                  color="#00897B"
-                />
+              <View style={styles.warningIcon}>
+                <Ionicons name="person-add" size={getIconSize(40)} color="#00897B" />
               </View>
+              <Text style={styles.deleteTitle}>Tambah Teman?</Text>
               <Text style={styles.deleteMessage}>
-                Apakah anda yakin menambahkan {selectedFriend?.name} sebagai teman?
+                Tambahkan {selectedFriend?.name} sebagai teman?
               </Text>
               <View style={styles.deleteActions}>
                 <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={() => {
-                    setShowConfirmFriendModal(false);
-                    setSelectedFriend(null);
-                  }}
+                  onPress={() => setShowConfirmFriendModal(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Tidak</Text>
+                  <Text style={styles.cancelButtonText}>Batal</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.confirmFriendButton}
+                  style={[styles.confirmDeleteButton, { backgroundColor: COLORS.teal }]}
                   onPress={addFriend}
                 >
-                  <Text style={styles.confirmFriendText}>Ya</Text>
+                  <Text style={styles.confirmDeleteText}>Tambah</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </BlurView>
-        </Modal>
-
-        {/* Success Add Friend Modal */}
-        <Modal
-          visible={showSuccessFriendModal}
-          transparent={true}
-          animationType="fade"
-        >
-          <BlurView intensity={20} style={styles.modalOverlay}>
-            <View style={styles.successModal}>
-              <View style={styles.successIcon}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={getIconSize(60)}
-                  color="#00897B"
-                />
-              </View>
-              <Text style={styles.successTitle}>
-                {selectedFriend?.name} sudah berhasil ditambahkan
-              </Text>
             </View>
           </BlurView>
         </Modal>
 
         {/* Add Member Modal */}
-        <Modal
-          visible={showAddMemberModal}
-          transparent={true}
-          animationType="slide"
-        >
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.modalBackdrop}>
-              <View style={styles.addMemberModal}>
-                <View style={styles.addMemberHeader}>
-                  <Text style={styles.addMemberTitle}>Tambah Anggota</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowAddMemberModal(false);
-                      setSelectedFriendToAdd(null);
-                    }}
-                    style={styles.closeButton}
-                  >
-                    <Ionicons name="close" size={24} color={COLORS.textPrimary} />
-                  </TouchableOpacity>
-                </View>
-                
-                <Text style={styles.addMemberSubtitle}>Pilih teman untuk ditambahkan ke grup</Text>
-                
-                <FlatList
-                  data={availableFriends}
-                  keyExtractor={(item, index) => `${item.friend.userId}-${index}`}
+        <Modal visible={showAddMemberModal} transparent={true} animationType="slide">
+          <BlurView intensity={20} style={styles.modalOverlay}>
+            <View style={styles.addMemberModal}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Tambah Anggota</Text>
+                <TouchableOpacity onPress={() => setShowAddMemberModal(false)}>
+                  <Ionicons name="close" size={24} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.modalSubtitle}>Pilih teman untuk ditambahkan ke grup</Text>
+              
+              {availableFriends.length > 0 ? (
+                <ScrollView 
                   style={styles.friendsList}
                   showsVerticalScrollIndicator={false}
-                  renderItem={({ item }) => (
+                >
+                  {availableFriends.map((friendData) => (
                     <TouchableOpacity
+                      key={friendData.friend.userId}
                       style={[
                         styles.friendItem,
-                        selectedFriendToAdd?.friend.userId === item.friend.userId && styles.friendItemSelected
+                        selectedFriendToAdd?.friend.userId === friendData.friend.userId && styles.selectedFriendItem
                       ]}
-                      onPress={() => setSelectedFriendToAdd(item)}
+                      onPress={() => setSelectedFriendToAdd(friendData)}
                       activeOpacity={0.7}
                     >
                       <UserAvatar
-                        photoUrl={item.friend.profilePhotoUrl || item.friend.avatar}
-                        name={item.friend.name}
+                        photoUrl={friendData.friend.profilePhotoUrl}
+                        name={friendData.friend.name}
                         size={40}
-                        style={styles.friendAvatar}
                       />
-                      <Text style={styles.friendName}>{item.friend.name}</Text>
-                      {selectedFriendToAdd?.friend.userId === item.friend.userId && (
-                        <Ionicons name="checkmark-circle" size={20} color="#00897B" />
+                      <View style={styles.friendInfo}>
+                        <Text style={styles.friendName}>{friendData.friend.name}</Text>
+                        <Text style={styles.friendUsername}>
+                          @{friendData.friend.username || friendData.friend.name.toLowerCase().replace(/\s+/g, '')}
+                        </Text>
+                      </View>
+                      {selectedFriendToAdd?.friend.userId === friendData.friend.userId && (
+                        <Ionicons name="checkmark-circle" size={24} color={COLORS.teal} />
                       )}
                     </TouchableOpacity>
-                  )}
-                  ListEmptyComponent={
-                    <View style={styles.emptyFriendsContainer}>
-                      <Ionicons name="people-outline" size={48} color={COLORS.textSecondary} />
-                      <Text style={styles.emptyFriendsText}>Tidak ada teman yang bisa ditambahkan</Text>
-                      <Text style={styles.emptyFriendsSubtext}>Semua teman sudah ada di grup ini</Text>
-                    </View>
-                  }
-                />
-                
-                <View style={styles.addMemberActions}>
-                  <TouchableOpacity
-                    style={styles.cancelAddButton}
-                    onPress={() => {
-                      setShowAddMemberModal(false);
-                      setSelectedFriendToAdd(null);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.cancelAddButtonText}>Batal</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.confirmAddButton,
-                      !selectedFriendToAdd && styles.confirmAddButtonDisabled
-                    ]}
-                    onPress={confirmAddMember}
-                    disabled={!selectedFriendToAdd || isUpdating}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.confirmAddButtonText}>
-                      {isUpdating ? "Menambahkan..." : "Tambah"}
-                    </Text>
-                  </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons name="people-outline" size={48} color={COLORS.textSecondary} />
+                  <Text style={styles.emptyText}>Tidak ada teman yang bisa ditambahkan</Text>
                 </View>
+              )}
+              
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelModalButton}
+                  onPress={() => setShowAddMemberModal(false)}
+                >
+                  <Text style={styles.cancelModalText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.confirmModalButton, 
+                    !selectedFriendToAdd && styles.disabledButton
+                  ]}
+                  onPress={confirmAddMember}
+                  disabled={!selectedFriendToAdd}
+                >
+                  <Text style={styles.confirmModalText}>Tambah</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-          </SafeAreaView>
-        </Modal>
-
-        {/* Add Member Success Modal */}
-        <Modal
-          visible={showAddMemberSuccessModal}
-          transparent={true}
-          animationType="fade"
-        >
-          <BlurView intensity={20} style={styles.modalOverlay}>
-            <View style={styles.successModal}>
-              <View style={styles.successIcon}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={getIconSize(60)}
-                  color="#00897B"
-                />
-              </View>
-              <Text style={styles.successTitle}>
-                {selectedFriendToAdd?.friend.name} berhasil ditambahkan ke grup
-              </Text>
             </View>
           </BlurView>
         </Modal>
@@ -982,355 +505,18 @@ export default function GroupDetailScreen() {
   );
 }
 
-const LOCAL_COLORS = {
-  background: "#A6D3CE",
-  cardBrown: COLORS.card,
-  cardWhite: COLORS.white,
-  orange: COLORS.orange,
-  textPrimary: COLORS.textPrimary,
-  textSecondary: COLORS.textSecondary,
-  border: COLORS.border,
-  headerBrown: "#00897B",
-  gray: COLORS.gray,
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: LOCAL_COLORS.background,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  headerTitle: {
-    fontSize: rf(FONT_SIZES.xl),
-    fontFamily: FONTS.bold,
-    color: LOCAL_COLORS.textPrimary,
-  },
-  whiteModalContainer: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    marginBottom: -24,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 16,
-  },
-  groupInfoCard: {
-    backgroundColor: "#A6D3CE",
-    marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  groupTitle: {
-    fontSize: rf(20),
-    fontFamily: FONTS.bold,
-    color: COLORS.black,
-    marginBottom: getSpacing(4),
-  },
-  groupSubtitle: {
-    fontSize: rf(14),
-    fontFamily: FONTS.regular,
-    color: COLORS.black,
-    opacity: 0.8,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: rf(FONT_SIZES.lg),
-    fontFamily: FONTS.bold,
-    color: LOCAL_COLORS.textPrimary,
-  },
-  membersHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: getSpacing(12),
-  },
-  memberCount: {
-    fontSize: rf(12),
-    fontFamily: FONTS.regular,
-    color: COLORS.textSecondary,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: getSpacing(12),
-  },
-  editButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.inputBg,
-    paddingHorizontal: getSpacing(12),
-    paddingVertical: getSpacing(6),
-    borderRadius: getBorderRadius(16),
-    borderWidth: 1,
-    borderColor: "#00897B",
-  },
-  editButtonText: {
-    fontSize: rf(12),
-    fontFamily: FONTS.semiBold,
-    color: "#00897B",
-    marginLeft: getSpacing(4),
-  },
-  groupNameDisplay: {
-    backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(16),
-    paddingHorizontal: getSpacing(16),
-    borderWidth: 1,
-    borderColor: COLORS.inputBorder,
-  },
-  groupNameText: {
-    fontSize: rf(16),
-    fontFamily: FONTS.regular,
-    color: COLORS.textPrimary,
-  },
-  input: {
-    backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(16),
-    paddingHorizontal: getSpacing(16),
-    fontSize: rf(16),
-    fontFamily: FONTS.regular,
-    color: COLORS.textPrimary,
-    borderWidth: 1,
-    borderColor: COLORS.inputBorder,
-  },
-  textArea: {
-    backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(16),
-    paddingHorizontal: getSpacing(16),
-    fontSize: rf(16),
-    fontFamily: FONTS.regular,
-    color: COLORS.textPrimary,
-    borderWidth: 1,
-    borderColor: COLORS.inputBorder,
-    minHeight: 80,
-  },
-  groupDescriptionDisplay: {
-    backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(16),
-    paddingHorizontal: getSpacing(16),
-    borderWidth: 1,
-    borderColor: COLORS.inputBorder,
-    minHeight: 80,
-  },
-  groupDescriptionText: {
-    fontSize: rf(16),
-    fontFamily: FONTS.regular,
-    color: COLORS.textPrimary,
-    lineHeight: 22,
-  },
-  memberItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: getSpacing(12),
-    paddingHorizontal: getSpacing(14),
-    backgroundColor: COLORS.inputBg,
-    borderRadius: getBorderRadius(10),
-    marginBottom: getSpacing(6),
-    borderWidth: 1,
-    borderColor: COLORS.inputBorder,
-  },
-  memberAvatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    marginRight: getSpacing(12),
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  memberNameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: getSpacing(2),
-  },
-  memberName: {
-    fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-    marginRight: getSpacing(8),
-  },
-  hostBadge: {
-    backgroundColor: COLORS.teal,
-    paddingHorizontal: getSpacing(6),
-    paddingVertical: getSpacing(2),
-    borderRadius: getBorderRadius(8),
-  },
-  hostBadgeText: {
-    fontSize: rf(10),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.white,
-  },
-  youBadge: {
-    backgroundColor: "#FF9500",
-    paddingHorizontal: getSpacing(6),
-    paddingVertical: getSpacing(2),
-    borderRadius: getBorderRadius(8),
-  },
-  youBadgeText: {
-    fontSize: rf(10),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.white,
-  },
-  youHostBadge: {
-    backgroundColor: COLORS.teal,
-    paddingHorizontal: getSpacing(8),
-    paddingVertical: getSpacing(2),
-    borderRadius: getBorderRadius(8),
-  },
-  youHostBadgeText: {
-    fontSize: rf(10),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.white,
-  },
-  pendingLabel: {
-    fontSize: rf(12),
-    fontFamily: FONTS.regular,
-    color: "#FF9500",
-    marginTop: getSpacing(2),
-  },
-  addFriendButton: {
-    backgroundColor: "rgba(0, 137, 123, 0.1)",
-    paddingHorizontal: getSpacing(12),
-    paddingVertical: getSpacing(6),
-    borderRadius: getBorderRadius(16),
-    borderWidth: 1,
-    borderColor: "rgba(0, 137, 123, 0.3)",
-  },
-  addFriendText: {
-    fontSize: rf(12),
-    fontFamily: FONTS.semiBold,
-    color: "#00897B",
-  },
-  removeButton: {
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    backgroundColor: "rgba(255, 59, 48, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 59, 48, 0.2)",
-  },
-  actionButtons: {
-    flexDirection: "row",
-    paddingHorizontal: getSpacing(20),
-    paddingVertical: getSpacing(20),
-    gap: getSpacing(12),
-  },
-  buttonIcon: {
-    marginRight: getSpacing(6),
-  },
-  createBillButton: {
-    flex: 2,
-    backgroundColor: "#00897B",
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(14),
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#00897B",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  createBillButtonText: {
-    fontSize: rf(15),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.white,
-  },
-  addMemberButton: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderWidth: 1.5,
-    borderColor: "#00897B",
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(14),
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addMemberButtonText: {
-    fontSize: rf(14),
-    fontFamily: FONTS.semiBold,
-    color: "#00897B",
-  },
-  deleteGroupButton: {
-    backgroundColor: "rgba(255, 59, 48, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 59, 48, 0.3)",
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(14),
-    paddingHorizontal: getSpacing(16),
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  createBillButtonMember: {
-    flex: 2,
-    backgroundColor: "#00897B",
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(14),
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#00897B",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  leaveGroupButton: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderWidth: 1.5,
-    borderColor: "#FF3B30",
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(14),
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  leaveGroupButtonText: {
-    fontSize: rf(14),
-    fontFamily: FONTS.semiBold,
-    color: "#FF3B30",
-  },
+// Simplified styles for modals (keeping essential ones)
+const styles = {
   modalOverlay: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
   },
   deleteModal: {
     backgroundColor: COLORS.white,
     borderRadius: getBorderRadius(24),
     padding: getSpacing(32),
-    alignItems: "center",
+    alignItems: "center" as const,
     marginHorizontal: getSpacing(40),
     minWidth: wp(70),
   },
@@ -1338,20 +524,19 @@ const styles = StyleSheet.create({
     marginBottom: getSpacing(16),
   },
   deleteTitle: {
-    fontSize: rf(FONT_SIZES.xl),
-    fontFamily: FONTS.bold,
+    fontSize: rf(20),
+    fontWeight: "bold" as const,
     color: COLORS.textPrimary,
-    marginBottom: getSpacing(SPACING.sm),
+    marginBottom: getSpacing(8),
   },
   deleteMessage: {
     fontSize: rf(14),
-    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
-    textAlign: "center",
+    textAlign: "center" as const,
     marginBottom: getSpacing(24),
   },
   deleteActions: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     gap: getSpacing(12),
   },
   cancelButton: {
@@ -1361,11 +546,11 @@ const styles = StyleSheet.create({
     borderColor: COLORS.inputBorder,
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(12),
-    alignItems: "center",
+    alignItems: "center" as const,
   },
   cancelButtonText: {
     fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
+    fontWeight: "600" as const,
     color: COLORS.textSecondary,
   },
   confirmDeleteButton: {
@@ -1373,172 +558,144 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF3B30",
     borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(12),
-    alignItems: "center",
+    alignItems: "center" as const,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   confirmDeleteText: {
     fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
+    fontWeight: "600" as const,
     color: COLORS.white,
   },
   successModal: {
     backgroundColor: "#A6D3CE",
     borderRadius: getBorderRadius(24),
     padding: getSpacing(40),
-    alignItems: "center",
+    alignItems: "center" as const,
     marginHorizontal: getSpacing(40),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    transform: [{ scale: 1 }],
   },
   successIcon: {
     marginBottom: getSpacing(16),
   },
   successTitle: {
     fontSize: rf(18),
-    fontFamily: FONTS.bold,
+    fontWeight: "bold" as const,
     color: COLORS.white,
-    textAlign: "center",
-  },
-  friendIcon: {
-    marginBottom: getSpacing(16),
-  },
-  confirmFriendButton: {
-    flex: 1,
-    backgroundColor: "#00897B",
-    borderRadius: getBorderRadius(12),
-    paddingVertical: getSpacing(12),
-    alignItems: "center",
-  },
-  confirmFriendText: {
-    fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.white,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: "transparent",
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
+    textAlign: "center" as const,
   },
   addMemberModal: {
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: getBorderRadius(24),
-    borderTopRightRadius: getBorderRadius(24),
-    paddingTop: getSpacing(20),
-    paddingHorizontal: getSpacing(20),
-    maxHeight: hp(85),
-    minHeight: hp(50),
+    borderRadius: getBorderRadius(20),
+    marginHorizontal: getSpacing(20),
+    maxHeight: wp(80),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  closeButton: {
-    padding: getSpacing(4),
+  modalHeader: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    padding: getSpacing(20),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  addMemberHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: getSpacing(16),
-  },
-  addMemberTitle: {
-    fontSize: rf(18),
-    fontFamily: FONTS.bold,
+  modalTitle: {
+    fontSize: rf(20),
+    fontWeight: "bold" as const,
     color: COLORS.textPrimary,
   },
-  addMemberSubtitle: {
+  modalSubtitle: {
     fontSize: rf(14),
-    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
-    marginBottom: getSpacing(20),
+    paddingHorizontal: getSpacing(20),
+    paddingTop: getSpacing(16),
+    paddingBottom: getSpacing(8),
   },
   friendsList: {
-    flex: 1,
-    marginBottom: getSpacing(20),
+    maxHeight: wp(50),
+    paddingHorizontal: getSpacing(20),
   },
   friendItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
     paddingVertical: getSpacing(12),
     paddingHorizontal: getSpacing(16),
-    backgroundColor: COLORS.inputBg,
     borderRadius: getBorderRadius(12),
     marginBottom: getSpacing(8),
+    backgroundColor: COLORS.inputBg,
     borderWidth: 1,
     borderColor: COLORS.inputBorder,
   },
-  friendItemSelected: {
-    borderColor: "#00897B",
-    backgroundColor: "rgba(0, 137, 123, 0.05)",
+  selectedFriendItem: {
+    backgroundColor: "rgba(0, 137, 123, 0.1)",
+    borderColor: COLORS.teal,
   },
-  friendAvatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    marginRight: getSpacing(12),
+  friendInfo: {
+    flex: 1,
+    marginLeft: getSpacing(12),
   },
   friendName: {
-    flex: 1,
     fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
+    fontWeight: "600" as const,
     color: COLORS.textPrimary,
   },
-  emptyFriendsContainer: {
-    alignItems: "center",
-    paddingVertical: getSpacing(40),
+  friendUsername: {
+    fontSize: rf(12),
+    color: COLORS.textSecondary,
+    marginTop: getSpacing(2),
   },
-  emptyFriendsText: {
-    textAlign: "center",
-    fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
-    color: COLORS.textPrimary,
-    marginTop: getSpacing(12),
+  emptyState: {
+    alignItems: "center" as const,
+    paddingVertical: getSpacing(32),
   },
-  emptyFriendsSubtext: {
-    textAlign: "center",
+  emptyText: {
     fontSize: rf(14),
-    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
-    marginTop: getSpacing(4),
+    marginTop: getSpacing(12),
+    textAlign: "center" as const,
   },
-  addMemberActions: {
-    flexDirection: "row",
+  modalActions: {
+    flexDirection: "row" as const,
+    padding: getSpacing(20),
     gap: getSpacing(12),
-    paddingBottom: getSpacing(20),
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
-  cancelAddButton: {
+  cancelModalButton: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.inputBorder,
-    borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(12),
-    alignItems: "center",
+    borderRadius: getBorderRadius(12),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center" as const,
   },
-  cancelAddButtonText: {
+  cancelModalText: {
     fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
+    fontWeight: "600" as const,
     color: COLORS.textSecondary,
   },
-  confirmAddButton: {
+  confirmModalButton: {
     flex: 1,
-    backgroundColor: "#00897B",
-    borderRadius: getBorderRadius(12),
     paddingVertical: getSpacing(12),
-    alignItems: "center",
+    borderRadius: getBorderRadius(12),
+    backgroundColor: COLORS.teal,
+    alignItems: "center" as const,
   },
-  confirmAddButtonDisabled: {
-    backgroundColor: COLORS.gray,
-  },
-  confirmAddButtonText: {
+  confirmModalText: {
     fontSize: rf(16),
-    fontFamily: FONTS.semiBold,
+    fontWeight: "600" as const,
     color: COLORS.white,
   },
-});
+  disabledButton: {
+    opacity: 0.5,
+  },
+};

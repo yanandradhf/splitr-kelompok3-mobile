@@ -163,7 +163,7 @@ export default function ProfileScreen() {
                     size={22}
                     color={COLORS.teal}
                   />
-                  <Text style={styles.menuText}>Edit Profile</Text>
+                  <Text style={styles.menuText}>Ubah Profil</Text>
                 </View>
                 <Ionicons
                   name="chevron-forward"

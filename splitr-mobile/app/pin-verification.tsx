@@ -74,10 +74,10 @@ export default function PinVerificationScreen() {
         console.log(JSON.stringify(receiptData, null, 2));
         
         console.log('🚀 NAVIGATING TO SUCCESS SCREEN');
-        console.log('Path: /(tabs)/monitoring/transaction/pembayaran/berhasil');
+        console.log('Path: /(modals)/payment-success');
         
         router.replace({
-          pathname: '/(tabs)/monitoring/transaction/pembayaran/berhasil',
+          pathname: '/(modals)/payment-success',
           params: {
             receiptData: JSON.stringify(receiptData),
             paymentType: response.data.paymentType
