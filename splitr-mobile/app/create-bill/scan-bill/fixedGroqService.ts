@@ -148,8 +148,14 @@ CONTOH PARSING:
 - "Nasi Goreng 25.000" → name="Nasi Goreng", price=25000, quantity=1, discount=0
 - "2x Es Teh @ 8.000 = 16.000" → name="Es Teh", price=8000, quantity=2, discount=0
 - "Ayam Bakar (Diskon 10%) 27.000" → name="Ayam Bakar", price=30000, quantity=1, discount=3000
-- "Pajak 10%: 5.000" → tax=5000, taxPercentage=10
-- "Service Charge 5%: 2.500" → serviceCharge=2500, serviceChargePercentage=5
+- "Pajak: 5.000" atau "PPN 10%: 5.000" → tax=5000 (abaikan %)
+- "Service Charge: 3.750" atau "Layanan 7.5%: 3.750" → serviceCharge=3750 (abaikan %)
+
+PRIORITAS PEMBACAAN:
+1. FOKUS pada NOMINAL/JUMLAH pajak dan service charge, BUKAN persentase
+2. Cari angka setelah kata "Pajak", "PPN", "Tax", "Service", "Layanan"
+3. Persentase akan dihitung otomatis dari nominal
+4. Jika item tidak jelas, estimasi dari subtotal - item lain
 
 FORMAT OUTPUT (JSON KETAT):
 {
@@ -164,9 +170,9 @@ FORMAT OUTPUT (JSON KETAT):
   "subtotal": total_sebelum_diskon_dan_pajak,
   "discount": total_semua_diskon,
   "tax": jumlah_pajak,
-  "taxPercentage": persentase_pajak_atau_0,
+  "taxPercentage": 0,
   "serviceCharge": jumlah_service_charge,
-  "serviceChargePercentage": persentase_service_charge_atau_0,
+  "serviceChargePercentage": 0,
   "total": subtotal_minus_diskon_plus_pajak_plus_service_charge,
   "confidence": tingkat_kepercayaan_0_sampai_1
 }
@@ -183,50 +189,60 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
 
   static parseResponse(content: string): OCRResult {
     try {
-      // Try JSON parsing first
+      // Clean and extract JSON more robustly
       let jsonText = content.trim();
-      jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-      jsonText = jsonText.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
       
-      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        jsonText = jsonMatch[0];
+      // Remove markdown code blocks
+      jsonText = jsonText.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+      
+      // Find JSON object boundaries more carefully
+      const startIndex = jsonText.indexOf('{');
+      const lastIndex = jsonText.lastIndexOf('}');
+      
+      if (startIndex !== -1 && lastIndex !== -1 && lastIndex > startIndex) {
+        jsonText = jsonText.substring(startIndex, lastIndex + 1);
+      } else {
+        throw new Error('No valid JSON object found');
       }
+      
+      // Clean up common OCR artifacts that break JSON
+      jsonText = jsonText.replace(/[\u0000-\u001F\u007F-\u009F]/g, ''); // Remove control characters
+      jsonText = jsonText.replace(/\\n/g, ' '); // Replace escaped newlines
+      jsonText = jsonText.replace(/\\t/g, ' '); // Replace escaped tabs
+      jsonText = jsonText.replace(/\\r/g, ''); // Remove carriage returns
 
-      // Fix mathematical expressions in JSON
-      jsonText = jsonText.replace(/"subtotal":\s*([0-9+\s*-]+),/g, (match, expr) => {
+      // Fix mathematical expressions and malformed values
+      jsonText = jsonText.replace(/"(\w+)":\s*([0-9+\s*\-*/]+)([,}])/g, (match, key, expr, suffix) => {
         try {
-          // Safely evaluate simple arithmetic expressions
           const cleanExpr = expr.replace(/\s/g, '').replace(/[^0-9+\-*/]/g, '');
-          if (/^[0-9+\-*/]+$/.test(cleanExpr)) {
+          if (/^[0-9+\-*/]+$/.test(cleanExpr) && cleanExpr.length > 0) {
             const result = Function('"use strict"; return (' + cleanExpr + ')')();
-            return `"subtotal": ${result},`;
+            return `"${key}": ${result}${suffix}`;
           }
-          return match;
+          // Extract first number if expression is malformed
+          const numberMatch = expr.match(/(\d+)/);
+          if (numberMatch) {
+            return `"${key}": ${numberMatch[1]}${suffix}`;
+          }
+          return `"${key}": 0${suffix}`;
         } catch {
-          return match;
+          return `"${key}": 0${suffix}`;
         }
       });
       
-      // Remove any remaining mathematical expressions that might cause JSON parse errors
-      jsonText = jsonText.replace(/"[^"]*":\s*[0-9+\s*-]+(?=[,}])/g, (match) => {
-        const colonIndex = match.indexOf(':');
-        const key = match.substring(0, colonIndex + 1);
-        const value = match.substring(colonIndex + 1).trim();
-        
-        // If value contains operators, try to extract just the number
-        const numberMatch = value.match(/^(\d+)/);
-        if (numberMatch) {
-          return key + ' ' + numberMatch[1];
-        }
-        return match;
-      });
+      // Fix malformed strings with unescaped quotes
+      jsonText = jsonText.replace(/"([^"]*?)"([^":,}\]]*?)"([^":,}\]]*?)"/g, '"$1$2$3"');
 
-      console.log('Fixed Groq: Parsing JSON:', jsonText);
+      console.log('Fixed Groq: Parsing JSON:', jsonText.substring(0, 200) + '...');
+      
+      // Final validation before parsing
+      if (!jsonText.startsWith('{') || !jsonText.endsWith('}')) {
+        throw new Error('Invalid JSON format');
+      }
+      
       const parsed = JSON.parse(jsonText);
       
       if (parsed.hasOwnProperty('items') && Array.isArray(parsed.items)) {
-        // Process AI response
         const validItems: OrderItem[] = [];
         parsed.items.forEach((item: any) => {
           if (item.name && typeof item.price === 'number' && item.price > 0) {
@@ -243,17 +259,40 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
           sum + (item.price * item.quantity), 0);
         const discount = Number(parsed.discount) || validItems.reduce((sum, item) => 
           sum + (item.discount || 0), 0);
-        const tax = Math.max(0, Number(parsed.tax) || 0);
-        const taxPercentage = Number(parsed.taxPercentage) || 
-          (subtotal > 0 && tax > 0 ? Math.round((tax / (subtotal - discount)) * 100) : 0);
-        const serviceCharge = Math.max(0, Number(parsed.serviceCharge) || 0);
-        const serviceChargePercentage = Number(parsed.serviceChargePercentage) || 
-          (subtotal > 0 && serviceCharge > 0 ? Math.round((serviceCharge / (subtotal - discount)) * 100) : 0);
-        const total = Number(parsed.total) || (subtotal - discount + tax + serviceCharge);
+        
+        // Enhanced tax and service charge calculation - prioritize amounts over percentages
+        let tax = Math.max(0, Number(parsed.tax) || 0);
+        let serviceCharge = Math.max(0, Number(parsed.serviceCharge) || 0);
+        
+        // Always calculate percentages from amounts for accuracy
+        const baseAmount = subtotal - discount;
+        let taxPercentage = 0;
+        let serviceChargePercentage = 0;
+        
+        if (tax > 0 && baseAmount > 0) {
+          taxPercentage = Math.round((tax / baseAmount) * 1000) / 10; // 1 decimal place
+        }
+        if (serviceCharge > 0 && baseAmount > 0) {
+          serviceChargePercentage = Math.round((serviceCharge / baseAmount) * 1000) / 10;
+        }
+        
+        // Fix total calculation accuracy (handle -1 issue)
+        let total = Number(parsed.total) || (subtotal - discount + tax + serviceCharge);
+        
+        // Auto-correct common OCR errors in total (off by 1)
+        const calculatedTotal = subtotal - discount + tax + serviceCharge;
+        if (Math.abs(total - calculatedTotal) === 1) {
+          console.log('Fixed Groq: Correcting total from', total, 'to', calculatedTotal);
+          total = calculatedTotal;
+        }
+        
+        // Estimate missing item prices if some items are unclear
+        const processedItems = this.estimateMissingPrices(validItems, subtotal);
+        
         const confidence = Math.min(Math.max(Number(parsed.confidence) || 0.7, 0), 1);
 
         return {
-          items: validItems,
+          items: processedItems,
           subtotal,
           discount,
           tax,
@@ -271,8 +310,25 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
       
     } catch (error) {
       console.error('Fixed Groq: JSON parse failed, trying regex fallback:', error);
+      console.log('Fixed Groq: Raw content causing error:', content.substring(0, 500));
       return this.parseWithRegex(content);
     }
+  }
+
+  // Estimate missing item prices based on subtotal
+  static estimateMissingPrices(items: OrderItem[], subtotal: number): OrderItem[] {
+    const knownTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const missingAmount = subtotal - knownTotal;
+    
+    // Find items with suspiciously low prices (likely OCR errors)
+    const suspiciousItems = items.filter(item => item.price < 1000);
+    
+    if (missingAmount > 0 && suspiciousItems.length === 1) {
+      console.log('Fixed Groq: Estimating price for unclear item:', suspiciousItems[0].name);
+      suspiciousItems[0].price = Math.round(missingAmount / suspiciousItems[0].quantity);
+    }
+    
+    return items;
   }
 
   static parseWithRegex(content: string): OCRResult {

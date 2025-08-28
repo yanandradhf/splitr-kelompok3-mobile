@@ -13,9 +13,9 @@ export interface BillItem {
 }
 
 export interface BillFees {
-  taxPct: number;
-  servicePct: number;
-  discountPct?: number;
+  taxPct: number; // Supports decimal values like 7.5, 11.5
+  servicePct: number; // Supports decimal values like 5.5, 7.5
+  discountPct?: number; // Supports decimal values
   discountNominal?: number;
 }
 

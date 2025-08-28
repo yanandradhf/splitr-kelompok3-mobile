@@ -17,6 +17,7 @@ import { useBillStore } from "../../../store/billStore";
 import { formatRp } from "../../../lib/currency";
 import { getCategories, Category } from "../../../services/categoryApi";
 import type { BillCategory } from "../../../types/bill";
+import PhotoPreviewModal from "../../../components/ui/PhotoPreviewModal";
 import {
   COLORS,
   FONTS,
@@ -53,6 +54,7 @@ export default function BillResult() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
   
   React.useEffect(() => {
     if (results) {
@@ -77,10 +79,10 @@ export default function BillResult() {
             addItem(billItem);
           });
           
-          // Set fees from OCR
+          // Set fees from OCR with decimal support
           const fees = {
-            taxPct: parsed.taxPercentage || 0,
-            servicePct: parsed.serviceChargePercentage || 0,
+            taxPct: parseFloat(String(parsed.taxPercentage || 0)),
+            servicePct: parseFloat(String(parsed.serviceChargePercentage || 0)),
             discountPct: 0,
             discountNominal: parsed.discount || 0
           };
@@ -140,10 +142,7 @@ export default function BillResult() {
 
   const openPreview = () => {
     if (uri) {
-      router.push({
-        pathname: "/create-bill/scan-bill/preview",
-        params: { uri },
-      });
+      setShowPhotoPreview(true);
     }
   };
 
@@ -224,7 +223,7 @@ export default function BillResult() {
             <View style={styles.scanCard}>
               <Text style={styles.scanTitle}>Struk berhasil di-scan</Text>
               <Text style={styles.scanHint}>
-                Klik gambar di bawah untuk melihat foto struk lebih jelas.
+                Klik gambar di bawah untuk melihat foto struk dalam ukuran penuh.
               </Text>
               
               <View style={styles.imageButtonRow}>
@@ -306,7 +305,7 @@ export default function BillResult() {
               {draft.totals.tax > 0 && (
                 <View style={styles.itemRow}>
                   <Text style={styles.metaLabel}>
-                    Pajak {draft.fees.taxPct > 0 ? `(${draft.fees.taxPct}%)` : ''}
+                    Pajak {draft.fees.taxPct > 0 ? `(${draft.fees.taxPct % 1 === 0 ? draft.fees.taxPct : draft.fees.taxPct.toFixed(1)}%)` : ''}
                   </Text>
                   <Text style={styles.metaAmount}>
                     {formatRp(draft.totals.tax)}
@@ -318,7 +317,7 @@ export default function BillResult() {
               {draft.totals.service > 0 && (
                 <View style={styles.itemRow}>
                   <Text style={styles.metaLabel}>
-                    Layanan {draft.fees.servicePct > 0 ? `(${draft.fees.servicePct}%)` : ''}
+                    Layanan {draft.fees.servicePct > 0 ? `(${draft.fees.servicePct % 1 === 0 ? draft.fees.servicePct : draft.fees.servicePct.toFixed(1)}%)` : ''}
                   </Text>
                   <Text style={styles.metaAmount}>
                     {formatRp(draft.totals.service)}
@@ -365,6 +364,13 @@ export default function BillResult() {
             </Pressable>
           </ScrollView>
         </View>
+        
+        {/* Photo Preview Modal */}
+        <PhotoPreviewModal
+          visible={showPhotoPreview}
+          imageUri={uri || ''}
+          onClose={() => setShowPhotoPreview(false)}
+        />
       </SafeAreaView>
     </View>
   );

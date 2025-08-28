@@ -79,10 +79,13 @@ export const summaryCardStyles = StyleSheet.create({
     elevation: 8,
     position: "relative",
     overflow: "hidden",
+    height: 120,
   },
   gradientBackground: {
-    padding: SPACING.lg,
+    padding: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
+    flex: 1,
+    justifyContent: "center",
   },
   filterContainer: {
     position: "absolute",
@@ -92,7 +95,8 @@ export const summaryCardStyles = StyleSheet.create({
   },
   compactContent: {
     alignItems: "center",
-    paddingTop: SPACING.sm,
+    justifyContent: "center",
+    flex: 1,
   },
   compactAmount: {
     fontSize: 32,
@@ -109,13 +113,15 @@ export const summaryCardStyles = StyleSheet.create({
     gap: SPACING.sm,
   },
   compactLabel: {
-    fontSize: FONT_SIZES.base,
+    fontSize: FONT_SIZES.sm,
     fontFamily: FONTS.semiBold,
     color: 'rgba(255,255,255,0.95)',
     textAlign: "center",
     textShadowColor: 'rgba(0,0,0,0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    lineHeight: 18,
+    maxWidth: '80%',
   },
   compactFilter: {
     padding: 10,
