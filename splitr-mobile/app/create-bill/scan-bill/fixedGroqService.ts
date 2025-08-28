@@ -195,22 +195,44 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
       // Remove markdown code blocks
       jsonText = jsonText.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
       
-      // Find JSON object boundaries more carefully
+      // Find JSON object boundaries with better validation
       const startIndex = jsonText.indexOf('{');
-      const lastIndex = jsonText.lastIndexOf('}');
-      
-      if (startIndex !== -1 && lastIndex !== -1 && lastIndex > startIndex) {
-        jsonText = jsonText.substring(startIndex, lastIndex + 1);
-      } else {
-        throw new Error('No valid JSON object found');
+      if (startIndex === -1) {
+        throw new Error('No JSON object start found');
       }
+      
+      // Find matching closing brace by counting braces
+      let braceCount = 0;
+      let endIndex = -1;
+      for (let i = startIndex; i < jsonText.length; i++) {
+        if (jsonText[i] === '{') braceCount++;
+        if (jsonText[i] === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            endIndex = i;
+            break;
+          }
+        }
+      }
+      
+      if (endIndex === -1) {
+        throw new Error('No matching closing brace found');
+      }
+      
+      jsonText = jsonText.substring(startIndex, endIndex + 1);
       
       // Clean up common OCR artifacts that break JSON
       jsonText = jsonText.replace(/[\u0000-\u001F\u007F-\u009F]/g, ''); // Remove control characters
       jsonText = jsonText.replace(/\\n/g, ' '); // Replace escaped newlines
       jsonText = jsonText.replace(/\\t/g, ' '); // Replace escaped tabs
       jsonText = jsonText.replace(/\\r/g, ''); // Remove carriage returns
-
+      
+      // Fix trailing commas
+      jsonText = jsonText.replace(/,\s*([}\]])/g, '$1');
+      
+      // Fix unescaped quotes in strings
+      jsonText = jsonText.replace(/"([^"]*?)"([^":,}\]]*?)"([^":,}\]]*?)"/g, '"$1$2$3"');
+      
       // Fix mathematical expressions and malformed values
       jsonText = jsonText.replace(/"(\w+)":\s*([0-9+\s*\-*/]+)([,}])/g, (match, key, expr, suffix) => {
         try {
@@ -219,7 +241,6 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
             const result = Function('"use strict"; return (' + cleanExpr + ')')();
             return `"${key}": ${result}${suffix}`;
           }
-          // Extract first number if expression is malformed
           const numberMatch = expr.match(/(\d+)/);
           if (numberMatch) {
             return `"${key}": ${numberMatch[1]}${suffix}`;
@@ -229,20 +250,17 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
           return `"${key}": 0${suffix}`;
         }
       });
-      
-      // Fix malformed strings with unescaped quotes
-      jsonText = jsonText.replace(/"([^"]*?)"([^":,}\]]*?)"([^":,}\]]*?)"/g, '"$1$2$3"');
 
       console.log('Fixed Groq: Parsing JSON:', jsonText.substring(0, 200) + '...');
       
-      // Final validation before parsing
-      if (!jsonText.startsWith('{') || !jsonText.endsWith('}')) {
-        throw new Error('Invalid JSON format');
+      // Validate JSON structure before parsing
+      if (!this.isValidJSON(jsonText)) {
+        throw new Error('Invalid JSON structure detected');
       }
       
       const parsed = JSON.parse(jsonText);
       
-      if (parsed.hasOwnProperty('items') && Array.isArray(parsed.items)) {
+      if (parsed && typeof parsed === 'object' && parsed.hasOwnProperty('items') && Array.isArray(parsed.items)) {
         const validItems: OrderItem[] = [];
         parsed.items.forEach((item: any) => {
           if (item.name && typeof item.price === 'number' && item.price > 0) {
@@ -312,6 +330,32 @@ Berikan HANYA JSON, tanpa teks tambahan.`;
       console.error('Fixed Groq: JSON parse failed, trying regex fallback:', error);
       console.log('Fixed Groq: Raw content causing error:', content.substring(0, 500));
       return this.parseWithRegex(content);
+    }
+  }
+
+  // Validate JSON structure
+  static isValidJSON(jsonText: string): boolean {
+    try {
+      // Basic structure checks
+      if (!jsonText.startsWith('{') || !jsonText.endsWith('}')) {
+        return false;
+      }
+      
+      // Check for balanced braces
+      let braceCount = 0;
+      for (const char of jsonText) {
+        if (char === '{') braceCount++;
+        if (char === '}') braceCount--;
+        if (braceCount < 0) return false;
+      }
+      
+      if (braceCount !== 0) return false;
+      
+      // Try parsing to catch syntax errors
+      JSON.parse(jsonText);
+      return true;
+    } catch {
+      return false;
     }
   }
 
