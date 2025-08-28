@@ -26,11 +26,9 @@ export const useAuth = () => {
       console.log('❌ Error status:', error.response?.status);
       console.log('❌ Error data:', error.response?.data);
       
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Username atau password salah';
-      
       Alert.alert(
-        'Login Gagal', 
-        errorMessage
+        'Login Gagal',
+        'Username dan password belum sesuai'
       );
     }
   };

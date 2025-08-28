@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -114,19 +115,19 @@ const ChangePinScreen = () => {
   const handleNext = async () => {
     if (step === 'current') {
       if (currentPin.length !== 6) {
-        alert('PIN harus 6 digit');
+        Alert.alert('Error', 'PIN harus 6 digit', [{ text: 'OK' }]);
         return;
       }
       setStep('new');
     } else if (step === 'new') {
       if (newPin.length !== 6) {
-        alert('PIN baru harus 6 digit');
+        Alert.alert('Error', 'PIN baru harus 6 digit', [{ text: 'OK' }]);
         return;
       }
       setStep('confirm');
     } else if (step === 'confirm') {
       if (newPin !== confirmPin) {
-        alert('PIN tidak cocok');
+        Alert.alert('Error', 'PIN tidak cocok', [{ text: 'OK' }]);
         return;
       }
       
@@ -142,11 +143,23 @@ const ChangePinScreen = () => {
           setStep('success');
         }
       } catch (error: any) {
-        console.error('Change PIN error:', error);
-        console.error('PIN Error status:', error.response?.status);
-        console.error('PIN Error data:', error.response?.data);
-        const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Gagal mengubah PIN. Silakan coba lagi.';
-        alert(errorMessage);
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Gagal mengubah PIN. Silakan coba lagi.';
+        
+        if (errorMessage.toLowerCase().includes('current pin is incorrect') || 
+            errorMessage.toLowerCase().includes('pin salah') ||
+            errorMessage.toLowerCase().includes('pin lama salah')) {
+          Alert.alert(
+            'PIN Salah',
+            'PIN lama yang Anda masukkan tidak benar. Silakan coba lagi.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert(
+            'Gagal Mengubah PIN',
+            errorMessage,
+            [{ text: 'OK' }]
+          );
+        }
       } finally {
         setIsLoading(false);
       }

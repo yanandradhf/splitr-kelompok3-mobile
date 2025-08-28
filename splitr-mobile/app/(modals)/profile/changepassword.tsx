@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
   TextInput,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,15 +30,15 @@ const ChangePasswordScreen = () => {
 
   const handleNext = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      alert('Semua field harus diisi');
+      Alert.alert('Error', 'Semua field harus diisi', [{ text: 'OK' }]);
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert('Password baru dan konfirmasi tidak cocok');
+      Alert.alert('Error', 'Password baru dan konfirmasi tidak cocok', [{ text: 'OK' }]);
       return;
     }
     if (newPassword.length < 6) {
-      alert('Password baru minimal 6 karakter');
+      Alert.alert('Error', 'Password baru minimal 6 karakter', [{ text: 'OK' }]);
       return;
     }
 
@@ -53,10 +54,25 @@ const ChangePasswordScreen = () => {
         setStep('success');
       }
     } catch (error: any) {
-      console.error('Change password error:', error.response?.data?.error || error.message);
       
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Gagal mengubah password. Silakan coba lagi.';
-      alert(errorMessage);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Gagal mengubah password. Silakan coba lagi.';
+      
+      // Check if error is about incorrect current password
+      if (errorMessage.toLowerCase().includes('current password is incorrect') || 
+          errorMessage.toLowerCase().includes('password salah') ||
+          errorMessage.toLowerCase().includes('password saat ini salah')) {
+        Alert.alert(
+          'Password Salah',
+          'Password saat ini yang Anda masukkan tidak benar. Silakan coba lagi.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          'Gagal Mengubah Password',
+          errorMessage,
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
       setIsLoading(false);
     }
