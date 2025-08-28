@@ -6,7 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useBillStore } from "../../store/billStore";
 import type { BillItem } from "../../types/bill";
 import { formatRp } from "../../lib/currency";
-import { handleDecimalInput, parseDecimalValue } from "../../utils/inputUtils";
+import { validatePercentageInput, normalizeDecimalInput } from "../../utils/decimalInput";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function EditBill() {
@@ -25,6 +25,9 @@ export default function EditBill() {
   const [editPrice, setEditPrice] = useState("");
   const [editIsSharing, setEditIsSharing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [taxInput, setTaxInput] = useState('');
+  const [serviceInput, setServiceInput] = useState('');
+  const [discountInput, setDiscountInput] = useState('');
 
   useEffect(() => { recalcTotals(); }, [draft.items, draft.fees]);
 
@@ -103,6 +106,7 @@ export default function EditBill() {
         <KeyboardAvoidingView 
           style={styles.keyboardAvoid}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
           <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
             <Text style={styles.sectionTitle}>Tambah Item</Text>
@@ -307,11 +311,14 @@ export default function EditBill() {
                   <Text style={styles.inputLabel}>Pajak (PPN)</Text>
                   <TextInput 
                     placeholder="11" 
-                    keyboardType="decimal-pad" 
-                    value={draft.fees.taxPct > 0 ? String(draft.fees.taxPct) : ''} 
-                    onChangeText={(v) => {
-                      const cleaned = handleDecimalInput(v, 1);
-                      setFees({ ...draft.fees, taxPct: parseDecimalValue(cleaned) });
+                    keyboardType="numeric" 
+                    value={taxInput || ''} 
+                    onChangeText={(text) => {
+                      const validation = validatePercentageInput(text);
+                      if (validation.isValid) {
+                        setTaxInput(validation.formatted);
+                        setFees({ ...draft.fees, taxPct: validation.value });
+                      }
                     }} 
                     style={styles.input} 
                   />
@@ -324,11 +331,14 @@ export default function EditBill() {
                   <Text style={styles.inputLabel}>Service Charge</Text>
                   <TextInput 
                     placeholder="5" 
-                    keyboardType="decimal-pad" 
-                    value={draft.fees.servicePct > 0 ? String(draft.fees.servicePct) : ''} 
-                    onChangeText={(v) => {
-                      const cleaned = handleDecimalInput(v, 1);
-                      setFees({ ...draft.fees, servicePct: parseDecimalValue(cleaned) });
+                    keyboardType="numeric" 
+                    value={serviceInput || ''} 
+                    onChangeText={(text) => {
+                      const validation = validatePercentageInput(text);
+                      if (validation.isValid) {
+                        setServiceInput(validation.formatted);
+                        setFees({ ...draft.fees, servicePct: validation.value });
+                      }
                     }} 
                     style={styles.input} 
                   />
@@ -359,11 +369,14 @@ export default function EditBill() {
                     <View style={styles.percentInputContainer}>
                       <TextInput 
                         placeholder="10" 
-                        keyboardType="decimal-pad" 
-                        value={draft.fees.discountPct > 0 ? String(draft.fees.discountPct) : ''} 
-                        onChangeText={(v) => {
-                          const cleaned = handleDecimalInput(v, 1);
-                          setFees({ ...draft.fees, discountPct: parseDecimalValue(cleaned), discountNominal: 0 });
+                        keyboardType="numeric" 
+                        value={discountInput || ''} 
+                        onChangeText={(text) => {
+                          const validation = validatePercentageInput(text);
+                          if (validation.isValid) {
+                            setDiscountInput(validation.formatted);
+                            setFees({ ...draft.fees, discountPct: validation.value, discountNominal: 0 });
+                          }
                         }} 
                         style={styles.percentInput} 
                       />
@@ -489,7 +502,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 100,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
