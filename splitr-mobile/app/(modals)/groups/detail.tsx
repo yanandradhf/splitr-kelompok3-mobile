@@ -403,7 +403,7 @@ export default function GroupDetailScreen() {
           <BlurView intensity={20} style={styles.modalOverlay}>
             <View style={styles.deleteModal}>
               <View style={styles.warningIcon}>
-                <Ionicons name="person-add" size={getIconSize(40)} color="#00897B" />
+                <Ionicons name="person-add" size={getIconSize(40)} color={COLORS.orange} />
               </View>
               <Text style={styles.deleteTitle}>Tambah Teman?</Text>
               <Text style={styles.deleteMessage}>
@@ -417,7 +417,7 @@ export default function GroupDetailScreen() {
                   <Text style={styles.cancelButtonText}>Batal</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.confirmDeleteButton, { backgroundColor: COLORS.teal }]}
+                  style={[styles.confirmDeleteButton, { backgroundColor: COLORS.orange }]}
                   onPress={addFriend}
                 >
                   <Text style={styles.confirmDeleteText}>Tambah</Text>
@@ -467,7 +467,7 @@ export default function GroupDetailScreen() {
                         </Text>
                       </View>
                       {selectedFriendToAdd?.friend.userId === friendData.friend.userId && (
-                        <Ionicons name="checkmark-circle" size={24} color={COLORS.teal} />
+                        <Ionicons name="checkmark-circle" size={24} color={COLORS.orange} />
                       )}
                     </TouchableOpacity>
                   ))}
@@ -636,8 +636,8 @@ const styles = {
     borderColor: COLORS.inputBorder,
   },
   selectedFriendItem: {
-    backgroundColor: "rgba(0, 137, 123, 0.1)",
-    borderColor: COLORS.teal,
+    backgroundColor: "rgba(253, 136, 56, 0.1)",
+    borderColor: COLORS.orange,
   },
   friendInfo: {
     flex: 1,
@@ -687,7 +687,7 @@ const styles = {
     flex: 1,
     paddingVertical: getSpacing(12),
     borderRadius: getBorderRadius(12),
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.orange,
     alignItems: "center" as const,
   },
   confirmModalText: {

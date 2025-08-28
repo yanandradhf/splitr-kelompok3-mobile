@@ -572,10 +572,9 @@ const styles = StyleSheet.create({
   },
   friendsListContainer: {
     flex: 1,
-    maxHeight: hp(40),
   },
   friendsListContent: {
-    paddingBottom: getSpacing(SPACING.xl),
+    paddingBottom: getSpacing(100),
   },
   sectionTitle: {
     fontSize: rf(FONT_SIZES.lg),

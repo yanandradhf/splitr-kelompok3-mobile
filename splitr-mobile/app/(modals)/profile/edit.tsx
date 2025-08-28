@@ -70,6 +70,10 @@ const EditProfileScreen = () => {
     return email.includes('@') && email.includes('.');
   };
 
+  const isValidPhone = (phone: string) => {
+    return /^\+[0-9]+$/.test(phone);
+  };
+
   const hasValidChanges = () => {
     // Check if any field has meaningful changes (not just spaces)
     const nameChanged = username.trim() !== originalData.name.trim() && username.trim() !== '';
@@ -80,6 +84,11 @@ const EditProfileScreen = () => {
     
     // If email changed, validate it
     if (emailChanged && !isValidEmail(email.trim())) {
+      return false;
+    }
+    
+    // If phone changed, validate it (only if not empty)
+    if (phoneChanged && phoneNumber.trim() !== '' && !isValidPhone(phoneNumber.trim())) {
       return false;
     }
     
@@ -95,6 +104,12 @@ const EditProfileScreen = () => {
     // Validate email if it was changed
     if (email.trim() !== originalData.email.trim() && !isValidEmail(email.trim())) {
       Alert.alert('Email Tidak Valid', 'Masukkan alamat email yang valid dengan @ dan domain.');
+      return;
+    }
+
+    // Validate phone if it was changed
+    if (phoneNumber.trim() !== originalData.phone.trim() && !isValidPhone(phoneNumber.trim())) {
+      Alert.alert('Nomor Telepon Tidak Valid', 'Nomor telepon hanya boleh berisi angka dan tanda + saja.');
       return;
     }
 
