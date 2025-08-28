@@ -154,10 +154,7 @@ export default function BillSummary() {
                   <View style={styles.memberTotalContainer}>
                     <Text style={styles.memberTotal}>{formatRp(member.total)}</Text>
                     {member.totalDiscount > 0 && (
-                      <Text style={styles.memberDiscount}>
-                        <Text>Hemat </Text>
-                        <Text>{formatRp(member.totalDiscount)}</Text>
-                      </Text>
+                      <Text style={styles.memberDiscount}>Hemat {formatRp(member.totalDiscount)}</Text>
                     )}
                   </View>
                 </View>
@@ -189,10 +186,7 @@ export default function BillSummary() {
                       <View style={styles.discountRow}>
                         <View style={styles.discountContainer}>
                           <Ionicons name="pricetag" size={12} color={COLORS.success} />
-                          <Text style={styles.discountText}>
-                            <Text>Diskon -</Text>
-                            <Text>{formatRp(item.discount)}</Text>
-                          </Text>
+                          <Text style={styles.discountText}>Diskon -{formatRp(item.discount)}</Text>
                         </View>
                       </View>
                     )}
@@ -209,39 +203,19 @@ export default function BillSummary() {
             <Text style={styles.totalValue}>{formatRp(draft.totals.subTotal)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>
-              <Text>Pajak (</Text>
-              <Text>{draft.fees.taxPct}</Text>
-              <Text>%)</Text>
-            </Text>
+            <Text style={styles.totalLabel}>Pajak ({draft.fees.taxPct}%)</Text>
             <Text style={styles.totalValue}>{formatRp(draft.totals.tax)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>
-              <Text>Layanan (</Text>
-              <Text>{draft.fees.servicePct}</Text>
-              <Text>%)</Text>
-            </Text>
+            <Text style={styles.totalLabel}>Layanan ({draft.fees.servicePct}%)</Text>
             <Text style={styles.totalValue}>{formatRp(draft.totals.service)}</Text>
           </View>
           {draft.totals.discount > 0 && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>
-                <Text>Diskon </Text>
-                {draft.fees.discountPct > 0 ? (
-                  <Text>
-                    <Text>(</Text>
-                    <Text>{draft.fees.discountPct}</Text>
-                    <Text>%)</Text>
-                  </Text>
-                ) : (
-                  <Text>(Nominal)</Text>
-                )}
+                Diskon {draft.fees.discountPct > 0 ? `(${draft.fees.discountPct}%)` : '(Nominal)'}
               </Text>
-              <Text style={[styles.totalValue, styles.successColor]}>
-                <Text>-</Text>
-                <Text>{formatRp(draft.totals.discount)}</Text>
-              </Text>
+              <Text style={[styles.totalValue, { color: COLORS.success }]}>-{formatRp(draft.totals.discount)}</Text>
             </View>
           )}
           <View style={[styles.totalRow, styles.grandTotalRow]}>
@@ -534,8 +508,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-  },
-  successColor: {
-    color: COLORS.success,
   },
 });

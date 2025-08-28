@@ -28,7 +28,7 @@ code .env
 
 ```env
 EXPO_PUBLIC_NGROK_URL=https://c520ce759f72.ngrok-free.app --> ganti yg benar
-EXPO_PUBLIC_GROQ_API_KEY= tanya ke yg lain
+EXPO_PUBLIC_GROQ_API_KEY= blabla
 ```
 
 ### Step 3: Verify

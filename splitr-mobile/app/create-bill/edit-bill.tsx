@@ -141,17 +141,17 @@ export default function EditBill() {
               </View>
             ) : (
               <View style={styles.inputRow}>
-                <View style={[styles.inputContainer, styles.flexOne]}>
+                <View style={[styles.inputContainer, { flex: 1 }]}>
                   <Text style={styles.inputLabel}>Jumlah</Text>
                   <TextInput 
                     placeholder="1" 
                     keyboardType="number-pad" 
                     value={qty} 
                     onChangeText={setQty} 
-                    style={[styles.input, styles.textCenter]} 
+                    style={[styles.input, { textAlign: "center" }]} 
                   />
                 </View>
-                <View style={[styles.inputContainer, styles.flexTwo]}>
+                <View style={[styles.inputContainer, { flex: 2 }]}>
                   <Text style={styles.inputLabel}>Harga Satuan</Text>
                   <View style={styles.priceInputContainer}>
                     <Text style={styles.currencyPrefix}>Rp</Text>
@@ -216,16 +216,16 @@ export default function EditBill() {
                           </View>
                         ) : (
                           <View style={styles.editRow}>
-                            <View style={[styles.editInputContainer, styles.flexOne]}>
+                            <View style={[styles.editInputContainer, { flex: 1 }]}>
                               <Text style={styles.editLabel}>Qty</Text>
                               <TextInput 
                                 value={editQty} 
                                 onChangeText={setEditQty} 
                                 keyboardType="number-pad"
-                                style={[styles.editInput, styles.textCenter]} 
+                                style={[styles.editInput, { textAlign: "center" }]} 
                               />
                             </View>
-                            <View style={[styles.editInputContainer, styles.flexTwo]}>
+                            <View style={[styles.editInputContainer, { flex: 2 }]}>
                               <Text style={styles.editLabel}>Harga</Text>
                               <View style={styles.priceInputContainer}>
                                 <Text style={styles.currencyPrefix}>Rp</Text>
@@ -255,18 +255,7 @@ export default function EditBill() {
                         <View style={styles.itemInfo}>
                           <Text style={styles.itemName}>{item.name}</Text>
                           <Text style={styles.itemDetails}>
-                            {item.isSharing ? (
-                              <Text>
-                                <Text>Sharing - </Text>
-                                <Text>{formatRp(item.price)}</Text>
-                              </Text>
-                            ) : (
-                              <Text>
-                                <Text>{item.qty}</Text>
-                                <Text> × </Text>
-                                <Text>{formatRp(item.price)}</Text>
-                              </Text>
-                            )}
+                            {item.isSharing ? `Sharing - ${formatRp(item.price)}` : `${item.qty} × ${formatRp(item.price)}`}
                           </Text>
                         </View>
                         <View style={styles.itemActions}>
@@ -310,21 +299,6 @@ export default function EditBill() {
                 >
                   <Text style={[styles.toggleText, showDiscount && styles.toggleTextActive]}>+ Diskon/Promo</Text>
                 </Pressable>
-              </View>
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Biaya Order/Antar</Text>
-                <View style={styles.priceInputContainer}>
-                  <Text style={styles.currencyPrefix}>Rp</Text>
-                  <TextInput 
-                    placeholder="0" 
-                    keyboardType="number-pad" 
-                    value={String(draft.fees.orderFee || '')} 
-                    onChangeText={(v) => setFees({ ...draft.fees, orderFee: Number(v) || 0 })} 
-                    style={styles.priceInput} 
-                  />
-                </View>
-                <Text style={styles.inputHint}>Biaya pengiriman atau order fee (opsional)</Text>
               </View>
               
               {showTax && (
@@ -409,50 +383,24 @@ export default function EditBill() {
                   <Text style={styles.totalLabel}>Subtotal</Text>
                   <Text style={styles.totalValue}>{formatRp(draft.totals.subTotal)}</Text>
                 </View>
-                {(draft.fees.orderFee || 0) > 0 && (
-                  <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>Biaya Order</Text>
-                    <Text style={styles.totalValue}>{formatRp(draft.fees.orderFee || 0)}</Text>
-                  </View>
-                )}
                 {draft.totals.tax > 0 && (
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>
-                      <Text>Pajak PPN (</Text>
-                      <Text>{draft.fees.taxPct}</Text>
-                      <Text>%)</Text>
-                    </Text>
+                    <Text style={styles.totalLabel}>Pajak PPN ({draft.fees.taxPct}%)</Text>
                     <Text style={styles.totalValue}>{formatRp(draft.totals.tax)}</Text>
                   </View>
                 )}
                 {draft.totals.service > 0 && (
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>
-                      <Text>Service Charge (</Text>
-                      <Text>{draft.fees.servicePct}</Text>
-                      <Text>%)</Text>
-                    </Text>
+                    <Text style={styles.totalLabel}>Service Charge ({draft.fees.servicePct}%)</Text>
                     <Text style={styles.totalValue}>{formatRp(draft.totals.service)}</Text>
                   </View>
                 )}
                 {(draft.fees.discountPct > 0 || draft.fees.discountNominal > 0) && (
                   <View style={styles.totalRow}>
                     <Text style={styles.totalLabel}>
-                      <Text>Diskon </Text>
-                      {draft.fees.discountPct > 0 ? (
-                        <Text>
-                          <Text>(</Text>
-                          <Text>{draft.fees.discountPct}</Text>
-                          <Text>%)</Text>
-                        </Text>
-                      ) : (
-                        <Text>(Nominal)</Text>
-                      )}
+                      Diskon {draft.fees.discountPct > 0 ? `(${draft.fees.discountPct}%)` : '(Nominal)'}
                     </Text>
-                    <Text style={[styles.totalValue, styles.successColor]}>
-                      <Text>-</Text>
-                      <Text>{formatRp(draft.totals.discount)}</Text>
-                    </Text>
+                    <Text style={[styles.totalValue, { color: COLORS.success }]}>-{formatRp(draft.totals.discount)}</Text>
                   </View>
                 )}
                 <View style={styles.divider} />
@@ -871,18 +819,6 @@ const styles = StyleSheet.create({
   },
   editSharingToggle: {
     marginBottom: SPACING.sm,
-  },
-  flexOne: {
-    flex: 1,
-  },
-  flexTwo: {
-    flex: 2,
-  },
-  textCenter: {
-    textAlign: "center",
-  },
-  successColor: {
-    color: COLORS.success,
   },
 
 });

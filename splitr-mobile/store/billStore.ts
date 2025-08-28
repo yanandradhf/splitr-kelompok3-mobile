@@ -15,7 +15,7 @@ const newDraft = (): BillDraft => ({
   categoryId: null,
   categoryName: null,
   items: [],
-  fees: { taxPct: 0, servicePct: 0, discountPct: 0, discountNominal: 0, orderFee: 0 },
+  fees: { taxPct: 0, servicePct: 0, discountPct: 0, discountNominal: 0 },
   assignments: [],
   selectedMemberIds: [],
   paymentMethod: undefined,
@@ -68,47 +68,31 @@ export const useBillStore = create<BillState>((set, get) => ({
   setFees: (fees) => set((s) => ({ draft: { ...s.draft, fees } })),
   recalcTotals: () => {
     const { items, fees } = get().draft;
-    
-    // 1. Calculate items subtotal (line totals after item discounts)
-    const itemsSubtotal = items.reduce((total, item) => {
-      const lineTotal = item.qty * item.price;
-      const itemDiscount = item.discount || 0;
-      return total + (lineTotal - itemDiscount);
+    const subTotal = items.reduce((t, it) => {
+      return t + (it.isSharing ? it.price : it.qty * it.price);
     }, 0);
     
-    // 2. Add order fee
-    const afterOrderFee = itemsSubtotal + (fees.orderFee || 0);
-    
-    // 3. Calculate total discount (global)
-    let totalDiscount = 0;
+    // 1. Hitung diskon dulu dari subtotal
+    let discount = 0;
     if (fees.discountPct > 0) {
-      totalDiscount = Math.round(itemsSubtotal * (fees.discountPct / 100));
+      discount = Math.floor(subTotal * (fees.discountPct / 100));
     } else if (fees.discountNominal > 0) {
-      totalDiscount = fees.discountNominal;
+      discount = fees.discountNominal;
     }
     
-    // 4. Apply total discount
-    const afterTotalDiscount = Math.max(0, afterOrderFee - totalDiscount);
+    // 2. Harga setelah diskon
+    const afterDiscount = Math.max(0, subTotal - discount);
     
-    // 5. Calculate service charge and tax
-    const service = Math.round(afterTotalDiscount * (fees.servicePct / 100));
-    const tax = Math.round(afterTotalDiscount * (fees.taxPct / 100));
+    // 3. Hitung service dari harga setelah diskon
+    const service = Math.floor(afterDiscount * (fees.servicePct / 100));
     
-    // 6. Final grand total
-    const grandTotal = afterTotalDiscount + service + tax;
+    // 4. Hitung pajak dari harga setelah diskon
+    const tax = Math.floor(afterDiscount * (fees.taxPct / 100));
     
-    set((s) => ({ 
-      draft: { 
-        ...s.draft, 
-        totals: { 
-          subTotal: itemsSubtotal, 
-          tax, 
-          service, 
-          discount: totalDiscount, 
-          grandTotal 
-        } 
-      } 
-    }));
+    // 5. Total akhir
+    const grandTotal = afterDiscount + service + tax;
+    
+    set((s) => ({ draft: { ...s.draft, totals: { subTotal, tax, service, discount, grandTotal } } }));
   },
   setSelectedMembers: (ids) =>
     set((s) => ({ draft: { ...s.draft, selectedMemberIds: ids } })),
@@ -132,18 +116,18 @@ export const useBillStore = create<BillState>((set, get) => ({
   setReceiptImage: (uri) => set((s) => ({ draft: { ...s.draft, receiptImage: uri } })),
   finalize: async (memberNames: {[id: string]: string}, categoryId: string, userMap?: Map<string, any>, currentUser?: any, categories?: any[]) => {
     const { draft } = get();
-    console.log('📦 Finalizing bill with receipt:', JSON.stringify({
+    console.log('📦 Finalizing bill with receipt:', {
       billName: draft.name,
       hasReceipt: !!draft.receiptImage,
       receiptImage: draft.receiptImage
-    }));
+    });
     
     try {
       // Use createBillWithReceipt to handle receipt upload
       const { createBillWithReceipt } = require('@/services/billApi');
       const billResponse = await createBillWithReceipt(draft, categoryId, userMap, currentUser, categories);
       
-      console.log('✅ Bill created successfully:', JSON.stringify(billResponse));
+      console.log('✅ Bill created successfully:', billResponse);
       
       // Save to created bills store
       const { addCreatedBill } = require('@/store/createdBillsStore').useCreatedBillsStore.getState();
@@ -154,7 +138,7 @@ export const useBillStore = create<BillState>((set, get) => ({
       
       return billResponse;
     } catch (error) {
-      console.error('❌ Failed to create bill: ' + String(error));
+      console.error('❌ Failed to create bill:', error);
       throw error;
     }
   },

@@ -9,7 +9,6 @@ export interface BillItem {
   name: string;
   qty: number;
   price: number;
-  discount?: number;
   isSharing?: boolean;
 }
 
@@ -18,7 +17,6 @@ export interface BillFees {
   servicePct: number;
   discountPct?: number;
   discountNominal?: number;
-  orderFee?: number;
 }
 
 export interface Member {

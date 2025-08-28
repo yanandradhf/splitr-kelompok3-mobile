@@ -4,7 +4,7 @@
  */
 
 // Get ngrok URL from environment variable
-export const NGROK_URL = process.env.EXPO_PUBLIC_NGROK_URL || "https://2cf65d03461e.ngrok-free.app";
+export const NGROK_URL = process.env.EXPO_PUBLIC_NGROK_URL || "https://c520ce759f72.ngrok-free.app";
 
 // Helper to get full URL
 export const getFullUrl = (path: string = ''): string => {

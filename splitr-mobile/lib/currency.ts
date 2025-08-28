@@ -1,4 +1,4 @@
-export const formatRp = (n: number | string | null | undefined): string => {
+export const formatRp = (n: number | string | null | undefined) => {
   if (n === null || n === undefined || n === '') {
     return 'Rp 0';
   }
@@ -10,9 +10,7 @@ export const formatRp = (n: number | string | null | undefined): string => {
     return 'Rp 0';
   }
   
-  const formatted = Math.max(0, Math.floor(num))
+  return `Rp ${Math.max(0, Math.floor(num))
     .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  
-  return 'Rp ' + formatted;
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 };

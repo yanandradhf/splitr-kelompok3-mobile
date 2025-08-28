@@ -9,7 +9,6 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
@@ -53,7 +52,6 @@ export default function BillResult() {
   const [category, setCategory] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [showImageModal, setShowImageModal] = useState(false);
   const [loading, setLoading] = useState(true);
   
   React.useEffect(() => {
@@ -67,39 +65,37 @@ export default function BillResult() {
           // Clear existing items first
           reset();
           
-          // Add OCR items to store with enhanced data
+          // Add OCR items to store
           parsed.items.forEach((item: any) => {
             const billItem = {
               id: Math.random().toString(36).slice(2),
               name: item.name,
-              qty: item.quantity || 1,
-              price: item.unitPrice || item.price || 0,
-              discount: item.itemDiscount || item.discount || 0,
+              qty: item.quantity,
+              price: item.price,
               isSharing: false
             };
             addItem(billItem);
           });
           
-          // Set fees from OCR including order fee and total discount
+          // Set fees from OCR
           const fees = {
             taxPct: parsed.taxPercentage || 0,
             servicePct: parsed.serviceChargePercentage || 0,
             discountPct: 0,
-            discountNominal: parsed.totalDiscount || 0,
-            orderFee: parsed.orderFee || 0
+            discountNominal: parsed.discount || 0
           };
           setFees(fees);
         }
         
         // Store receipt image URI
         if (uri) {
-          console.log('📸 Setting receipt image URI: ' + uri);
+          console.log('📸 Setting receipt image URI:', uri);
           setReceiptImage(uri);
         } else {
           console.log('⚠️ No receipt image URI provided');
         }
       } catch (error) {
-        console.error("Failed to parse scan results: " + String(error));
+        console.error("Failed to parse scan results:", error);
       }
     }
   }, [results, uri]);
@@ -114,7 +110,7 @@ export default function BillResult() {
         const data = await getCategories();
         setCategories(data);
       } catch (error) {
-        console.error('Failed to fetch categories: ' + String(error));
+        console.error('Failed to fetch categories:', error);
         setCategories([]);
       } finally {
         setLoading(false);
@@ -144,7 +140,10 @@ export default function BillResult() {
 
   const openPreview = () => {
     if (uri) {
-      setShowImageModal(true);
+      router.push({
+        pathname: "/create-bill/scan-bill/preview",
+        params: { uri },
+      });
     }
   };
 
@@ -157,14 +156,14 @@ export default function BillResult() {
             <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>Buat Tagihan</Text>
-          <View style={styles.placeholder} />
+          <View style={{ width: 22 }} />
         </View>
 
         {/* Panel putih dengan sudut atas melengkung */}
         <View style={styles.sheet}>
           <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: SPACING.xl }}
             showsVerticalScrollIndicator={false}
           >
             {/* Nama Tagihan */}
@@ -189,8 +188,8 @@ export default function BillResult() {
                 disabled={loading}
               >
                 <View style={styles.dropdownContent}>
-                  {category ? <Text style={styles.categoryIcon}>{category.categoryIcon}</Text> : null}
-                  <Text style={[styles.selectText, !category && styles.placeholderText]}>
+                  {category && <Text style={styles.categoryIcon}>{category.categoryIcon}</Text>}
+                  <Text style={[styles.selectText, !category && { color: COLORS.placeholder }]}>
                     {category ? category.categoryName : (loading ? 'Loading...' : 'Pilih kategori')}
                   </Text>
                 </View>
@@ -229,7 +228,7 @@ export default function BillResult() {
               </Text>
               
               <View style={styles.imageButtonRow}>
-                {uri ? (
+                {!!uri && (
                   <Pressable style={styles.thumbWrap} onPress={openPreview}>
                     <Image
                       source={{ uri }}
@@ -237,7 +236,7 @@ export default function BillResult() {
                       resizeMode="contain"
                     />
                   </Pressable>
-                ) : null}
+                )}
                 
                 <Pressable style={styles.retakeBtn} onPress={retake}>
                   <Ionicons name="camera" size={18} color={COLORS.black} />
@@ -257,28 +256,20 @@ export default function BillResult() {
               {draft.items && draft.items.length > 0 ? (
                 draft.items.map((item) => (
                   <View key={item.id} style={styles.itemRow}>
-                    <View style={styles.itemInfo}>
+                    <View style={{ flex: 1 }}>
                       <Text style={styles.itemName}>{item.name}</Text>
                       <Text style={styles.itemQtyPrice}>
-                        <Text>{item.qty}</Text>
-                        <Text> x </Text>
-                        <Text>{formatRp(item.price)}</Text>
+                        x{item.qty} {formatRp(item.price)}
                       </Text>
-                      {(item.discount || 0) > 0 && (
-                        <Text style={styles.discountText}>
-                          <Text>Diskon item: -</Text>
-                          <Text>{formatRp(item.discount || 0)}</Text>
-                        </Text>
-                      )}
                     </View>
                     <Text style={styles.itemAmount}>
-                      {formatRp((item.qty * item.price) - (item.discount || 0))}
+                      {formatRp(item.qty * item.price)}
                     </Text>
                   </View>
                 ))
               ) : (
                 <View style={styles.emptyState}>
-                  <Ionicons name="document-outline" size={48} color={COLORS.placeholder} />
+                  <Ionicons name="document-outline" size={48} color="#ccc" />
                   <Text style={styles.emptyText}>Tidak ada item terdeteksi</Text>
                   <Text style={styles.emptySubtext}>OCR gagal membaca item dari struk</Text>
                   <Pressable 
@@ -301,39 +292,21 @@ export default function BillResult() {
                 </Text>
               </View>
 
-              {/* Order Fee - only show if detected by OCR */}
-              {draft.fees.orderFee && draft.fees.orderFee > 0 && (
+              {/* Diskon total */}
+              {draft.totals.discount > 0 && (
                 <View style={styles.itemRow}>
-                  <Text style={styles.metaLabel}>Biaya Order</Text>
-                  <Text style={styles.metaAmount}>
-                    {formatRp(draft.fees.orderFee)}
+                  <Text style={styles.metaLabel}>Diskon</Text>
+                  <Text style={[styles.metaAmount, { color: COLORS.red }]}>
+                    -{formatRp(draft.totals.discount)}
                   </Text>
                 </View>
               )}
 
-              {/* Service Charge - only show if detected by OCR */}
-              {draft.totals.service > 0 && (
-                <View style={styles.itemRow}>
-                  <Text style={styles.metaLabel}>
-                    Layanan
-                    {draft.fees.servicePct > 0 && (
-                      <Text> ({draft.fees.servicePct}%)</Text>
-                    )}
-                  </Text>
-                  <Text style={styles.metaAmount}>
-                    {formatRp(draft.totals.service)}
-                  </Text>
-                </View>
-              )}
-
-              {/* Pajak - only show if detected by OCR */}
+              {/* Pajak */}
               {draft.totals.tax > 0 && (
                 <View style={styles.itemRow}>
                   <Text style={styles.metaLabel}>
-                    Pajak
-                    {draft.fees.taxPct > 0 && (
-                      <Text> ({draft.fees.taxPct}%)</Text>
-                    )}
+                    Pajak {draft.fees.taxPct > 0 ? `(${draft.fees.taxPct}%)` : ''}
                   </Text>
                   <Text style={styles.metaAmount}>
                     {formatRp(draft.totals.tax)}
@@ -341,13 +314,14 @@ export default function BillResult() {
                 </View>
               )}
 
-              {/* Diskon total - only show if detected by OCR */}
-              {draft.totals.discount > 0 && (
+              {/* Service Charge */}
+              {draft.totals.service > 0 && (
                 <View style={styles.itemRow}>
-                  <Text style={[styles.metaLabel, styles.discountLabel]}>Diskon Total</Text>
-                  <Text style={[styles.metaAmount, styles.discountAmount]}>
-                    <Text>-</Text>
-                    <Text>{formatRp(draft.totals.discount)}</Text>
+                  <Text style={styles.metaLabel}>
+                    Layanan {draft.fees.servicePct > 0 ? `(${draft.fees.servicePct}%)` : ''}
+                  </Text>
+                  <Text style={styles.metaAmount}>
+                    {formatRp(draft.totals.service)}
                   </Text>
                 </View>
               )}
@@ -384,40 +358,13 @@ export default function BillResult() {
               disabled={!canConfirm}
               style={[
                 styles.confirmBtn,
-                !canConfirm && styles.disabledBtn,
+                !canConfirm && { backgroundColor: COLORS.disabled },
               ]}
             >
               <Text style={styles.confirmText}>Konfirmasi</Text>
             </Pressable>
           </ScrollView>
         </View>
-        
-        {/* Image Preview Modal */}
-        <Modal
-          visible={showImageModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowImageModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowImageModal(false)}
-              activeOpacity={0.7}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close" size={22} color={COLORS.white} />
-            </TouchableOpacity>
-            
-            {uri && (
-              <Image
-                source={{ uri }}
-                style={styles.modalImage}
-                resizeMode="contain"
-              />
-            )}
-          </View>
-        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -431,10 +378,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundMain, // hijau muda di header
   },
   safeArea: { flex: 1 },
-  placeholder: { width: 22 },
-  scrollView: { flex: 1 },
-  scrollContent: { paddingBottom: SPACING.xl },
-  itemInfo: { flex: 1 },
 
   header: {
     flexDirection: "row",
@@ -674,18 +617,7 @@ const styles = StyleSheet.create({
     color: COLORS.red,
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.xs,
-    marginTop: 2,
   },
-
-  discountLabel: {
-    color: COLORS.red,
-    fontFamily: FONTS.medium,
-  },
-  discountAmount: {
-    color: COLORS.red,
-    fontFamily: FONTS.bold,
-  },
-
 
   /* Add manual button */
   addManualBtn: {
@@ -722,12 +654,6 @@ const styles = StyleSheet.create({
   categoryIcon: {
     fontSize: 18,
   },
-  placeholderText: {
-    color: COLORS.placeholder,
-  },
-  disabledBtn: {
-    backgroundColor: COLORS.disabled,
-  },
   dropdownList: {
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.md,
@@ -753,31 +679,5 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
-  },
-  
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalImage: {
-    width: '90%',
-    height: '80%',
   },
 });
