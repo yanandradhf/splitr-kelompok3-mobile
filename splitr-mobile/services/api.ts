@@ -49,7 +49,7 @@ const refreshAccessToken = async () => {
 const convertImageUrls = (obj: any): any => {
   if (!obj) return obj;
   
-  const ngrokUrl = process.env.EXPO_PUBLIC_NGROK_URL || "https://c520ce759f72.ngrok-free.app";
+  const ngrokUrl = process.env.EXPO_PUBLIC_NGROK_URL || "https://0a8cd1b6f3b5.ngrok-free.app";
   
   if (typeof obj === 'string') {
     // Convert localhost URLs

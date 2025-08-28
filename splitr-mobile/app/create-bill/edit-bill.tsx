@@ -6,6 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useBillStore } from "../../store/billStore";
 import type { BillItem } from "../../types/bill";
 import { formatRp } from "../../lib/currency";
+import { handleDecimalInput, parseDecimalValue } from "../../utils/inputUtils";
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export default function EditBill() {
@@ -306,12 +307,15 @@ export default function EditBill() {
                   <Text style={styles.inputLabel}>Pajak (PPN)</Text>
                   <TextInput 
                     placeholder="11" 
-                    keyboardType="number-pad" 
-                    value={String(draft.fees.taxPct || '')} 
-                    onChangeText={(v) => setFees({ ...draft.fees, taxPct: Number(v) || 0 })} 
+                    keyboardType="decimal-pad" 
+                    value={draft.fees.taxPct > 0 ? String(draft.fees.taxPct) : ''} 
+                    onChangeText={(v) => {
+                      const cleaned = handleDecimalInput(v, 1);
+                      setFees({ ...draft.fees, taxPct: parseDecimalValue(cleaned) });
+                    }} 
                     style={styles.input} 
                   />
-                  <Text style={styles.inputHint}>Biasanya 10-11% dari subtotal + service</Text>
+                  <Text style={styles.inputHint}>Contoh: 11 atau 10.5 (desimal diperbolehkan)</Text>
                 </View>
               )}
               
@@ -320,12 +324,15 @@ export default function EditBill() {
                   <Text style={styles.inputLabel}>Service Charge</Text>
                   <TextInput 
                     placeholder="5" 
-                    keyboardType="number-pad" 
-                    value={String(draft.fees.servicePct || '')} 
-                    onChangeText={(v) => setFees({ ...draft.fees, servicePct: Number(v) || 0 })} 
+                    keyboardType="decimal-pad" 
+                    value={draft.fees.servicePct > 0 ? String(draft.fees.servicePct) : ''} 
+                    onChangeText={(v) => {
+                      const cleaned = handleDecimalInput(v, 1);
+                      setFees({ ...draft.fees, servicePct: parseDecimalValue(cleaned) });
+                    }} 
                     style={styles.input} 
                   />
-                  <Text style={styles.inputHint}>Jika ada, misalnya 5% dari subtotal</Text>
+                  <Text style={styles.inputHint}>Contoh: 5 atau 7.5 (desimal diperbolehkan)</Text>
                 </View>
               )}
               
@@ -352,9 +359,12 @@ export default function EditBill() {
                     <View style={styles.percentInputContainer}>
                       <TextInput 
                         placeholder="10" 
-                        keyboardType="number-pad" 
-                        value={String(draft.fees.discountPct || '')} 
-                        onChangeText={(v) => setFees({ ...draft.fees, discountPct: Number(v) || 0, discountNominal: 0 })} 
+                        keyboardType="decimal-pad" 
+                        value={draft.fees.discountPct > 0 ? String(draft.fees.discountPct) : ''} 
+                        onChangeText={(v) => {
+                          const cleaned = handleDecimalInput(v, 1);
+                          setFees({ ...draft.fees, discountPct: parseDecimalValue(cleaned), discountNominal: 0 });
+                        }} 
                         style={styles.percentInput} 
                       />
                       <Text style={styles.percentSuffix}>%</Text>
@@ -385,20 +395,20 @@ export default function EditBill() {
                 </View>
                 {draft.totals.tax > 0 && (
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>Pajak PPN ({draft.fees.taxPct}%)</Text>
+                    <Text style={styles.totalLabel}>Pajak PPN ({draft.fees.taxPct % 1 === 0 ? draft.fees.taxPct : draft.fees.taxPct.toFixed(1)}%)</Text>
                     <Text style={styles.totalValue}>{formatRp(draft.totals.tax)}</Text>
                   </View>
                 )}
                 {draft.totals.service > 0 && (
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>Service Charge ({draft.fees.servicePct}%)</Text>
+                    <Text style={styles.totalLabel}>Service Charge ({draft.fees.servicePct % 1 === 0 ? draft.fees.servicePct : draft.fees.servicePct.toFixed(1)}%)</Text>
                     <Text style={styles.totalValue}>{formatRp(draft.totals.service)}</Text>
                   </View>
                 )}
                 {(draft.fees.discountPct > 0 || draft.fees.discountNominal > 0) && (
                   <View style={styles.totalRow}>
                     <Text style={styles.totalLabel}>
-                      Diskon {draft.fees.discountPct > 0 ? `(${draft.fees.discountPct}%)` : '(Nominal)'}
+                      Diskon {draft.fees.discountPct > 0 ? `(${draft.fees.discountPct % 1 === 0 ? draft.fees.discountPct : draft.fees.discountPct.toFixed(1)}%)` : '(Nominal)'}
                     </Text>
                     <Text style={[styles.totalValue, { color: COLORS.success }]}>-{formatRp(draft.totals.discount)}</Text>
                   </View>
