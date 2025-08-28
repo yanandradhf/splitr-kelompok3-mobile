@@ -4,7 +4,7 @@
 
 // Get ngrok URL directly
 const getNgrokUrl = (): string => {
-  return process.env.EXPO_PUBLIC_NGROK_URL || "https://c520ce759f72.ngrok-free.app";
+  return process.env.EXPO_PUBLIC_NGROK_URL || "https://2cf65d03461e.ngrok-free.app";
 };
 
 // Simple image URL converter

@@ -54,7 +54,11 @@ export default function BillDetail() {
                   <View key={it.id} style={styles.itemRow}>
                     <View style={styles.itemInfo}>
                       <Text style={styles.itemName}>{it.name}</Text>
-                      <Text style={styles.itemDetails}>{it.qty} × {formatRp(it.price)}</Text>
+                      <Text style={styles.itemDetails}>
+                        <Text>{it.qty}</Text>
+                        <Text> × </Text>
+                        <Text>{formatRp(it.price)}</Text>
+                      </Text>
                     </View>
                     <Text style={styles.itemPrice}>{formatRp(it.qty * it.price)}</Text>
                   </View>
@@ -84,9 +88,21 @@ export default function BillDetail() {
                 {draft.totals.discount > 0 && (
                   <View style={styles.totalRow}>
                     <Text style={styles.totalLabel}>
-                      Diskon {draft.fees.discountPct > 0 ? `(${draft.fees.discountPct}%)` : '(Nominal)'}
+                      <Text>Diskon </Text>
+                      {draft.fees.discountPct > 0 ? (
+                        <Text>
+                          <Text>(</Text>
+                          <Text>{draft.fees.discountPct}</Text>
+                          <Text>%)</Text>
+                        </Text>
+                      ) : (
+                        <Text>(Nominal)</Text>
+                      )}
                     </Text>
-                    <Text style={[styles.totalValue, { color: COLORS.success }]}>-{formatRp(draft.totals.discount)}</Text>
+                    <Text style={[styles.totalValue, styles.successColor]}>
+                      <Text>-</Text>
+                      <Text>{formatRp(draft.totals.discount)}</Text>
+                    </Text>
                   </View>
                 )}
                 <View style={styles.divider} />
@@ -293,5 +309,8 @@ const styles = StyleSheet.create({
   },
   confirmTextDisabled: {
     color: COLORS.textSecondary,
+  },
+  successColor: {
+    color: COLORS.success,
   },
 });

@@ -15,6 +15,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { FixedGroqService } from "./fixedGroqService";
+import { COLORS } from "../../../constants/theme";
 
 const { width, height } = Dimensions.get("window");
 const PADDING = 18;
@@ -169,7 +170,7 @@ export default function ScanningScreen() {
             />
           ) : (
             <View style={styles.noImg}>
-              <Ionicons name="image-outline" size={48} color="#999" />
+              <Ionicons name="image-outline" size={48} color={COLORS.placeholder} />
               <Text style={styles.noImgText}>Tidak ada gambar</Text>
             </View>
           )}
@@ -201,7 +202,7 @@ export default function ScanningScreen() {
         </View>
       ) : (
         <View style={styles.modalCenter}>
-          <View style={[styles.modal, { paddingBottom: 16 }]}>
+          <View style={[styles.modal, styles.modalUnreadable]}>
             {/* Ilustrasi gagal */}
             <View style={styles.failIconWrap}>
               <Ionicons name="document-text-outline" size={42} color={GREEN} />
@@ -384,4 +385,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   filledText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  modalUnreadable: {
+    paddingBottom: 16,
+  },
 });

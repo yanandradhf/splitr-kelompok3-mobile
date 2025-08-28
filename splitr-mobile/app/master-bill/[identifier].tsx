@@ -85,7 +85,10 @@ export default function MasterBillDetail() {
       <View style={masterBillStyles.container}>
         <SafeAreaView style={masterBillStyles.safeArea}>
           <View style={masterBillStyles.header}>
-            <Pressable onPress={() => router.back()} style={masterBillStyles.backButton}>
+            <Pressable
+              onPress={() => router.back()}
+              style={masterBillStyles.backButton}
+            >
               <Ionicons
                 name="arrow-back"
                 size={24}
@@ -119,7 +122,10 @@ export default function MasterBillDetail() {
       <View style={masterBillStyles.container}>
         <SafeAreaView style={masterBillStyles.safeArea}>
           <View style={masterBillStyles.header}>
-            <Pressable onPress={() => router.back()} style={masterBillStyles.backButton}>
+            <Pressable
+              onPress={() => router.back()}
+              style={masterBillStyles.backButton}
+            >
               <Ionicons
                 name="arrow-back"
                 size={24}
@@ -408,8 +414,44 @@ const styles = {
     color: COLORS.textPrimary,
     flex: 1,
   },
-  commentTimeBottom: {
-    fontSize: 12,
+  hostBadge: {
+    backgroundColor: COLORS.teal,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  hostBadgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.bold,
+    color: COLORS.white,
+  },
+  participantAccount: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.regular,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.xs,
+  },
+  participantAmount: {
+    fontSize: FONT_SIZES.base,
+    fontFamily: FONTS.bold,
+    color: COLORS.teal,
+  },
+  participantStatus: {
+    alignItems: "flex-end",
+    gap: SPACING.xs,
+  },
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  statusLabel: {
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONTS.semiBold,
+  },
+  paidDate: {
+    fontSize: FONT_SIZES.xs,
+    fontFamily: FONTS.regular,
     color: COLORS.textSecondary,
     marginLeft: 32,
     marginTop: 8,
