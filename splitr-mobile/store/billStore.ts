@@ -75,7 +75,7 @@ export const useBillStore = create<BillState>((set, get) => ({
     // 1. Hitung diskon dulu dari subtotal
     let discount = 0;
     if (fees.discountPct > 0) {
-      discount = Math.floor(subTotal * (fees.discountPct / 100));
+      discount = Math.round(subTotal * (fees.discountPct / 100));
     } else if (fees.discountNominal > 0) {
       discount = fees.discountNominal;
     }
@@ -83,11 +83,11 @@ export const useBillStore = create<BillState>((set, get) => ({
     // 2. Harga setelah diskon
     const afterDiscount = Math.max(0, subTotal - discount);
     
-    // 3. Hitung service dari harga setelah diskon
-    const service = Math.floor(afterDiscount * (fees.servicePct / 100));
+    // 3. Hitung service dari harga setelah diskon (support decimal percentages)
+    const service = Math.round(afterDiscount * (fees.servicePct / 100));
     
-    // 4. Hitung pajak dari harga setelah diskon
-    const tax = Math.floor(afterDiscount * (fees.taxPct / 100));
+    // 4. Hitung pajak dari harga setelah diskon (support decimal percentages)
+    const tax = Math.round(afterDiscount * (fees.taxPct / 100));
     
     // 5. Total akhir
     const grandTotal = afterDiscount + service + tax;
