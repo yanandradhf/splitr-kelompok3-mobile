@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { View, Text, ActivityIndicator } from 'react-native';
 import { ErrorModal } from '../components/ui/ErrorModal';
+import { ActivityTracker } from '../components/ui/ActivityTracker';
 import { useErrorStore } from '../store/errorStore';
 import { useFonts } from '../hooks/useFonts';
 import { COLORS } from '../constants/theme';
@@ -10,23 +11,33 @@ export default function RootLayout() {
   const { isVisible, title, message, isSessionExpired, hideError } = useErrorStore();
   const { fontsLoaded, fontError } = useFonts();
 
-  // Show loading screen while fonts are loading
+  // Don't block app loading for fonts in Expo Go
+  // Show loading only for a short time, then continue with fallback
   if (!fontsLoaded && !fontError) {
+    // Set a timeout to prevent infinite loading in Expo Go
+    setTimeout(() => {
+      if (!fontsLoaded) {
+        console.warn('⚠️ Font loading timeout - continuing with system fonts');
+      }
+    }, 3000);
+    
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.backgroundMain }}>
         <ActivityIndicator size="large" color={COLORS.teal} />
-        <Text style={{ marginTop: 16, fontSize: 16, color: COLORS.textPrimary }}>Loading...</Text>
+        <Text style={{ marginTop: 16, fontSize: 16, color: COLORS.textPrimary, fontFamily: 'System' }}>Loading...</Text>
       </View>
     );
   }
 
-  // Show error if fonts failed to load but continue with fallback
+  // Log font loading status
   if (fontError) {
-    console.warn('Font loading error:', fontError);
+    console.warn('⚠️ Font loading error (using system fonts):', fontError);
+  } else if (fontsLoaded) {
+    console.log('✅ Custom fonts loaded successfully');
   }
   
   return (
-    <>
+    <ActivityTracker>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -47,6 +58,6 @@ export default function RootLayout() {
         isSessionExpired={isSessionExpired}
         onClose={hideError}
       />
-    </>
+    </ActivityTracker>
   );
 }

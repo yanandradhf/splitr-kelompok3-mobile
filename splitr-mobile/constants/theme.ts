@@ -40,7 +40,8 @@ export const COLORS = {
   disabled: '#9CA3AF',     // Disabled state
 };
 
-export const FONTS = {
+// Primary fonts
+const PRIMARY_FONTS = {
   regular: 'PlusJakartaSans_400Regular',
   medium: 'PlusJakartaSans_500Medium',
   semiBold: 'PlusJakartaSans_600SemiBold',
@@ -48,18 +49,36 @@ export const FONTS = {
   extraBold: 'PlusJakartaSans_800ExtraBold',
 };
 
-// Fallback fonts for when custom fonts fail to load
-export const FALLBACK_FONTS = {
+// Robust fallback fonts for Expo Go
+const FALLBACK_FONTS = {
   regular: 'System',
   medium: 'System',
-  semiBold: 'System',
+  semiBold: 'System', 
   bold: 'System',
   extraBold: 'System',
 };
 
-// Get font with fallback
+// Export FONTS with automatic fallback
+export const FONTS = {
+  regular: PRIMARY_FONTS.regular,
+  medium: PRIMARY_FONTS.medium,
+  semiBold: PRIMARY_FONTS.semiBold,
+  bold: PRIMARY_FONTS.bold,
+  extraBold: PRIMARY_FONTS.extraBold,
+};
+
+// Get font with robust fallback
 export const getFont = (fontWeight: keyof typeof FONTS, fontsLoaded: boolean = true) => {
-  return fontsLoaded ? FONTS[fontWeight] : FALLBACK_FONTS[fontWeight];
+  if (!fontsLoaded) {
+    return FALLBACK_FONTS[fontWeight];
+  }
+  
+  // Try primary font, fallback to system if not available
+  try {
+    return PRIMARY_FONTS[fontWeight] || FALLBACK_FONTS[fontWeight];
+  } catch {
+    return FALLBACK_FONTS[fontWeight];
+  }
 };
 
 export const FONT_SIZES = {

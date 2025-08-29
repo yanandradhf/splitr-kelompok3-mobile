@@ -60,6 +60,13 @@ export default function BillResult() {
     if (results) {
       try {
         const parsed = JSON.parse(results);
+        console.log('🔍 FULL OCR PAYLOAD:', JSON.stringify(parsed, null, 2));
+        console.log('📊 TAX INFO:', {
+          tax: parsed.tax,
+          taxPercentage: parsed.taxPercentage,
+          serviceCharge: parsed.serviceCharge,
+          serviceChargePercentage: parsed.serviceChargePercentage
+        });
         setScanResults(parsed);
         
         // Integrate OCR results into bill store if items exist
@@ -86,6 +93,7 @@ export default function BillResult() {
             discountPct: 0,
             discountNominal: parsed.discount || 0
           };
+          console.log('💰 FEES BEING SET:', fees);
           setFees(fees);
         }
         
@@ -302,6 +310,11 @@ export default function BillResult() {
               )}
 
               {/* Pajak */}
+              {console.log('📊 TAX DISPLAY CHECK:', {
+                'draft.totals.tax': draft.totals.tax,
+                'draft.fees.taxPct': draft.fees.taxPct,
+                'condition': draft.totals.tax > 0
+              })}
               {draft.totals.tax > 0 && (
                 <View style={styles.itemRow}>
                   <Text style={styles.metaLabel}>

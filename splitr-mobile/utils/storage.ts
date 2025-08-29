@@ -82,12 +82,24 @@ export const StorageService = {
     try {
       // Clear AsyncStorage
       await AsyncStorage.clear();
+      console.log('🧹 AsyncStorage cleared');
       
-      // Clear SecureStore
-      const { deleteItemAsync, getAllKeysAsync } = await import('expo-secure-store');
-      const keys = await getAllKeysAsync();
-      for (const key of keys) {
-        await deleteItemAsync(key);
+      // Clear SecureStore (known keys)
+      const { deleteItemAsync } = await import('expo-secure-store');
+      const secureStoreKeys = [
+        'access_token',
+        'refresh_token', 
+        'user_data',
+        'auth_token' // legacy
+      ];
+      
+      for (const key of secureStoreKeys) {
+        try {
+          await deleteItemAsync(key);
+          console.log(`🔑 Cleared SecureStore key: ${key}`);
+        } catch (keyError) {
+          // Key might not exist, ignore
+        }
       }
       
       console.log('🧹 All app data cleared successfully');

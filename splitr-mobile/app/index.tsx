@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { StorageService } from '../utils/storage';
 import { useAuthStore } from '../features/auth/auth.store';
-import { COLORS } from '../constants/theme';
+import CustomSplashScreen from './(public)/splash';
 
 export default function AppEntry() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -30,8 +29,13 @@ export default function AppEntry() {
     try {
       console.log('🚀 Initializing app...');
       
+      // Start timer for minimum splash duration (match CustomSplashScreen)
+      const startTime = Date.now();
+      const MIN_SPLASH_DURATION = 2500; // 2.5 seconds to match splash component
+      
       // DEVELOPMENT ONLY: Clear data if __DEV__ flag is true and specific condition met
       if (__DEV__ && false) { // Change 'false' to 'true' temporarily to clear data
+        console.log('🧹 Development mode: Clearing all data...');
         await StorageService.clearAllData();
       }
       
@@ -41,18 +45,29 @@ export default function AppEntry() {
       // 1. Check onboarding status
       const shouldShowOnboarding = await StorageService.shouldShowOnboarding();
       
+      // 2. Check authentication session if onboarding is done
+      if (!shouldShowOnboarding) {
+        console.log('🔍 Checking authentication...');
+        await checkAuth();
+      }
+      
+      // Ensure minimum splash duration (match with CustomSplashScreen duration)
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = MIN_SPLASH_DURATION - elapsedTime;
+      
+      if (remainingTime > 0) {
+        console.log(`⏳ Waiting ${remainingTime}ms for minimum splash duration`);
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
+      
+      // Navigate based on onboarding status
       if (shouldShowOnboarding) {
         console.log('🎆 First time user - showing onboarding');
         router.replace('/(public)/onboarding');
-        return;
+      } else {
+        // Mark as initialized to trigger auth-based navigation
+        setIsInitialized(true);
       }
-      
-      // 2. Check authentication session
-      console.log('🔍 Checking authentication...');
-      await checkAuth();
-      
-      // Mark as initialized to trigger navigation
-      setIsInitialized(true);
       
     } catch (error) {
       console.error('❌ Error initializing app:', error);
@@ -60,9 +75,12 @@ export default function AppEntry() {
     }
   };
 
+  const handleSplashFinish = () => {
+    // This will be called when splash animation completes
+    // But we control the navigation through our initialization logic
+  };
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.backgroundMain }}>
-      <ActivityIndicator size="large" color={COLORS.teal} />
-    </View>
+    <CustomSplashScreen onFinish={handleSplashFinish} />
   );
 }

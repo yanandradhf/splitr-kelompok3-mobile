@@ -25,11 +25,30 @@ export default function EditBill() {
   const [editPrice, setEditPrice] = useState("");
   const [editIsSharing, setEditIsSharing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [taxInput, setTaxInput] = useState('');
-  const [serviceInput, setServiceInput] = useState('');
-  const [discountInput, setDiscountInput] = useState('');
+  const [taxInput, setTaxInput] = useState(draft.fees.taxPct > 0 ? String(draft.fees.taxPct) : '');
+  const [serviceInput, setServiceInput] = useState(draft.fees.servicePct > 0 ? String(draft.fees.servicePct) : '');
+  const [discountInput, setDiscountInput] = useState(draft.fees.discountPct > 0 ? String(draft.fees.discountPct) : '');
 
   useEffect(() => { recalcTotals(); }, [draft.items, draft.fees]);
+
+  // Sync input fields with store values
+  useEffect(() => {
+    console.log('🔄 Syncing input fields with store values:', {
+      taxPct: draft.fees.taxPct,
+      servicePct: draft.fees.servicePct,
+      discountPct: draft.fees.discountPct
+    });
+    
+    if (draft.fees.taxPct > 0 && !taxInput) {
+      setTaxInput(String(draft.fees.taxPct));
+    }
+    if (draft.fees.servicePct > 0 && !serviceInput) {
+      setServiceInput(String(draft.fees.servicePct));
+    }
+    if (draft.fees.discountPct > 0 && !discountInput) {
+      setDiscountInput(String(draft.fees.discountPct));
+    }
+  }, [draft.fees.taxPct, draft.fees.servicePct, draft.fees.discountPct]);
 
   const isAddDisabled = !name.trim() || (!isSharing && !qty) || !price || Number(price) <= 0;
 
