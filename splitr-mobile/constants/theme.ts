@@ -48,6 +48,20 @@ export const FONTS = {
   extraBold: 'PlusJakartaSans_800ExtraBold',
 };
 
+// Fallback fonts for when custom fonts fail to load
+export const FALLBACK_FONTS = {
+  regular: 'System',
+  medium: 'System',
+  semiBold: 'System',
+  bold: 'System',
+  extraBold: 'System',
+};
+
+// Get font with fallback
+export const getFont = (fontWeight: keyof typeof FONTS, fontsLoaded: boolean = true) => {
+  return fontsLoaded ? FONTS[fontWeight] : FALLBACK_FONTS[fontWeight];
+};
+
 export const FONT_SIZES = {
   xs: 12,
   sm: 14,

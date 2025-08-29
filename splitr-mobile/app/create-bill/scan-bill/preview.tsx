@@ -101,9 +101,10 @@ const styles = StyleSheet.create({
   },
 
   previewWrap: {
-    height: PREVIEW_H,                 // ⬅️ dibatasi agar tidak terlalu panjang
-    marginTop: 12,
+    flex: 1,
+    marginTop: 20,
     marginHorizontal: PADDING,
+    marginBottom: 20,
     borderRadius: 16,
     backgroundColor: "#F7F7F7",
     overflow: "hidden",
@@ -114,20 +115,20 @@ const styles = StyleSheet.create({
     borderColor: "#eee",
   },
 
-  // width/height mengikuti lebar container & tinggi card agar proporsional
   previewImg: {
-    width: width - PADDING * 2 - 28,
-    height: PREVIEW_H - 28,
+    width: '100%',
+    height: '100%',
     borderRadius: 8,
   },
 
-  noImg: { height: PREVIEW_H - 28, alignItems: "center", justifyContent: "center" },
+  noImg: { flex: 1, alignItems: "center", justifyContent: "center" },
   noImgText: { marginTop: 8, color: "#777" },
 
   footerBar: {
-    backgroundColor: BG,               // ⬅️ hilangkan area hitam
-    paddingTop: 146,
-    paddingBottom: Platform.select({ ios: 20, android: 14 }),
+    backgroundColor: BG,
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: Platform.select({ ios: 34, android: 20 }),
   },
 
   actions: {

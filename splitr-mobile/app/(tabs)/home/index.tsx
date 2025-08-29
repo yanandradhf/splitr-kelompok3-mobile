@@ -239,7 +239,13 @@ export default function HomeScreen() {
                         })()}
                       </View>
                       <View style={styles.groupInfo}>
-                        <Text style={styles.groupName}>{group.groupName}</Text>
+                        <Text 
+                          style={styles.groupName}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {group.groupName}
+                        </Text>
                         <Text style={styles.groupMembers}>
                           {group.memberCount} orang dalam grup ini
                         </Text>
@@ -463,7 +469,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    width: 300,
+    width: 280,
     backgroundColor: COLORS.white,
   },
   groupHeader: {

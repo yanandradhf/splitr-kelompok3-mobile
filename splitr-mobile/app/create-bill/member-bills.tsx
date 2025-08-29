@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, TextInput, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, TextInput, ScrollView, Modal } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -64,8 +64,9 @@ export default function MemberOfBills() {
               onPress={() => setShowAddFriend(true)}
               style={styles.headerAddButton}
               activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="person-add" size={20} color={COLORS.textPrimary} />
+              <Ionicons name="person-add" size={22} color={COLORS.textPrimary} />
             </TouchableOpacity>
           ) : (
             <View style={styles.placeholder} />
@@ -272,6 +273,117 @@ export default function MemberOfBills() {
           </View>
         </View>
       </SafeAreaView>
+
+      {/* Add Friend Modal */}
+      <Modal visible={showAddFriend} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Cari & Tambah Teman</Text>
+              <TouchableOpacity onPress={() => setShowAddFriend(false)} style={styles.modalCloseButton}>
+                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalContent}>
+              <Text style={styles.modalSubtitle}>Masukkan username teman yang ingin ditambahkan</Text>
+              
+              <View style={styles.modalSearchContainer}>
+                <TextInput
+                  style={styles.modalSearchInput}
+                  placeholder="Username teman..."
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholderTextColor={COLORS.textSecondary}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity 
+                  style={styles.modalSearchButton}
+                  onPress={handleUsernameSearch}
+                  disabled={isSearching || !username.trim()}
+                >
+                  {isSearching ? (
+                    <ActivityIndicator size="small" color={COLORS.white} />
+                  ) : (
+                    <Ionicons name="search" size={20} color={COLORS.white} />
+                  )}
+                </TouchableOpacity>
+              </View>
+              
+              {searchError && (
+                <Text style={styles.modalErrorText}>{searchError}</Text>
+              )}
+              
+              {showNoResults && (
+                <View style={styles.modalNoResults}>
+                  <Ionicons name="person-remove-outline" size={48} color={COLORS.textSecondary} />
+                  <Text style={styles.modalNoResultsText}>Username tidak ditemukan</Text>
+                </View>
+              )}
+              
+              {searchResults.length > 0 && (
+                <View style={styles.modalResults}>
+                  {searchResults.map((user) => (
+                    <TouchableOpacity 
+                      key={user.id}
+                      style={styles.modalUserCard}
+                      onPress={() => {
+                        console.log('User clicked:', user);
+                        handleAddFriendClick(user);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.modalUserAvatar}>
+                        <Text style={styles.modalUserAvatarText}>
+                          {user.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.modalUserInfo}>
+                        <Text style={styles.modalUserName}>{user.name}</Text>
+                        <Text style={styles.modalUserUsername}>@{user.username}</Text>
+                      </View>
+                      <Ionicons name="person-add" size={20} color={COLORS.teal} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal visible={showConfirmationModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModalContainer}>
+            <Text style={styles.confirmModalTitle}>Tambah Teman</Text>
+            <Text style={styles.confirmModalMessage}>
+              Tambahkan {selectedUser?.name} sebagai teman?
+            </Text>
+            {console.log('Confirmation modal render - visible:', showConfirmationModal, 'selectedUser:', selectedUser)}
+            <View style={styles.confirmModalButtons}>
+              <TouchableOpacity 
+                style={styles.confirmModalCancelButton}
+                onPress={handleCancelAdd}
+                disabled={isAddingFriend}
+              >
+                <Text style={styles.confirmModalCancelText}>Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.confirmModalConfirmButton}
+                onPress={handleConfirmAdd}
+                disabled={isAddingFriend}
+              >
+                {isAddingFriend ? (
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                  <Text style={styles.confirmModalConfirmText}>Tambah</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -280,11 +392,11 @@ export default function MemberOfBills() {
 const styles = {
   container: { flex: 1, backgroundColor: COLORS.backgroundMain },
   safeArea: { flex: 1 },
-  header: { flexDirection: "row" as const, alignItems: "center" as const, justifyContent: "space-between" as const, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md },
+  header: { flexDirection: "row" as const, alignItems: "center" as const, justifyContent: "space-between" as const, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, zIndex: 10 },
   backButton: { padding: 5 },
   headerTitle: { fontSize: FONT_SIZES.xl, fontFamily: FONTS.bold, color: COLORS.textPrimary },
-  placeholder: { width: 24 },
-  headerAddButton: { padding: SPACING.xs, borderRadius: BORDER_RADIUS.sm },
+  placeholder: { width: 40, height: 40 },
+  headerAddButton: { padding: SPACING.sm, borderRadius: BORDER_RADIUS.sm, minWidth: 40, minHeight: 40, justifyContent: "center" as const, alignItems: "center" as const },
   whiteModalContainer: { backgroundColor: COLORS.white, borderTopLeftRadius: BORDER_RADIUS.xl, borderTopRightRadius: BORDER_RADIUS.xl, shadowColor: "#000", shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5, flex: 1 },
   content: { flex: 1, paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg, paddingBottom: SPACING.lg },
   sectionTitle: { fontSize: FONT_SIZES.lg, fontFamily: FONTS.bold, color: COLORS.textPrimary, marginBottom: SPACING.xs },
@@ -330,4 +442,36 @@ const styles = {
   confirmButtonContent: { flexDirection: "row" as const, alignItems: "center" as const, gap: SPACING.xs },
   confirmText: { color: COLORS.white, fontFamily: FONTS.bold, fontSize: FONT_SIZES.base },
   confirmTextDisabled: { color: COLORS.textSecondary },
+  
+  // Modal styles
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)", justifyContent: "center" as const, alignItems: "center" as const, paddingHorizontal: SPACING.lg },
+  modalContainer: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, width: "100%", maxWidth: 400, maxHeight: "80%" },
+  modalHeader: { flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "center" as const, padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.inputBorder },
+  modalTitle: { fontSize: FONT_SIZES.lg, fontFamily: FONTS.bold, color: COLORS.textPrimary },
+  modalCloseButton: { padding: SPACING.xs },
+  modalContent: { padding: SPACING.lg },
+  modalSubtitle: { fontSize: FONT_SIZES.sm, fontFamily: FONTS.regular, color: COLORS.textSecondary, marginBottom: SPACING.md },
+  modalSearchContainer: { flexDirection: "row" as const, gap: SPACING.sm, marginBottom: SPACING.md },
+  modalSearchInput: { flex: 1, backgroundColor: COLORS.inputBg, borderRadius: BORDER_RADIUS.sm, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md, fontSize: FONT_SIZES.base, fontFamily: FONTS.regular, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.inputBorder },
+  modalSearchButton: { backgroundColor: COLORS.teal, borderRadius: BORDER_RADIUS.sm, paddingHorizontal: SPACING.md, justifyContent: "center" as const, alignItems: "center" as const, minWidth: 48 },
+  modalErrorText: { fontSize: FONT_SIZES.sm, fontFamily: FONTS.medium, color: COLORS.red, textAlign: "center" as const, marginBottom: SPACING.md },
+  modalNoResults: { alignItems: "center" as const, paddingVertical: SPACING.xl },
+  modalNoResultsText: { fontSize: FONT_SIZES.base, fontFamily: FONTS.medium, color: COLORS.textSecondary, marginTop: SPACING.sm },
+  modalResults: { marginTop: SPACING.sm },
+  modalUserCard: { flexDirection: "row" as const, alignItems: "center" as const, padding: SPACING.md, backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, marginBottom: SPACING.sm },
+  modalUserAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.teal, justifyContent: "center" as const, alignItems: "center" as const, marginRight: SPACING.md },
+  modalUserAvatarText: { fontSize: FONT_SIZES.base, fontFamily: FONTS.bold, color: COLORS.white },
+  modalUserInfo: { flex: 1 },
+  modalUserName: { fontSize: FONT_SIZES.base, fontFamily: FONTS.semiBold, color: COLORS.textPrimary },
+  modalUserUsername: { fontSize: FONT_SIZES.sm, fontFamily: FONTS.regular, color: COLORS.textSecondary },
+  
+  // Confirmation modal styles
+  confirmModalContainer: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.xl, width: "90%", maxWidth: 300 },
+  confirmModalTitle: { fontSize: FONT_SIZES.lg, fontFamily: FONTS.bold, color: COLORS.textPrimary, textAlign: "center" as const, marginBottom: SPACING.sm },
+  confirmModalMessage: { fontSize: FONT_SIZES.base, fontFamily: FONTS.regular, color: COLORS.textSecondary, textAlign: "center" as const, marginBottom: SPACING.xl },
+  confirmModalButtons: { flexDirection: "row" as const, gap: SPACING.sm },
+  confirmModalCancelButton: { flex: 1, backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.sm, paddingVertical: SPACING.sm, alignItems: "center" as const },
+  confirmModalCancelText: { fontSize: FONT_SIZES.base, fontFamily: FONTS.medium, color: COLORS.textPrimary },
+  confirmModalConfirmButton: { flex: 1, backgroundColor: COLORS.teal, borderRadius: BORDER_RADIUS.sm, paddingVertical: SPACING.sm, alignItems: "center" as const },
+  confirmModalConfirmText: { fontSize: FONT_SIZES.base, fontFamily: FONTS.bold, color: COLORS.white },
 };

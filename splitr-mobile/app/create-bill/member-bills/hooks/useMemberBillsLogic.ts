@@ -86,8 +86,11 @@ export const useMemberBillsLogic = () => {
   };
 
   const handleAddFriendClick = (friend: SearchUser) => {
+    console.log('handleAddFriendClick called with:', friend);
     setSelectedUser(friend);
+    setShowAddFriend(false); // Close add friend modal first
     setShowConfirmationModal(true);
+    console.log('Confirmation modal should show now');
   };
 
   const handleConfirmAdd = async () => {
@@ -119,6 +122,7 @@ export const useMemberBillsLogic = () => {
   const handleCancelAdd = () => {
     setShowConfirmationModal(false);
     setSelectedUser(null);
+    setShowAddFriend(true); // Reopen add friend modal
   };
 
   const toggle = (id: string) => {
