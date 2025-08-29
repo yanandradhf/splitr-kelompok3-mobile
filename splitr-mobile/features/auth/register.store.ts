@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { registerAPI } from '../../services';
-import { handleApiError } from '../../utils/errorHandler';
 
 interface RegisterData {
   nomorRekening: string;
@@ -93,9 +92,9 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
       }
       return false;
     } catch (error: any) {
-      const apiError = handleApiError(error);
-      set({ error: apiError.message });
-      throw new Error(apiError.message);
+      // Error automatically handled by API interceptor
+      set({ isLoading: false });
+      throw error;
     } finally {
       set({ isLoading: false });
     }
@@ -106,9 +105,8 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
     try {
       await registerAPI.sendOtp({ email });
     } catch (error: any) {
-      const apiError = handleApiError(error);
-      set({ error: apiError.message });
-      throw new Error(apiError.message);
+      // Error automatically handled by API interceptor
+      throw error;
     } finally {
       set({ isLoading: false });
     }
@@ -127,9 +125,8 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
         throw new Error('Kode OTP tidak valid');
       }
     } catch (error: any) {
-      const apiError = handleApiError(error);
-      set({ error: apiError.message });
-      throw new Error(apiError.message);
+      // Error automatically handled by API interceptor
+      throw error;
     } finally {
       set({ isLoading: false });
     }
@@ -158,9 +155,8 @@ export const useRegisterStore = create<RegisterState>((set, get) => ({
       // Clear temporary token but keep data for success page
       await SecureStore.deleteItemAsync('temp_token');
     } catch (error: any) {
-      const apiError = handleApiError(error);
-      set({ error: apiError.message });
-      throw new Error(apiError.message);
+      // Error automatically handled by API interceptor
+      throw error;
     } finally {
       set({ isLoading: false });
     }

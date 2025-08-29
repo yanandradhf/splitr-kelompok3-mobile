@@ -91,83 +91,36 @@ const convertImageUrls = (obj: any): any => {
   return obj;
 };
 
-// Response interceptor with refresh token handling
+// Response interceptor - Auto handle ALL errors with toast
 api.interceptors.response.use(
   (response) => {
-    // Convert localhost URLs to ngrok in response data
     if (response.data) {
       response.data = convertImageUrls(response.data);
     }
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
+    const { showApiError, showErrorToast } = await import('../utils/globalErrorHandler');
     
-    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
-      const errorCode = error.response?.data?.code;
+    // Handle ONLY 401 - Auto logout for token issues
+    if (error.response?.status === 401) {
+      console.log('🚨 Token invalid, forcing logout');
       
-      // Handle single session errors first
-      const { handleSessionError } = await import('../utils/errorHandler');
-      const sessionHandled = await handleSessionError(error);
-      if (sessionHandled) {
-        return Promise.reject(error);
-      }
+      // Clear all tokens immediately
+      await SecureStore.deleteItemAsync('access_token');
+      await SecureStore.deleteItemAsync('refresh_token');
+      await SecureStore.deleteItemAsync('user_data');
       
-      // Handle invalid token - force logout
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || '';
-      const isInvalidToken = errorMessage.includes('invalid') || 
-                            errorMessage.includes('expired') ||
-                            errorMessage.includes('malformed') ||
-                            error.response?.data?.code === 'INVALID_TOKEN';
+      // Show session error modal - redirect akan dilakukan setelah user tap OK
+      const { showSessionExpiredModal } = await import('../utils/globalErrorHandler');
+      showSessionExpiredModal();
       
-      if (isInvalidToken) {
-        console.log('🚨 Invalid token detected, forcing logout');
-        await SecureStore.deleteItemAsync('access_token');
-        await SecureStore.deleteItemAsync('refresh_token');
-        await SecureStore.deleteItemAsync('user_data');
-        
-        const { Alert } = await import('react-native');
-        const { router } = await import('expo-router');
-        
-        Alert.alert(
-          'Session Invalid',
-          'Your session has expired. Please login again.',
-          [{ text: 'Login', onPress: () => router.replace('/(auth)/login') }]
-        );
-        
-        return Promise.reject(error);
-      }
-      
-      // Try to refresh token only if we have refresh token
-      const refreshToken = await SecureStore.getItemAsync('refresh_token');
-      if (!refreshToken) {
-        console.log('🚨 No refresh token, logging out');
-        await SecureStore.deleteItemAsync('access_token');
-        await SecureStore.deleteItemAsync('user_data');
-        
-        const { router } = await import('expo-router');
-        router.replace('/(auth)/login');
-        return Promise.reject(error);
-      }
-      
-      originalRequest._retry = true;
-      try {
-        console.log('🔄 Attempting token refresh...');
-        const newToken = await refreshAccessToken();
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        console.log('✅ Token refreshed, retrying request');
-        return api(originalRequest);
-      } catch (refreshError) {
-        console.log('❌ Token refresh failed, logging out');
-        await SecureStore.deleteItemAsync('access_token');
-        await SecureStore.deleteItemAsync('refresh_token');
-        await SecureStore.deleteItemAsync('user_data');
-        
-        const { router } = await import('expo-router');
-        router.replace('/(auth)/login');
-        return Promise.reject(refreshError);
-      }
+      return Promise.reject(error);
     }
+    
+    // Handle ALL other errors (400, 404, 422, 500, etc.) with modal - NO LOGOUT
+    showApiError(error);
+    
     return Promise.reject(error);
   }
 );

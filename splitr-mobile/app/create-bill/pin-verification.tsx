@@ -112,8 +112,7 @@ export default function PinVerification() {
         return;
       }
     } catch (error) {
-      console.error('PIN validation error:', error);
-      alert('Gagal memverifikasi PIN. Silakan coba lagi.');
+      // Error automatically handled by API interceptor
       setPin("");
       setIsCreating(false);
       return;
@@ -159,8 +158,7 @@ export default function PinVerification() {
         }
       });
     } catch (error) {
-      console.error('Failed to create bill:', error);
-      alert('Gagal membuat tagihan. Silakan coba lagi.');
+      // Error automatically handled by API interceptor
       setIsCreating(false);
     }
   };

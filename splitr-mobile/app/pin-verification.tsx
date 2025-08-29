@@ -88,8 +88,7 @@ export default function PinVerificationScreen() {
         Alert.alert('Pembayaran Gagal', response.data.message || 'Terjadi kesalahan.');
       }
     } catch (error: any) {
-      console.error('❌ Payment error:', error);
-      Alert.alert('Pembayaran Gagal', error.response?.data?.message || 'Terjadi kesalahan jaringan.');
+      // Error automatically handled by API interceptor
     } finally {
       setLoading(false);
     }

@@ -18,11 +18,11 @@ import { useProfileStore } from "../../../store";
 import LoadingScreen from "../../../components/ui/LoadingScreen";
 import { SkeletonProfile } from "../../../components/ui/Skeleton";
 import UserAvatar from "../../../components/ui/UserAvatar";
-import { authAPI } from "../../../services/api";
-import * as SecureStore from "expo-secure-store";
+import { useAuth } from "../../../hooks/useAuth";
 
 export default function ProfileScreen() {
   const { user, stats, isLoading, fetchProfile } = useProfileStore();
+  const { logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showFullImage, setShowFullImage] = useState(false);
@@ -297,15 +297,9 @@ export default function ProfileScreen() {
   async function handleLogout() {
     setIsLoggingOut(true);
     try {
-      const response = await authAPI.logout();
-      if (response.status === 200) {
-        await SecureStore.deleteItemAsync("auth_token");
-        await SecureStore.deleteItemAsync("user_data");
-        router.replace("/(auth)/login");
-      }
+      await logout();
     } catch (error) {
-      console.error("Logout error:", error);
-      Alert.alert("Error", "Gagal keluar dari aplikasi. Silakan coba lagi.");
+      // Error automatically handled by API interceptor
     } finally {
       setIsLoggingOut(false);
       setShowLogoutModal(false);

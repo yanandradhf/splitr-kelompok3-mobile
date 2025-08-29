@@ -32,25 +32,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       login: async (username: string, password: string) => {
         set({ isLoading: true });
         try {
-          console.log('🔥 API Call starting...');
-          console.log('🔥 Credentials:', { username, password });
-          
           const response = await authAPI.login({ username, password });
-          
-          console.log('🔥 API Response:', response);
-          console.log('🔥 Response data:', response.data);
-          
-          const { user, accessToken, refreshToken } = response.data;
-          
-          console.log('🔥 Extracted user:', user);
-          console.log('🔥 Extracted tokens:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+          const { user, accessToken, refreshToken, sessionInfo } = response.data;
           
           // Save to SecureStore
           await SecureStore.setItemAsync('access_token', accessToken);
           await SecureStore.setItemAsync('refresh_token', refreshToken);
           await SecureStore.setItemAsync('user_data', JSON.stringify(user));
-          
-          console.log('🔥 Saved to SecureStore');
           
           set({ 
             user, 
@@ -60,38 +48,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             isLoading: false 
           });
           
-          console.log('🔥 State updated successfully');
+
+          
         } catch (error) {
-          console.log('🔥 Login error in store:', error);
           set({ isLoading: false });
           throw error;
         }
       },
 
       logout: async () => {
+        // Clear local storage immediately (no API call needed with auto-replace system)
         try {
-          // Try to call logout API, but don't fail if it errors
-          await authAPI.logout();
-        } catch (error) {
-          console.log('Logout API failed, clearing locally:', error?.message || error);
-        } finally {
-          // Always clear local storage
-          try {
-            await SecureStore.deleteItemAsync('access_token');
-            await SecureStore.deleteItemAsync('refresh_token');
-            await SecureStore.deleteItemAsync('user_data');
-          } catch (storageError) {
-            console.log('Storage cleanup error:', storageError);
-          }
-          
-          // Always reset state
-          set({ 
-            user: null, 
-            token: null, 
-            refreshToken: null,
-            isAuthenticated: false 
-          });
+          await SecureStore.deleteItemAsync('access_token');
+          await SecureStore.deleteItemAsync('refresh_token');
+          await SecureStore.deleteItemAsync('user_data');
+        } catch (storageError) {
+          console.log('Storage cleanup error:', storageError);
         }
+        
+        // Reset state
+        set({ 
+          user: null, 
+          token: null, 
+          refreshToken: null,
+          isAuthenticated: false 
+        });
       },
 
   checkAuth: async () => {

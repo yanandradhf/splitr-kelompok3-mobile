@@ -37,12 +37,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       console.log('📊 Stats data:', stats);
       set({ user, stats, isLoading: false });
     } catch (error: any) {
-      console.error('❌ Error fetching profile:', error);
-      console.error('❌ Error response:', error.response?.data);
-      set({ 
-        error: error.response?.data?.message || 'Failed to fetch profile',
-        isLoading: false 
-      });
+      // Error automatically handled by API interceptor
+      set({ isLoading: false });
     }
   },
 
@@ -62,11 +58,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       
       return true;
     } catch (error: any) {
-      console.error('Error updating profile:', error);
-      set({ 
-        error: error.response?.data?.message || 'Failed to update profile',
-        isUpdating: false 
-      });
+      // Error automatically handled by API interceptor
+      set({ isUpdating: false });
       return false;
     }
   },
@@ -83,11 +76,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       set({ isUploadingPhoto: false });
       return true;
     } catch (error: any) {
-      console.error('Error uploading profile photo:', error);
-      set({ 
-        error: error.response?.data?.message || 'Failed to upload photo',
-        isUploadingPhoto: false 
-      });
+      // Error automatically handled by API interceptor
+      set({ isUploadingPhoto: false });
       return false;
     }
   },

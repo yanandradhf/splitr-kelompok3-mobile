@@ -9,29 +9,9 @@ export interface ApiError {
 }
 
 export const handleSessionError = async (error: any) => {
-  const errorCode = error.response?.data?.code;
-  const errorMessage = error.response?.data?.error || error.response?.data?.message || '';
-  
-  // Handle session replacement/expiry
-  if (errorCode === 'SESSION_REPLACED' || errorCode === 'SESSION_EXPIRED') {
-    console.log('🚨 Session invalid:', errorCode);
-    
-    await clearTokensAndRedirect('Your account was accessed from another device. Please login again.');
-    return true;
-  }
-  
-  // Handle invalid token
-  if (errorCode === 'INVALID_TOKEN' || 
-      errorMessage.includes('invalid') || 
-      errorMessage.includes('malformed') ||
-      errorMessage.includes('expired')) {
-    console.log('🚨 Invalid token detected:', errorMessage);
-    
-    await clearTokensAndRedirect('Your session has expired. Please login again.');
-    return true;
-  }
-  
-  return false; // Not handled
+  // Session errors are now handled directly in API interceptor
+  // This function is kept for backward compatibility
+  return false;
 };
 
 const clearTokensAndRedirect = async (message: string) => {
@@ -67,19 +47,6 @@ export const handleApiError = async (error: any): Promise<ApiError> => {
           return { message: 'Session expired', status, code: error.response.data?.code };
         }
         return { message: 'Sesi Anda telah berakhir, silakan login kembali', status };
-      case 403:
-        const errorMessage403 = error.response.data?.message || error.response.data?.error || '';
-        const isInvalidToken403 = errorMessage403.includes('invalid') || 
-                                 errorMessage403.includes('token') ||
-                                 error.response.data?.code === 'INVALID_TOKEN';
-        
-        if (isInvalidToken403) {
-          const handled403 = await handleSessionError(error);
-          if (handled403) {
-            return { message: 'Invalid token', status, code: error.response.data?.code };
-          }
-        }
-        return { message: 'Anda tidak memiliki akses untuk melakukan aksi ini', status };
       case 404:
         return { message: 'Data tidak ditemukan', status };
       case 422:
