@@ -18,13 +18,15 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
   isSessionExpired = false,
   onClose,
 }) => {
-  const handleClose = async () => {
+  const handleClose = () => {
     onClose();
     
-    // Redirect to login only after user taps OK for session expired
+    // Immediate redirect for session expired
     if (isSessionExpired) {
-      const { router } = await import('expo-router');
-      router.replace('/(auth)/login');
+      setTimeout(async () => {
+        const { router } = await import('expo-router');
+        router.replace('/(auth)/login');
+      }, 100); // Small delay to let modal close
     }
   };
   return (

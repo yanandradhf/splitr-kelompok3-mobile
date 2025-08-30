@@ -73,6 +73,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           refreshToken: null,
           isAuthenticated: false 
         });
+        
+        // Immediate redirect to login
+        const { router } = await import('expo-router');
+        router.replace('/(auth)/login');
       },
 
   checkAuth: async () => {

@@ -14,19 +14,18 @@ export const useAutoLogout = () => {
       clearTimeout(timeoutRef.current);
     }
     
+    // Only start timer if user is authenticated
     if (isAuthenticated) {
       console.log('⏰ Timer reset - will logout in', TIMEOUT_DURATION / 1000, 'seconds');
       timeoutRef.current = setTimeout(async () => {
         console.log('🕐 Auto logout triggered - forcing logout now');
-        console.log('🔓 Calling logout function...');
+        
+        // Clear timer first
+        clearTimer();
+        
         try {
           await logout();
           console.log('✅ Logout completed');
-          
-          // Force redirect to login
-          const { router } = await import('expo-router');
-          console.log('🔄 Redirecting to login...');
-          router.replace('/(auth)/login');
         } catch (error) {
           console.error('❌ Logout error:', error);
         }

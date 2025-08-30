@@ -102,18 +102,28 @@ api.interceptors.response.use(
   async (error) => {
     const { showApiError, showErrorToast } = await import('../utils/globalErrorHandler');
     
-    // Handle ONLY 401 - Auto logout for token issues
+    // Handle 401 - Different behavior for login vs authenticated requests
     if (error.response?.status === 401) {
-      console.log('🚨 Token invalid, forcing logout');
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
       
-      // Clear all tokens immediately
-      await SecureStore.deleteItemAsync('access_token');
-      await SecureStore.deleteItemAsync('refresh_token');
-      await SecureStore.deleteItemAsync('user_data');
-      
-      // Show session error modal - redirect akan dilakukan setelah user tap OK
-      const { showSessionExpiredModal } = await import('../utils/globalErrorHandler');
-      showSessionExpiredModal();
+      if (isLoginRequest) {
+        // For login requests: show actual backend error message
+        console.log('🚨 Login failed: Invalid credentials');
+        const { showApiError } = await import('../utils/globalErrorHandler');
+        showApiError(error);
+      } else {
+        // For authenticated requests: session expired, auto logout
+        console.log('🚨 Token invalid, forcing logout');
+        
+        // Clear all tokens immediately
+        await SecureStore.deleteItemAsync('access_token');
+        await SecureStore.deleteItemAsync('refresh_token');
+        await SecureStore.deleteItemAsync('user_data');
+        
+        // Show session expired modal with auto redirect
+        const { showSessionExpiredModal } = await import('../utils/globalErrorHandler');
+        showSessionExpiredModal();
+      }
       
       return Promise.reject(error);
     }

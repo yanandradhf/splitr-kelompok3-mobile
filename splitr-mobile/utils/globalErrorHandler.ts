@@ -42,8 +42,8 @@ export const handleApiError = (error: any): { title: string; message: string } =
         };
       case 401:
         return {
-          title: 'Sesi Habis',
-          message: 'Silakan login kembali'
+          title: 'Login Gagal',
+          message: data?.message || 'Username atau password salah'
         };
       case 404:
         return {
