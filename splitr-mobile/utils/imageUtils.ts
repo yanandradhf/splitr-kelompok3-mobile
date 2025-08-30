@@ -1,5 +1,5 @@
-// Re-export from centralized ngrok config
-export { getImageUrl } from '../config/ngrok';
+// Re-export from centralized base URL config
+export { getImageUrl } from '../config/baseUrl';
 
 // Fallback avatar generator
 export const getFallbackAvatar = (name: string, size: number = 50): string => {

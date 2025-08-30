@@ -6,6 +6,7 @@ import { useErrorStore } from '../store/errorStore';
 import { useFonts } from '../hooks/useFonts';
 import { COLORS } from '../constants/theme';
 import '../utils/globalErrorHandler'; // Initialize global error handling
+import { checkEnvVars } from '../utils/envChecker'; // Environment variable checker
 
 export default function RootLayout() {
   const { isVisible, title, message, isSessionExpired, hideError } = useErrorStore();
@@ -34,6 +35,11 @@ export default function RootLayout() {
     console.warn('⚠️ Font loading error (using system fonts):', fontError);
   } else if (fontsLoaded) {
     console.log('✅ Custom fonts loaded successfully');
+  }
+  
+  // Check environment variables on app start (development only)
+  if (__DEV__) {
+    checkEnvVars();
   }
   
   return (

@@ -1,4 +1,4 @@
-import { NGROK_URL } from './ngrok';
+import { BASE_URL } from './baseUrl';
 
 /**
  * Centralized API Configuration
@@ -7,7 +7,7 @@ import { NGROK_URL } from './ngrok';
 
 // Main API Configuration
 export const API_CONFIG = {
-  BASE_URL: NGROK_URL,
+  BASE_URL: BASE_URL,
   TIMEOUT: 10000,
   HEADERS: {
     'Content-Type': 'application/json',
@@ -72,33 +72,33 @@ export const EXTERNAL_APIS = {
   // Groq AI for OCR
   GROQ: {
     URL: 'https://api.groq.com/openai/v1/chat/completions',
-    KEY: process.env.EXPO_PUBLIC_GROQ_API_KEY || '',
-    MODEL: 'meta-llama/llama-4-scout-17b-instruct',
+    KEY: process.env.EXPO_PUBLIC_GROQ_API_KEY,
+    MODEL: 'llama-3.2-90b-vision-preview',
     RATE_LIMIT: 2000 // ms between requests
   },
 
   // Google Gemini (backup OCR)
   GEMINI: {
     URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-    KEY: process.env.EXPO_PUBLIC_GEMINI_API_KEY || ''
+    KEY: process.env.EXPO_PUBLIC_GEMINI_API_KEY
   },
 
   // OCR.space (fallback)
   OCR_SPACE: {
     URL: 'https://api.ocr.space/parse/image',
-    KEY: process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY || ''
+    KEY: process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY
   },
 
   // OpenAI (optional)
   OPENAI: {
     URL: 'https://api.openai.com/v1/chat/completions',
-    KEY: process.env.EXPO_PUBLIC_OPENAI_API_KEY || ''
+    KEY: process.env.EXPO_PUBLIC_OPENAI_API_KEY
   },
 
   // Google Vision (optional)
   GOOGLE_VISION: {
     URL: 'https://vision.googleapis.com/v1/images:annotate',
-    KEY: process.env.EXPO_PUBLIC_GOOGLE_VISION_API_KEY || ''
+    KEY: process.env.EXPO_PUBLIC_GOOGLE_VISION_API_KEY
   }
 };
 

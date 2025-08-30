@@ -23,13 +23,19 @@ export interface OCRResult {
 }
 
 export class FixedGroqService {
-  static readonly API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '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';
+  static readonly API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
   static readonly API_URL = 'https://api.groq.com/openai/v1/chat/completions';
   static lastRequestTime = 0;
   static readonly MIN_REQUEST_INTERVAL = 2000;
 
   static async processReceipt(imageUri: string): Promise<OCRResult> {
     console.log('Fixed Groq: Starting receipt OCR processing:', imageUri);
+    
+    // Check API key availability
+    if (!this.API_KEY || this.API_KEY.trim() === '') {
+      throw new Error('GROQ_API_KEY not found in environment variables. Please check your .env file.');
+    }
+    
     console.log('Fixed Groq: API Key length:', this.API_KEY?.length);
     console.log('Fixed Groq: API Key preview:', this.API_KEY ? `${this.API_KEY.substring(0, 15)}...` : 'NOT FOUND');
     console.log('Fixed Groq: API URL:', this.API_URL);

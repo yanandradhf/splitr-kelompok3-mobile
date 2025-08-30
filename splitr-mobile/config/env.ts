@@ -4,20 +4,19 @@
  */
 
 // Validate required environment variables
-const validateEnvVar = (key: string, value: string | undefined, required = false): string => {
+const validateEnvVar = (key: string, value: string | undefined, required = false): string | undefined => {
   if (required && !value) {
     if (__DEV__) {
       console.warn(`⚠️ Missing required environment variable: ${key}`);
     }
-    return '';
   }
-  return value || '';
+  return value;
 };
 
 // Environment configuration
 export const ENV = {
-  // Ngrok URL (required for development)
-  NGROK_URL: validateEnvVar('EXPO_PUBLIC_NGROK_URL', process.env.EXPO_PUBLIC_NGROK_URL, true),
+  // Base API URL (required)
+  BASE_URL: validateEnvVar('EXPO_PUBLIC_API_BASE_URL', process.env.EXPO_PUBLIC_API_BASE_URL, true),
   
   // External API Keys (optional, fallback to empty string)
   API_KEYS: {

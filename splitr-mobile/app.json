@@ -1,24 +1,26 @@
 {
   "expo": {
-    "name": "splitr-mobile",
+    "name": "Splitr by BNI",
     "slug": "splitr-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/AppIcons/playstore.png",
     "scheme": "splitrmobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.splitrmobile"
+      "bundleIdentifier": "com.splitr.mobile",
+      "icon": "./assets/AppIcons/Assets.xcassets/AppIcon.appiconset/1024.png"
     },
     "android": {
+      "icon": "./assets/AppIcons/android/mipmap-xxxhdpi/ic_launcher.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/AppIcons/android/mipmap-xxxhdpi/ic_launcher.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.splitrmobile"
+      "package": "com.splitr.mobile"
     },
     "web": {
       "bundler": "metro",
@@ -40,6 +42,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5a3cb330-874e-4c18-baec-e56400506c3d"
+      }
     }
   }
 }
