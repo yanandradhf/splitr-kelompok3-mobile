@@ -3,8 +3,10 @@
  * Update this file when base URL changes
  */
 
-// Get base URL from environment variable
-export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+import Constants from 'expo-constants';
+
+// Get base URL from environment variable with fallback to app.json
+export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || Constants.expoConfig?.extra?.EXPO_PUBLIC_API_BASE_URL;
 
 // Helper to get full URL
 export const getFullUrl = (path: string = ''): string => {

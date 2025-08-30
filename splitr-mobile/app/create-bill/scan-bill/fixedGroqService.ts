@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import Constants from 'expo-constants';
 import { OCRLearningSystem, LearningData } from './ocrLearningSystem';
 
 export interface OrderItem {
@@ -23,7 +24,7 @@ export interface OCRResult {
 }
 
 export class FixedGroqService {
-  static readonly API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+  static readonly API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || Constants.expoConfig?.extra?.EXPO_PUBLIC_GROQ_API_KEY;
   static readonly API_URL = 'https://api.groq.com/openai/v1/chat/completions';
   static lastRequestTime = 0;
   static readonly MIN_REQUEST_INTERVAL = 2000;

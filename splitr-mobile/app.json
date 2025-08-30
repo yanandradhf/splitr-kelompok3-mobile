@@ -47,7 +47,9 @@
       "router": {},
       "eas": {
         "projectId": "5a3cb330-874e-4c18-baec-e56400506c3d"
-      }
+      },
+      "EXPO_PUBLIC_API_BASE_URL": "https://splitr-kalcer.up.railway.app",
+      "EXPO_PUBLIC_GROQ_API_KEY": "replace with correct api-key"
     }
   }
 }

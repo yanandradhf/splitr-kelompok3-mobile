@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { BASE_URL } from './baseUrl';
 
 /**
@@ -72,7 +73,7 @@ export const EXTERNAL_APIS = {
   // Groq AI for OCR
   GROQ: {
     URL: 'https://api.groq.com/openai/v1/chat/completions',
-    KEY: process.env.EXPO_PUBLIC_GROQ_API_KEY,
+    KEY: process.env.EXPO_PUBLIC_GROQ_API_KEY || Constants.expoConfig?.extra?.EXPO_PUBLIC_GROQ_API_KEY,
     MODEL: 'llama-3.2-90b-vision-preview',
     RATE_LIMIT: 2000 // ms between requests
   },
